@@ -1,0 +1,206 @@
+-- 0001_init.sql — Muraka core schema
+-- See docs/05-data-model.md. All timestamps UTC. IDs are UUIDs (v7 from clients).
+
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- ---------------------------------------------------------------- reference data
+
+CREATE TABLE atoll (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    name        text NOT NULL UNIQUE,
+    code        text NOT NULL UNIQUE,
+    centroid    geography(Point, 4326) NOT NULL,
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+-- ---------------------------------------------------------------- users
+
+CREATE TYPE user_role   AS ENUM ('contributor', 'researcher', 'admin');
+CREATE TYPE user_status AS ENUM ('active', 'banned', 'anonymised');
+
+CREATE TABLE app_user (
+    id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    email         text NOT NULL UNIQUE,
+    password_hash text NOT NULL,
+    display_name  text NOT NULL,
+    role          user_role   NOT NULL DEFAULT 'contributor',
+    status        user_status NOT NULL DEFAULT 'active',
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    updated_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX app_user_role_idx ON app_user (role);
+
+-- Tombstone user owning anonymised sightings (FR/NFR: deletion anonymises, never destroys).
+INSERT INTO app_user (id, email, password_hash, display_name, role, status)
+VALUES ('00000000-0000-0000-0000-000000000000',
+        'anonymised@muraka.invalid', 'x', 'Anonymised contributor',
+        'contributor', 'anonymised');
+
+CREATE TABLE refresh_token (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     uuid NOT NULL REFERENCES app_user(id) ON DELETE CASCADE,
+    token_hash  text NOT NULL UNIQUE,
+    expires_at  timestamptz NOT NULL,
+    revoked_at  timestamptz,
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX refresh_token_user_idx ON refresh_token (user_id);
+
+-- ---------------------------------------------------------------- reef sites
+
+CREATE TABLE reef_site (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    atoll_id    uuid REFERENCES atoll(id) ON DELETE SET NULL,
+    name        text NOT NULL,
+    boundary    geography(Polygon, 4326) NOT NULL,
+    created_by  uuid REFERENCES app_user(id) ON DELETE SET NULL,
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX reef_site_boundary_idx ON reef_site USING GIST (boundary);
+
+-- ---------------------------------------------------------------- ML model versions
+
+CREATE TABLE model_version (
+    id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    version       text NOT NULL UNIQUE,
+    artefact_key  text,
+    task          text NOT NULL DEFAULT 'patch_classification',
+    is_active     boolean NOT NULL DEFAULT false,
+    metrics       jsonb NOT NULL DEFAULT '{}'::jsonb,
+    dataset_hash  text,
+    notes         text,
+    trained_at    timestamptz,
+    created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+-- At most one active model version.
+CREATE UNIQUE INDEX model_version_single_active_idx
+    ON model_version (is_active) WHERE is_active;
+
+-- Placeholder so predictions can be recorded before a real model is registered.
+INSERT INTO model_version (version, task, is_active, notes)
+VALUES ('fake-0.0.0', 'patch_classification', true,
+        'Deterministic stub used when the ML service runs in FAKE_MODE.');
+
+-- ---------------------------------------------------------------- sightings
+
+CREATE TYPE coral_condition   AS ENUM ('healthy', 'bleached');
+CREATE TYPE location_source   AS ENUM ('gps', 'manual_pin');
+CREATE TYPE sighting_status   AS ENUM ('pending_photos', 'processing', 'awaiting_verification', 'verified', 'rejected');
+
+CREATE TABLE sighting (
+    id                      uuid PRIMARY KEY,               -- client-generated UUIDv7
+    contributor_id          uuid NOT NULL REFERENCES app_user(id) ON DELETE RESTRICT,
+    site_id                 uuid REFERENCES reef_site(id) ON DELETE SET NULL,
+    location                geography(Point, 4326) NOT NULL,
+    location_source         location_source NOT NULL DEFAULT 'gps',
+    location_accuracy_m     double precision,
+    depth_m                 double precision,
+    captured_at             timestamptz NOT NULL,           -- device time
+    note                    text,
+    self_assessed_condition coral_condition,                -- contributor's guess; never authoritative
+    status                  sighting_status NOT NULL DEFAULT 'pending_photos',
+    created_at              timestamptz NOT NULL DEFAULT now(),  -- server receive time
+    updated_at              timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT sighting_depth_sane CHECK (depth_m IS NULL OR (depth_m >= 0 AND depth_m <= 200))
+);
+
+CREATE INDEX sighting_location_idx     ON sighting USING GIST (location);
+CREATE INDEX sighting_captured_at_idx  ON sighting (captured_at DESC);
+CREATE INDEX sighting_status_idx       ON sighting (status);
+CREATE INDEX sighting_contributor_idx  ON sighting (contributor_id, captured_at DESC);
+CREATE INDEX sighting_site_idx         ON sighting (site_id);
+
+CREATE TABLE photo (
+    id            uuid PRIMARY KEY,                         -- client-generated UUIDv7
+    sighting_id   uuid NOT NULL REFERENCES sighting(id) ON DELETE CASCADE,
+    storage_key   text NOT NULL,
+    content_hash  text NOT NULL,
+    width         integer NOT NULL,
+    height        integer NOT NULL,
+    bytes         integer NOT NULL,
+    exif_captured_at timestamptz,
+    exif_location    geography(Point, 4326),
+    created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX photo_sighting_idx ON photo (sighting_id);
+
+-- ---------------------------------------------------------------- ML pipeline
+
+CREATE TYPE job_status AS ENUM ('queued', 'running', 'done', 'failed');
+
+CREATE TABLE classification_job (
+    id           bigserial PRIMARY KEY,
+    photo_id     uuid NOT NULL REFERENCES photo(id) ON DELETE CASCADE,
+    status       job_status NOT NULL DEFAULT 'queued',
+    attempts     integer NOT NULL DEFAULT 0,
+    last_error   text,
+    claimed_at   timestamptz,
+    finished_at  timestamptz,
+    created_at   timestamptz NOT NULL DEFAULT now()
+);
+
+-- Worker claim path: WHERE status='queued' ORDER BY id FOR UPDATE SKIP LOCKED.
+CREATE INDEX classification_job_claim_idx ON classification_job (status, id);
+CREATE INDEX classification_job_photo_idx ON classification_job (photo_id);
+
+-- Append-only. Multiple predictions per photo are expected (model re-runs).
+CREATE TABLE prediction (
+    id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    photo_id          uuid NOT NULL REFERENCES photo(id) ON DELETE CASCADE,
+    model_version_id  uuid NOT NULL REFERENCES model_version(id) ON DELETE RESTRICT,
+    label             coral_condition NOT NULL,
+    confidence        double precision NOT NULL,
+    severity          double precision NOT NULL,   -- fraction of patches classified bleached (0..1)
+    patch_grid        integer NOT NULL,            -- e.g. 5 => 5x5
+    patches           jsonb NOT NULL DEFAULT '[]'::jsonb,  -- per-patch overlay data
+    inference_ms      integer,
+    created_at        timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT prediction_confidence_range CHECK (confidence >= 0 AND confidence <= 1),
+    CONSTRAINT prediction_severity_range   CHECK (severity   >= 0 AND severity   <= 1)
+);
+
+CREATE INDEX prediction_photo_idx ON prediction (photo_id, created_at DESC);
+
+-- ---------------------------------------------------------------- verification
+
+CREATE TYPE verification_decision AS ENUM ('confirmed', 'corrected', 'rejected');
+CREATE TYPE reject_reason         AS ENUM ('blurry', 'not_coral', 'duplicate', 'spam', 'other');
+
+-- Append-only audit trail; the latest row wins. Never mutates predictions.
+CREATE TABLE verification (
+    id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    sighting_id    uuid NOT NULL REFERENCES sighting(id) ON DELETE CASCADE,
+    verifier_id    uuid NOT NULL REFERENCES app_user(id) ON DELETE RESTRICT,
+    decision       verification_decision NOT NULL,
+    label          coral_condition,
+    reject_reason  reject_reason,
+    comment        text,
+    created_at     timestamptz NOT NULL DEFAULT now(),
+    -- confirmed/corrected must carry a label; rejected must carry a reason.
+    CONSTRAINT verification_label_required
+        CHECK ((decision IN ('confirmed','corrected') AND label IS NOT NULL)
+            OR (decision = 'rejected' AND reject_reason IS NOT NULL))
+);
+
+CREATE INDEX verification_sighting_idx ON verification (sighting_id, created_at DESC);
+CREATE INDEX verification_verifier_idx ON verification (verifier_id, created_at DESC);
+
+-- ---------------------------------------------------------------- audit
+
+CREATE TABLE audit_log (
+    id          bigserial PRIMARY KEY,
+    actor_id    uuid REFERENCES app_user(id) ON DELETE SET NULL,
+    action      text NOT NULL,
+    subject     text,
+    detail      jsonb NOT NULL DEFAULT '{}'::jsonb,
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX audit_log_actor_idx  ON audit_log (actor_id, created_at DESC);
+CREATE INDEX audit_log_action_idx ON audit_log (action, created_at DESC);
