@@ -1,0 +1,31 @@
+# CPU-only inference image (docs/06: no GPU at serving time).
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+# Requirements first so source edits reuse the dependency layer.
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app ./app
+
+# Mount point for the active ONNX artefact; empty in fake mode.
+RUN mkdir -p /app/models \
+ && useradd --create-home --uid 10002 muraka \
+ && chown -R muraka:muraka /app
+USER muraka
+
+ENV FAKE_MODE=1 \
+    MODEL_PATH=/app/models/active.onnx \
+    ONNX_THREADS=2
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=5 \
+    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz').status==200 else 1)"
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

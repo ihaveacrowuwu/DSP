@@ -1,0 +1,145 @@
+# Baseline patch-classifier recipe.
+#
+# Sized for an Apple M1 Pro via PyTorch MPS: a full run should finish inside an
+# hour. Nothing here may require a discrete GPU or a cloud service.
+#
+# Prior published work on this dataset reports roughly 0.90 accuracy and 0.90
+# macro-F1 at patch level with a comparable-size backbone. That is the number to
+# match or beat, and the comparison belongs in the evaluation chapter.
+
+run:
+  name: baseline-effnetb0
+  seed: 42
+  # Everything reproducible: same seed and config must give the same metrics.
+  deterministic: true
+  output_dir: runs/baseline-effnetb0
+
+data:
+  # HuggingFace dataset id. Free download, no API key.
+  # VERIFY LICENCE TERMS BEFORE FIRST USE — this is the project's open question Q6.
+  source: NMFS-OSI/NOAA-PIFSC-ESD-CORAL-Bleaching-Dataset
+  # The dataset ships its own splits; use them rather than re-splitting, so results
+  # stay comparable with published numbers.
+  use_provided_splits: true
+  # Class order MUST match ml/service/app/inference.py CLASS_LABELS.
+  # Inverting this silently inverts every prediction.
+  class_labels: [healthy, bleached]
+  # The dataset's folder names, mapped onto our labels.
+  folder_map:
+    CORAL: healthy
+    CORAL_BL: bleached
+  image_size: 224
+  num_workers: 4
+  # Freeze the test split on first run and never consult it again until the final
+  # evaluation. Val is for every decision along the way.
+  test_split_locked: true
+
+model:
+  # Well-understood baseline first. A second run may compare one modern timm
+  # backbone of similar size (ConvNeXt-Tiny or EfficientNetV2-S).
+  backbone: efficientnet_b0
+  pretrained: imagenet
+  num_classes: 2
+  drop_rate: 0.3
+
+training:
+  device: mps            # falls back to cpu; cuda only if a machine has it
+  epochs: 30
+  batch_size: 32
+  # Two-stage transfer learning: train the head on a frozen backbone, then
+  # unfreeze and continue at a much lower rate.
+  head_lr: 1.0e-3
+  backbone_lr: 1.0e-4
+  unfreeze_epoch: 8
+  weight_decay: 1.0e-4
+  label_smoothing: 0.05
+  grad_clip: 1.0
+  early_stopping:
+    # Selection metric is recall-weighted, matching what the project cares about.
+    monitor: val_f2_bleached
+    patience: 8
+    mode: max
+  # Mixed precision is unreliable on MPS; enable only if a run proves stable.
+  amp: false
+
+imbalance:
+  # The training split is roughly 4,541 healthy against 2,751 bleached.
+  # Both mechanisms were validated on this dataset by prior work.
+  class_weighted_loss: true
+  oversample_minority: true
+  # Extra push towards recall on the bleached class. Report the effect.
+  bleached_loss_multiplier: 1.5
+
+augmentation:
+  horizontal_flip: 0.5
+  vertical_flip: 0.5
+  rotation_degrees: 180
+  random_resized_crop:
+    scale: [0.8, 1.0]
+    ratio: [0.9, 1.1]
+  # Underwater colour casts vary enormously with depth and light, so colour
+  # augmentation matters more here than in a typical vision task.
+  color_jitter:
+    brightness: 0.3
+    contrast: 0.4
+    saturation: 0.3
+    hue: 0.1
+  # Worth an ablation: does grey-world white balancing beat colour jitter alone?
+  grey_world_normalisation: false
+
+# ImageNet statistics. These MUST equal ml/service/app/config.py normalise_mean
+# and normalise_std, or serving quietly disagrees with training.
+preprocessing:
+  normalise_mean: [0.485, 0.456, 0.406]
+  normalise_std: [0.229, 0.224, 0.225]
+  interpolation: bilinear
+
+evaluation:
+  metrics: [accuracy, macro_f1, f2_bleached, precision_per_class, recall_per_class, roc_auc]
+  primary: macro_f1
+  # A missed bleaching event costs more than a false alarm, so recall on the
+  # bleached class is reported alongside the headline figure.
+  report_confusion_matrix: true
+  save_error_gallery: true
+  error_gallery_size: 40
+  # Out-of-domain check: the NOAA data is Hawaiian and consists of square tissue
+  # samples, while contributors send wide Maldivian reef scenes. Measuring that
+  # gap honestly is a key report section, not a failure.
+  cross_domain_sets:
+    - kaggle:vencerlanz09/healthy-and-bleached-corals-image-classification
+
+export:
+  format: onnx
+  opset: 17
+  output: ../models/active.onnx
+  # Embedded so the service can refuse to serve a model whose class order
+  # disagrees with its own expectation.
+  embed_metadata:
+    model_version: null    # set at export time, e.g. effnetb0-0.1.0
+    class_labels: healthy,bleached
+  # Compare PyTorch and ONNX logits on fixed inputs before shipping.
+  verify_parity: true
+  parity_tolerance: 1.0e-4
+
+hpo:
+  # Optional and time-boxed. Manual staged tuning is acceptable if the schedule
+  # is tight; HPO is a refinement, not the deliverable.
+  enabled: false
+  framework: optuna
+  trials: 12
+  epochs_per_trial: 10
+  # Local storage only: no key-requiring experiment tracker.
+  storage: sqlite:///runs/optuna.db
+  search_space:
+    head_lr: [5.0e-4, 5.0e-3]
+    backbone_lr: [1.0e-5, 5.0e-4]
+    unfreeze_epoch: [4, 12]
+    drop_rate: [0.2, 0.5]
+    weight_decay: [1.0e-5, 1.0e-2]
+
+logging:
+  # No comet-ml, W&B or Roboflow: all need accounts or API keys, which the project
+  # forbids. Local files are also what makes runs reproducible for the project.
+  to_csv: runs/baseline-effnetb0/metrics.csv
+  to_json: runs/baseline-effnetb0/summary.json
+  save_curves: true
