@@ -1,0 +1,1016 @@
+openapi: 3.1.0
+
+info:
+  title: Muraka API
+  version: 0.1.0
+  description: |
+    Citizen-science coral reef condition monitoring for the Maldives.
+
+    This document is the contract shared by the Vue dashboard and the native
+    Android and iOS apps. It is maintained by hand alongside
+    `backend/internal/httpapi`; treat any divergence as a bug in this file.
+
+    **Conventions**
+
+    - All timestamps are RFC 3339 with a UTC offset.
+    - Coordinates are WGS84 (EPSG:4326). Bounding boxes are
+      `minLon,minLat,maxLon,maxLat`, matching GeoJSON order.
+    - Resources created by a client carry a **client-generated UUID (v7
+      preferred)**. Submitting the same id twice is a no-op that returns the
+      stored resource with `200` instead of `201`, which is what makes the mobile
+      offline queue safe to retry forever.
+    - Errors share one envelope: `{ "error": code, "message": text, "fields": {} }`.
+      `fields` is present only on `422` and maps a request field to its problem.
+
+servers:
+  - url: http://localhost:8090
+    description: Local development stack (deploy/docker-compose.yml)
+
+tags:
+  - name: Authentication
+  - name: Sightings
+  - name: Verification
+  - name: Analysis
+  - name: Reference
+  - name: Administration
+  - name: Health
+
+security:
+  - bearerAuth: []
+
+paths:
+  /healthz:
+    get:
+      tags: [Health]
+      summary: Liveness
+      description: Reports that the process is running. Touches no dependencies.
+      security: []
+      responses:
+        '200':
+          description: The service is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  uptime_s: { type: integer }
+                  env: { type: string }
+
+  /readyz:
+    get:
+      tags: [Health]
+      summary: Readiness
+      description: |
+        Reports on each dependency. Returns `503` when the database is
+        unreachable. A missing ML service is reported as degraded, not failed:
+        submissions still queue and are classified once it returns.
+      security: []
+      responses:
+        '200': { description: Ready to serve traffic. }
+        '503': { description: A required dependency is unavailable. }
+
+  /v1/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Create an account
+      description: New accounts are always contributors. Elevation is an admin action.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, displayName]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 10 }
+                displayName: { type: string }
+      responses:
+        '200':
+          description: Account created and signed in.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Session' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /v1/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Sign in
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: Signed in.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Session' }
+        '401':
+          description: |
+            Email or password is incorrect. Deliberately identical whether or not
+            the account exists, so the endpoint cannot enumerate accounts.
+        '403': { description: The account is suspended. }
+
+  /v1/auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Exchange a refresh token for a new session
+      description: |
+        Refresh tokens are single-use: this call revokes the one presented and
+        issues a fresh pair. Clients must persist the new refresh token or the
+        next refresh will fail.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '200':
+          description: New session issued.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Session' }
+        '401': { description: The token is invalid, expired or already used. }
+
+  /v1/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Revoke a refresh token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '204': { description: Signed out. }
+
+  /v1/me:
+    get:
+      tags: [Authentication]
+      summary: Current account and contribution totals
+      responses:
+        '200':
+          description: The signed-in account.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+                  stats: { $ref: '#/components/schemas/ContributorStats' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    delete:
+      tags: [Authentication]
+      summary: Delete the account
+      description: |
+        Anonymises rather than erases: the account's sightings are reassigned to a
+        tombstone user so the scientific record survives while the link to the
+        person does not. Disclose this in the client before confirming.
+      responses:
+        '204': { description: Account anonymised and sessions revoked. }
+
+  /v1/sightings:
+    post:
+      tags: [Sightings]
+      summary: Submit sighting metadata
+      description: |
+        Step one of a two-step submission: metadata first, then one call per
+        photo. Idempotent on `id`, so a queued submission can be retried
+        indefinitely without creating duplicates.
+
+        The server resolves `siteId` itself by testing the coordinate against
+        known reef site boundaries; clients must not send it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateSighting' }
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Sighting' }
+        '200':
+          description: |
+            Already stored — this was a replay. The body is the existing
+            sighting. Clients should treat this exactly like `201` and mark the
+            queue item synced.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Sighting' }
+        '409': { description: That id already belongs to another account. }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    get:
+      tags: [Sightings]
+      summary: List sightings
+      description: |
+        Contributors see only their own submissions. Researchers and admins see
+        everything and may filter by contributor.
+      parameters:
+        - { $ref: '#/components/parameters/bbox' }
+        - { $ref: '#/components/parameters/from' }
+        - { $ref: '#/components/parameters/to' }
+        - { $ref: '#/components/parameters/condition' }
+        - { $ref: '#/components/parameters/verified' }
+        - { $ref: '#/components/parameters/site' }
+        - name: status
+          in: query
+          description: Comma-separated list of sighting statuses.
+          schema: { type: string, example: awaiting_verification,verified }
+        - name: contributor
+          in: query
+          description: Researcher/admin only; ignored for contributors.
+          schema: { type: string, format: uuid }
+        - { $ref: '#/components/parameters/limit' }
+        - { $ref: '#/components/parameters/offset' }
+      responses:
+        '200':
+          description: A page of sightings.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Page'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: '#/components/schemas/Sighting' }
+
+  /v1/sightings/{id}:
+    get:
+      tags: [Sightings]
+      summary: One sighting with photos and review history
+      parameters:
+        - { $ref: '#/components/parameters/idPath' }
+      responses:
+        '200':
+          description: The full record.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sighting: { $ref: '#/components/schemas/Sighting' }
+                  photos:
+                    type: array
+                    items: { $ref: '#/components/schemas/Photo' }
+                  verifications:
+                    type: array
+                    items: { $ref: '#/components/schemas/Verification' }
+        '403': { description: The sighting belongs to another contributor. }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/sightings/{id}/photos:
+    post:
+      tags: [Sightings]
+      summary: Attach a photograph
+      description: |
+        One call per photo. Idempotent on `photoId`.
+
+        The server decodes the image to confirm it really is a JPEG or PNG, then
+        re-encodes it as JPEG. That strips EXIF — including any GPS the
+        contributor did not intend to share — after capture time and position
+        have been read out. Attaching a photo enqueues it for classification.
+      parameters:
+        - { $ref: '#/components/parameters/idPath' }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [photoId, file]
+              properties:
+                photoId:
+                  type: string
+                  format: uuid
+                  description: Client-generated UUID (v7 preferred).
+                file:
+                  type: string
+                  format: binary
+                  description: JPEG or PNG, at most 12 MiB by default.
+      responses:
+        '201':
+          description: Stored and queued for classification.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  photoId: { type: string, format: uuid }
+                  sightingId: { type: string, format: uuid }
+                  width: { type: integer }
+                  height: { type: integer }
+                  bytes: { type: integer }
+                  queued: { type: boolean }
+        '200': { description: Already stored — a replay. }
+        '403': { description: The sighting belongs to another contributor. }
+        '413': { description: The image exceeds the size limit. }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /v1/photos/{id}/image:
+    get:
+      tags: [Sightings]
+      summary: Fetch photograph bytes
+      description: |
+        Requires the bearer token, so clients cannot use this URL directly in an
+        `<img>` tag or an image loader without an auth header.
+      parameters:
+        - { $ref: '#/components/parameters/idPath' }
+      responses:
+        '200':
+          description: The JPEG.
+          content:
+            image/jpeg:
+              schema: { type: string, format: binary }
+        '403': { description: The photo belongs to another contributor. }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/verifications/queue:
+    get:
+      tags: [Verification]
+      summary: Sightings awaiting expert review
+      description: |
+        Ordered by ascending model confidence, so expert attention goes where the
+        model is least sure. Researcher or admin only.
+      parameters:
+        - { $ref: '#/components/parameters/limit' }
+        - { $ref: '#/components/parameters/offset' }
+      responses:
+        '200':
+          description: A page of the queue.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Page'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: '#/components/schemas/Sighting' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /v1/sightings/{id}/verification:
+    post:
+      tags: [Verification]
+      summary: Record an expert decision
+      description: |
+        Appends to the review history; nothing is overwritten. The model's
+        prediction is preserved for provenance, and the expert label becomes the
+        sighting's effective condition.
+
+        `confirmed` and `corrected` require `label`. `rejected` requires
+        `rejectReason`.
+      parameters:
+        - { $ref: '#/components/parameters/idPath' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision:
+                  type: string
+                  enum: [confirmed, corrected, rejected]
+                label:
+                  $ref: '#/components/schemas/Condition'
+                rejectReason:
+                  type: string
+                  enum: [blurry, not_coral, duplicate, spam, other]
+                comment: { type: string }
+      responses:
+        '201':
+          description: Decision recorded.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Verification' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /v1/map/points:
+    get:
+      tags: [Analysis]
+      summary: Sightings for a map viewport
+      description: |
+        Below zoom 11 the response is aggregated into grid cells in SQL, so the
+        payload stays small regardless of how much data exists: a national view
+        of 10,000 sightings returns roughly 30 clusters. At zoom 11 and above,
+        individual sightings are returned with their ids.
+      parameters:
+        - { $ref: '#/components/parameters/bbox' }
+        - name: zoom
+          in: query
+          description: Map zoom level, 1–20. Decides whether results are clustered.
+          schema: { type: integer, default: 8, minimum: 1, maximum: 20 }
+        - { $ref: '#/components/parameters/from' }
+        - { $ref: '#/components/parameters/to' }
+        - { $ref: '#/components/parameters/condition' }
+        - { $ref: '#/components/parameters/verified' }
+      responses:
+        '200':
+          description: Points or clusters for the viewport.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clustered: { type: boolean }
+                  zoom: { type: integer }
+                  points:
+                    type: array
+                    items: { $ref: '#/components/schemas/MapPoint' }
+
+  /v1/trends:
+    get:
+      tags: [Analysis]
+      summary: Condition over time
+      parameters:
+        - name: bucket
+          in: query
+          schema: { type: string, enum: [day, week, month], default: month }
+        - { $ref: '#/components/parameters/bbox' }
+        - { $ref: '#/components/parameters/from' }
+        - { $ref: '#/components/parameters/to' }
+        - { $ref: '#/components/parameters/site' }
+        - { $ref: '#/components/parameters/verified' }
+      responses:
+        '200':
+          description: One entry per time bucket.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  buckets:
+                    type: array
+                    items: { $ref: '#/components/schemas/TrendBucket' }
+
+  /v1/export/sightings.csv:
+    get:
+      tags: [Analysis]
+      summary: Export the filtered set as CSV
+      description: |
+        Includes provenance columns (`condition`, `severity`, `confidence`,
+        `verified`) so downstream analysis can separate expert labels from model
+        output. Streams in pages; rejected sightings are excluded.
+      parameters:
+        - { $ref: '#/components/parameters/bbox' }
+        - { $ref: '#/components/parameters/from' }
+        - { $ref: '#/components/parameters/to' }
+        - { $ref: '#/components/parameters/condition' }
+        - { $ref: '#/components/parameters/verified' }
+        - { $ref: '#/components/parameters/site' }
+      responses:
+        '200':
+          description: CSV download.
+          content:
+            text/csv:
+              schema: { type: string }
+
+  /v1/atolls:
+    get:
+      tags: [Reference]
+      summary: List atolls
+      description: Public reference data; usable before sign-in for map setup.
+      security: []
+      responses:
+        '200':
+          description: All atolls.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Atoll' }
+
+  /v1/sites:
+    get:
+      tags: [Reference]
+      summary: List named reef sites
+      responses:
+        '200':
+          description: All reef sites.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ReefSite' }
+
+  /v1/admin/users:
+    get:
+      tags: [Administration]
+      summary: List accounts
+      responses:
+        '200':
+          description: All active and suspended accounts.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/User' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /v1/admin/users/{id}/role:
+    put:
+      tags: [Administration]
+      summary: Change an account's role
+      parameters:
+        - { $ref: '#/components/parameters/idPath' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: { $ref: '#/components/schemas/Role' }
+      responses:
+        '204': { description: Role changed. }
+        '409': { description: An admin cannot change their own role. }
+
+  /v1/admin/users/{id}/status:
+    put:
+      tags: [Administration]
+      summary: Suspend or restore an account
+      description: Suspending also revokes the account's refresh tokens immediately.
+      parameters:
+        - { $ref: '#/components/parameters/idPath' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [active, banned] }
+      responses:
+        '204': { description: Status updated. }
+        '409': { description: An admin cannot suspend themselves. }
+
+  /v1/admin/atolls:
+    post:
+      tags: [Administration]
+      summary: Create or update an atoll
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, code, lat, lon]
+              properties:
+                name: { type: string }
+                code: { type: string }
+                lat: { type: number }
+                lon: { type: number }
+      responses:
+        '200':
+          description: The stored atoll.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Atoll' }
+
+  /v1/admin/sites:
+    post:
+      tags: [Administration]
+      summary: Create a named reef site
+      description: |
+        Existing sightings inside the new boundary are assigned to it
+        immediately, so historical data joins the site without a backfill.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, boundary]
+              properties:
+                name: { type: string }
+                atollId: { type: string, format: uuid }
+                boundary:
+                  type: object
+                  description: GeoJSON Polygon.
+                  example:
+                    type: Polygon
+                    coordinates: [[[73.4, 4.1], [73.6, 4.1], [73.6, 4.3], [73.4, 4.3], [73.4, 4.1]]]
+      responses:
+        '201':
+          description: Site created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReefSite' }
+
+  /v1/admin/models:
+    get:
+      tags: [Administration]
+      summary: List model versions and their metrics
+      responses:
+        '200':
+          description: Every registered model version.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ModelVersion' }
+
+  /v1/admin/models/{version}/activate:
+    post:
+      tags: [Administration]
+      summary: Mark a model version as the serving version
+      description: |
+        Records which version future predictions cite. Loading a different
+        artefact still requires restarting the ML service.
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Activated. }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/admin/queue:
+    get:
+      tags: [Administration]
+      summary: Classification queue depth
+      responses:
+        '200':
+          description: Job counts by state.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  queued: { type: integer }
+                  running: { type: integer }
+                  failed: { type: integer }
+                  done: { type: integer }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Short-lived access token (15 minutes by default) from
+        `/v1/auth/login`. On `401`, refresh once and retry the request.
+
+  parameters:
+    idPath:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    bbox:
+      name: bbox
+      in: query
+      description: Viewport as `minLon,minLat,maxLon,maxLat`.
+      schema: { type: string, example: '71.8,-1.2,74.2,7.4' }
+    from:
+      name: from
+      in: query
+      description: Earliest capture time, as `YYYY-MM-DD` or RFC 3339.
+      schema: { type: string }
+    to:
+      name: to
+      in: query
+      description: Latest capture time, as `YYYY-MM-DD` or RFC 3339.
+      schema: { type: string }
+    condition:
+      name: condition
+      in: query
+      description: Filter by effective condition. Unknown values are ignored.
+      schema: { $ref: '#/components/schemas/Condition' }
+    verified:
+      name: verified
+      in: query
+      description: When `true`, only sightings an expert confirmed or corrected.
+      schema: { type: boolean }
+    site:
+      name: site
+      in: query
+      schema: { type: string, format: uuid }
+    limit:
+      name: limit
+      in: query
+      schema: { type: integer, default: 50, maximum: 200 }
+    offset:
+      name: offset
+      in: query
+      schema: { type: integer, default: 0 }
+
+  responses:
+    Unauthorized:
+      description: Missing, invalid or expired access token.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: The account's role does not permit this operation.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: No such resource.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: The request conflicts with existing data.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ValidationFailed:
+      description: One or more fields are invalid; see `fields`.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error: validation_failed
+            message: one or more fields are invalid
+            fields:
+              password: must be at least 10 characters
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: { type: string, description: Stable machine-readable code. }
+        message: { type: string, description: Human-readable explanation. }
+        fields:
+          type: object
+          additionalProperties: { type: string }
+          description: Present on 422 only; maps a field name to its problem.
+
+    Role:
+      type: string
+      enum: [contributor, researcher, admin]
+
+    Condition:
+      type: string
+      enum: [healthy, bleached]
+
+    SightingStatus:
+      type: string
+      enum: [pending_photos, processing, awaiting_verification, verified, rejected]
+      description: |
+        `pending_photos` — metadata stored, no photo yet.
+        `processing` — a photo is queued or being classified.
+        `awaiting_verification` — every photo has a prediction; needs an expert.
+        `verified` / `rejected` — an expert has decided.
+
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        displayName: { type: string }
+        role: { $ref: '#/components/schemas/Role' }
+        status: { type: string, enum: [active, banned, anonymised] }
+        createdAt: { type: string, format: date-time }
+
+    ContributorStats:
+      type: object
+      description: Totals for the contributor's own submissions.
+      properties:
+        total: { type: integer }
+        verified: { type: integer }
+        pending: { type: integer }
+        rejected: { type: integer }
+
+    Session:
+      type: object
+      properties:
+        accessToken: { type: string }
+        refreshToken:
+          type: string
+          description: Single-use. Persist the new one on every refresh.
+        expiresAt: { type: string, format: date-time }
+        user: { $ref: '#/components/schemas/User' }
+
+    Point:
+      type: object
+      properties:
+        lat: { type: number }
+        lon: { type: number }
+
+    CreateSighting:
+      type: object
+      required: [id, lat, lon, capturedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Client-generated, UUIDv7 preferred. The idempotency key.
+        lat: { type: number, minimum: -90, maximum: 90 }
+        lon: { type: number, minimum: -180, maximum: 180 }
+        locationSource:
+          type: string
+          enum: [gps, manual_pin]
+          default: gps
+        locationAccuracyM:
+          type: number
+          description: Reported GPS accuracy in metres, when the platform provides it.
+        depthM: { type: number, minimum: 0, maximum: 200 }
+        capturedAt:
+          type: string
+          format: date-time
+          description: |
+            Device capture time. Up to 24 hours in the future is tolerated for
+            clock skew; anything beyond that is rejected.
+        note: { type: string }
+        selfAssessedCondition:
+          allOf: [{ $ref: '#/components/schemas/Condition' }]
+          description: |
+            The diver's own impression. Recorded for comparison but never mixed
+            into the authoritative condition.
+
+    Sighting:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        contributorId: { type: string, format: uuid }
+        contributorName: { type: string }
+        siteId: { type: string, format: uuid }
+        siteName: { type: string }
+        location: { $ref: '#/components/schemas/Point' }
+        locationSource: { type: string, enum: [gps, manual_pin] }
+        locationAccuracyM: { type: number }
+        depthM: { type: number }
+        capturedAt: { type: string, format: date-time }
+        note: { type: string }
+        selfAssessedCondition: { $ref: '#/components/schemas/Condition' }
+        status: { $ref: '#/components/schemas/SightingStatus' }
+        createdAt:
+          type: string
+          format: date-time
+          description: When the server received it, as distinct from capture time.
+        photoCount: { type: integer }
+        condition:
+          allOf: [{ $ref: '#/components/schemas/Condition' }]
+          description: |
+            Effective condition: the expert label when one exists, otherwise the
+            model's. Absent until analysis completes. Always pair this with
+            `verified` in the interface — never show a model label as fact.
+        severity:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Worst bleached extent across the sighting's photos.
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        verified:
+          type: boolean
+          description: True only when an expert confirmed or corrected it.
+
+    Patch:
+      type: object
+      description: One cell of the inference grid, for drawing the overlay.
+      properties:
+        row: { type: integer }
+        col: { type: integer }
+        label: { $ref: '#/components/schemas/Condition' }
+        confidence: { type: number }
+
+    Prediction:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        photoId: { type: string, format: uuid }
+        modelVersion: { type: string }
+        label: { $ref: '#/components/schemas/Condition' }
+        confidence: { type: number }
+        severity:
+          type: number
+          description: Fraction of grid cells classified bleached.
+        patchGrid: { type: integer, example: 5 }
+        patches:
+          type: array
+          items: { $ref: '#/components/schemas/Patch' }
+        inferenceMs: { type: integer }
+        createdAt: { type: string, format: date-time }
+
+    Photo:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        sightingId: { type: string, format: uuid }
+        url:
+          type: string
+          description: Relative path to the bytes; requires the bearer token.
+        width: { type: integer }
+        height: { type: integer }
+        bytes: { type: integer }
+        createdAt: { type: string, format: date-time }
+        prediction: { $ref: '#/components/schemas/Prediction' }
+
+    Verification:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        sightingId: { type: string, format: uuid }
+        verifierId: { type: string, format: uuid }
+        verifierName: { type: string }
+        decision: { type: string, enum: [confirmed, corrected, rejected] }
+        label: { $ref: '#/components/schemas/Condition' }
+        rejectReason: { type: string, enum: [blurry, not_coral, duplicate, spam, other] }
+        comment: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    MapPoint:
+      type: object
+      properties:
+        lat: { type: number }
+        lon: { type: number }
+        count:
+          type: integer
+          description: 1 for an individual sighting, more for a cluster.
+        avgSeverity: { type: number }
+        sightingId:
+          type: string
+          description: Present only for unclustered points.
+
+    TrendBucket:
+      type: object
+      properties:
+        bucket: { type: string, format: date-time }
+        total: { type: integer }
+        bleached: { type: integer }
+        healthy: { type: integer }
+        avgSeverity: { type: number }
+
+    Atoll:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        code: { type: string }
+        centroid: { $ref: '#/components/schemas/Point' }
+
+    ReefSite:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        atollId: { type: string, format: uuid }
+        name: { type: string }
+
+    ModelVersion:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: string }
+        task: { type: string }
+        isActive: { type: boolean }
+        metrics:
+          type: object
+          description: Held-out metrics recorded at training time.
+        datasetHash: { type: string }
+        notes: { type: string }
+        trainedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+
+    Page:
+      type: object
+      properties:
+        total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
