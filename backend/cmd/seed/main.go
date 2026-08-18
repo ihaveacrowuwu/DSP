@@ -18,12 +18,16 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	_ "image/gif"
 	"image/jpeg"
+	_ "image/png"
 	"log"
 	"log/slog"
 	"math"
 	mrand "math/rand"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -81,16 +85,20 @@ var demoUsers = []demoUser{
 
 func main() {
 	count := flag.Int("sightings", 500, "number of synthetic sightings to create")
+	imageDir := flag.String("images", "/app/sample-images",
+		"directory of real reef photographs to attach; optional 'healthy' and "+
+			"'bleached' subdirectories are matched to each sighting's label. "+
+			"Falls back to a synthetic swatch when empty.")
 	seedValue := flag.Int64("seed", 42, "PRNG seed for reproducible data sets")
 	reset := flag.Bool("reset", false, "delete existing sightings before seeding")
 	flag.Parse()
 
-	if err := run(*count, *seedValue, *reset); err != nil {
+	if err := run(*count, *seedValue, *reset, *imageDir); err != nil {
 		log.Fatalf("seed failed: %v", err)
 	}
 }
 
-func run(count int, seedValue int64, reset bool) error {
+func run(count int, seedValue int64, reset bool, imageDir string) error {
 	cfg, err := config.Load()
 	if err != nil {
 		return err
@@ -164,19 +172,21 @@ func run(count int, seedValue int64, reset bool) error {
 		}
 	}
 
-	// --- a single placeholder image backing every synthetic photo, so image
-	// endpoints return something valid without inventing thousands of files.
+	// --- photographs for the synthetic sightings
 	images, err := storage.NewFS(cfg.StorageDir)
 	if err != nil {
 		return err
 	}
-	placeholder, err := placeholderJPEG()
+	library, err := loadImageLibrary(ctx, images, imageDir)
 	if err != nil {
 		return err
 	}
-	placeholderKey := storage.Key("seed-placeholder", storage.HashBytes(placeholder), ".jpg")
-	if err := images.Put(ctx, placeholderKey, bytes.NewReader(placeholder)); err != nil {
-		return fmt.Errorf("write placeholder image: %w", err)
+	if library.usingRealPhotos() {
+		fmt.Printf("attaching real photographs from %s (%d healthy, %d bleached)\n",
+			imageDir, len(library.healthy), len(library.bleached))
+	} else {
+		fmt.Printf("no photographs found in %s - attaching a synthetic swatch instead\n", imageDir)
+		fmt.Println("  drop reef photographs there, optionally in healthy/ and bleached/ subdirectories")
 	}
 
 	var fakeModelID uuid.UUID
@@ -237,10 +247,13 @@ func run(count int, seedValue int64, reset bool) error {
 				  LIMIT 1)
 			)`, sightingID, contributor, lat, lon, depth, capturedAt, status)
 
+		// Match the photograph to the label so a sighting reported as bleached does
+		// not show obviously healthy coral, which would undermine the demo.
+		photo := library.pick(label, rng)
 		batch.Queue(`
 			INSERT INTO photo (id, sighting_id, storage_key, content_hash, width, height, bytes)
-			VALUES ($1, $2, $3, $4, 640, 640, $5)`,
-			photoID, sightingID, placeholderKey, storage.HashBytes(placeholder), len(placeholder))
+			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+			photoID, sightingID, photo.key, photo.hash, photo.width, photo.height, photo.bytes)
 
 		patches, err := json.Marshal(synthPatches(severity, 5, rng))
 		if err != nil {
@@ -349,26 +362,196 @@ func boxGeoJSON(lat, lon, half float64) string {
 		lon-half, lat-half)
 }
 
-// placeholderJPEG draws a recognisable stand-in image (a coral-ish gradient with
-// a grid) so seeded photo endpoints return valid, obviously-synthetic pixels.
-func placeholderJPEG() ([]byte, error) {
+// storedImage is one photograph already written to blob storage, ready to be
+// referenced by any number of seeded sightings.
+type storedImage struct {
+	key    string
+	hash   string
+	width  int
+	height int
+	bytes  int
+}
+
+// imageLibrary holds the photographs available to the seeder, split by the label
+// they illustrate. With no real photographs supplied, both lists are empty and
+// every sighting falls back to the synthetic swatch.
+type imageLibrary struct {
+	healthy  []storedImage
+	bleached []storedImage
+	fallback storedImage
+}
+
+func (l imageLibrary) usingRealPhotos() bool {
+	return len(l.healthy) > 0 || len(l.bleached) > 0
+}
+
+func (l imageLibrary) pick(label domain.Condition, rng *mrand.Rand) storedImage {
+	pool := l.healthy
+	if label == domain.ConditionBleached {
+		pool = l.bleached
+	}
+	// Either class may be missing; fall back to whatever photographs do exist.
+	if len(pool) == 0 {
+		pool = append(append([]storedImage{}, l.healthy...), l.bleached...)
+	}
+	if len(pool) == 0 {
+		return l.fallback
+	}
+	return pool[rng.Intn(len(pool))]
+}
+
+// loadImageLibrary stores each photograph found under dir once, keyed by content
+// hash, so ten thousand sightings can share a few dozen files.
+//
+// A missing or empty directory is not an error: the seeder has to work on a
+// machine that has never downloaded a dataset.
+func loadImageLibrary(ctx context.Context, store *storage.FS, dir string) (imageLibrary, error) {
+	library := imageLibrary{}
+
+	swatch, err := syntheticSwatch()
+	if err != nil {
+		return library, err
+	}
+	fallback, err := putImage(ctx, store, "seed-swatch", swatch, 640, 640)
+	if err != nil {
+		return library, err
+	}
+	library.fallback = fallback
+
+	if dir == "" {
+		return library, nil
+	}
+
+	// Class subdirectories are optional; a flat directory feeds both labels.
+	healthy, err := loadImagesFrom(ctx, store, filepath.Join(dir, "healthy"))
+	if err != nil {
+		return library, err
+	}
+	bleached, err := loadImagesFrom(ctx, store, filepath.Join(dir, "bleached"))
+	if err != nil {
+		return library, err
+	}
+	library.healthy, library.bleached = healthy, bleached
+
+	if !library.usingRealPhotos() {
+		flat, err := loadImagesFrom(ctx, store, dir)
+		if err != nil {
+			return library, err
+		}
+		library.healthy, library.bleached = flat, flat
+	}
+	return library, nil
+}
+
+// maxSampleImages caps how many files are read, so pointing the seeder at a whole
+// dataset directory does not turn seeding into an import job.
+const maxSampleImages = 60
+
+func loadImagesFrom(ctx context.Context, store *storage.FS, dir string) ([]storedImage, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("read %s: %w", dir, err)
+	}
+
+	var out []storedImage
+	for _, entry := range entries {
+		if entry.IsDir() || len(out) >= maxSampleImages {
+			continue
+		}
+		switch strings.ToLower(filepath.Ext(entry.Name())) {
+		case ".jpg", ".jpeg", ".png":
+		default:
+			continue
+		}
+
+		path := filepath.Join(dir, entry.Name())
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("read %s: %w", path, err)
+		}
+		// Decode and re-encode so seeded photographs match what the API would have
+		// produced from a real upload: JPEG, EXIF stripped.
+		decoded, _, err := image.Decode(bytes.NewReader(raw))
+		if err != nil {
+			fmt.Printf("  skipping %s: not a decodable image\n", entry.Name())
+			continue
+		}
+		var buf bytes.Buffer
+		if err := jpeg.Encode(&buf, decoded, &jpeg.Options{Quality: 85}); err != nil {
+			return nil, fmt.Errorf("encode %s: %w", path, err)
+		}
+
+		bounds := decoded.Bounds()
+		name := strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
+		stored, err := putImage(ctx, store, name, buf.Bytes(), bounds.Dx(), bounds.Dy())
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, stored)
+	}
+	return out, nil
+}
+
+func putImage(ctx context.Context, store *storage.FS, name string, payload []byte, width, height int) (storedImage, error) {
+	hash := storage.HashBytes(payload)
+	key := storage.Key(name, hash, ".jpg")
+	if err := store.Put(ctx, key, bytes.NewReader(payload)); err != nil {
+		return storedImage{}, fmt.Errorf("write %s: %w", key, err)
+	}
+	return storedImage{key: key, hash: hash, width: width, height: height, bytes: len(payload)}, nil
+}
+
+// syntheticSwatch stands in when no photographs are available.
+//
+// Deliberately hatched on the diagonal with no orthogonal lines. An earlier
+// version drew a grid, which was indistinguishable from the model's patch overlay
+// and made reviewers think the photograph itself had failed to load.
+func syntheticSwatch() ([]byte, error) {
 	const size = 640
 	img := image.NewRGBA(image.Rect(0, 0, size, size))
+
 	for y := 0; y < size; y++ {
 		for x := 0; x < size; x++ {
-			shade := uint8(90 + 90*math.Sin(float64(x)/70)*math.Cos(float64(y)/70))
-			c := color.RGBA{R: shade / 2, G: uint8(120 + int(shade)/4), B: uint8(150 + int(shade)/5), A: 255}
-			if x%128 == 0 || y%128 == 0 {
-				c = color.RGBA{R: 240, G: 240, B: 240, A: 255}
+			// Soft mottling, roughly the colour of shallow water over reef.
+			shade := 90 + 90*math.Sin(float64(x)/70)*math.Cos(float64(y)/70)
+			c := color.RGBA{
+				R: clamp8(shade * 0.45),
+				G: clamp8(118 + shade*0.28),
+				B: clamp8(146 + shade*0.20),
+				A: 255,
+			}
+			// Diagonal hatching reads as "no photograph here" and cannot be taken
+			// for the axis-aligned patch grid.
+			if (x+y)%64 < 4 {
+				c = color.RGBA{
+					R: clamp8(shade*0.45 + 26),
+					G: clamp8(118 + shade*0.28 + 26),
+					B: clamp8(146 + shade*0.20 + 26),
+					A: 255,
+				}
 			}
 			img.Set(x, y, c)
 		}
 	}
+
 	var buf bytes.Buffer
 	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 70}); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func clamp8(v float64) uint8 {
+	if v < 0 {
+		return 0
+	}
+	if v > 255 {
+		return 255
+	}
+	return uint8(v)
 }
 
 // mustUUIDv7 mirrors what the mobile clients generate for idempotent ingest.

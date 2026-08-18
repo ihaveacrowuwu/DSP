@@ -62,6 +62,9 @@ services:
       - "${API_PORT:-8090}:8080"
     volumes:
       - image-data:/data/images
+      # Reef photographs for the seed loader to attach to synthetic sightings.
+      # Optional: with the directory empty, seeding falls back to a plain swatch.
+      - ../ml/datasets/samples:/app/sample-images:ro
     depends_on:
       postgres:
         condition: service_healthy

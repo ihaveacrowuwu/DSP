@@ -63,6 +63,32 @@ curl http://localhost:8010/healthz
 configurable: grid granularity and the label threshold are experiments the project
 reports on, not constants.
 
+## Demo photographs for the dashboard
+
+`make seed` attaches a photograph to every synthetic sighting. By default that is a
+plain hatched swatch, because a fresh clone has no reef imagery — which means the
+dashboard shows the model's patch overlay sitting on a blank blue-green square.
+
+To see real coral under the overlay, drop reef photographs into
+`ml/datasets/samples/` (created automatically, never committed):
+
+```
+ml/datasets/samples/
+  healthy/     photographs of healthy coral
+  bleached/    photographs of bleached coral
+```
+
+Both subdirectories are optional; files placed directly in `samples/` are used for
+either label. Up to 60 images are read, each stored once and shared across
+sightings, so two dozen is plenty. The seeder matches the photograph to each
+sighting's label, so a sighting reported as 80% bleached does not show obviously
+healthy coral.
+
+Then reseed: `make reset-data N=2000`.
+
+Everything is re-encoded to JPEG on the way in, exactly as the API does for real
+uploads. Once the NOAA dataset is downloaded for training, it is the obvious source.
+
 ## Training
 
 Not yet written — that work happens on the MacBook, where PyTorch has Metal
