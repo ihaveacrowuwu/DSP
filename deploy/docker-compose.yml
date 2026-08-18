@@ -1,0 +1,86 @@
+# Muraka development / demo stack.
+#
+#   docker compose -f deploy/docker-compose.yml up -d --build
+#
+# Everything is self-hosted: no external service, no API key (project constraint).
+# Host ports are overridable; defaults avoid common collisions.
+#   api 8090, ml 8010, web 5180, postgres 5433
+
+name: muraka
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: muraka
+      POSTGRES_PASSWORD: muraka
+      POSTGRES_DB: muraka
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U muraka -d muraka"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  ml:
+    build:
+      context: ../ml/service
+    environment:
+      # Flip to 0 and mount a model to serve real predictions (see ml/README.md).
+      FAKE_MODE: "1"
+      MODEL_PATH: /app/models/active.onnx
+      PATCH_GRID: "5"
+      PATCH_OVERLAP: "0"
+      BLEACHED_LABEL_THRESHOLD: "0.35"
+      ONNX_THREADS: "2"
+      LOG_LEVEL: INFO
+    ports:
+      - "${ML_PORT:-8010}:8000"
+    volumes:
+      # Drop a trained artefact here; nothing to rebuild.
+      - ../ml/models:/app/models:ro
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ../backend
+    environment:
+      MURAKA_ENV: development
+      HTTP_ADDR: ":8080"
+      DATABASE_URL: postgres://muraka:muraka@postgres:5432/muraka?sslmode=disable
+      JWT_SECRET: dev-only-insecure-secret-change-me
+      ML_SERVICE_URL: http://ml:8000
+      STORAGE_DIR: /data/images
+      WORKER_ENABLED: "true"
+      CORS_ORIGINS: http://localhost:5180,http://127.0.0.1:5180,http://localhost:5173
+      LOG_LEVEL: info
+    ports:
+      - "${API_PORT:-8090}:8080"
+    volumes:
+      - image-data:/data/images
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ml:
+        condition: service_started
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../web
+      args:
+        # Vite inlines this at build time, so it is an argument, not a runtime env.
+        VITE_API_BASE_URL: http://localhost:${API_PORT:-8090}
+    ports:
+      - "${WEB_PORT:-5180}:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  image-data:
