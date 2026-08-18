@@ -1,14 +1,21 @@
 <script setup lang="ts">
 /**
  * Full sighting record with complete provenance: who submitted it, what the model
- * said, which model version said it, and every expert decision since. Nothing is
- * overwritten, so the history reads as an audit trail.
+ * said, which model version said it, and every expert decision since.
+ *
+ * Nothing is ever overwritten in this system, so the review history is an audit
+ * trail rather than a status field — it is presented as a timeline for exactly
+ * that reason. A record whose condition was corrected still shows what the model
+ * originally claimed, because that disagreement is the interesting part.
  */
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 import ConditionChip from '@/components/ConditionChip.vue'
 import PatchLattice from '@/components/PatchLattice.vue'
+import Icon from '@/components/ui/Icon.vue'
+import MetricBar from '@/components/ui/MetricBar.vue'
+import { iconBack } from '@/lib/icons'
 import {
   ApiError,
   api,
@@ -28,7 +35,8 @@ const showLattice = ref(true)
 const loading = ref(true)
 const error = ref<string | null>(null)
 
-const decisionWording: Record<Verification['decision'], string> = {
+/** The interface's own voice, not the database's enum values. */
+const DECISION_WORDING: Record<Verification['decision'], string> = {
   confirmed: 'confirmed the model',
   corrected: 'corrected the model',
   rejected: 'rejected the photograph',
@@ -61,198 +69,215 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="loading" class="state">Loading record…</div>
-  <div v-else-if="error" class="state">
-    <p class="error" role="alert">{{ error }}</p>
-    <RouterLink :to="{ name: 'sightings' }">Back to sightings</RouterLink>
-  </div>
+  <div class="page">
+    <div v-if="loading" class="state">Loading record…</div>
 
-  <template v-else-if="sighting">
-    <header class="head">
-      <div>
-        <span class="eyebrow">Sighting record</span>
-        <h1>{{ new Date(sighting.capturedAt).toLocaleString() }}</h1>
-        <p class="position readout">
-          {{ sighting.location.lat.toFixed(5) }}, {{ sighting.location.lon.toFixed(5) }}
-          <span v-if="sighting.siteName"> · {{ sighting.siteName }}</span>
-        </p>
-      </div>
-      <ConditionChip
-        :condition="sighting.condition"
-        :status="sighting.status"
-        :verified="sighting.verified"
-        :severity="sighting.severity"
-      />
-    </header>
+    <div v-else-if="error" class="state">
+      <p class="notice" role="alert">{{ error }}</p>
+      <RouterLink class="btn btn-secondary" :to="{ name: 'sightings' }">
+        Back to sightings
+      </RouterLink>
+    </div>
 
-    <div class="body">
-      <section class="photos">
-        <div class="section-head">
-          <span class="eyebrow">Photographs / {{ photos.length }}</span>
-          <button
-            v-if="photos.some((p) => p.prediction?.patches?.length)"
-            type="button"
-            class="btn btn-ghost"
-            @click="showLattice = !showLattice"
-          >
-            {{ showLattice ? 'Hide model grid' : 'Show model grid' }}
-          </button>
+    <template v-else-if="sighting">
+      <RouterLink class="back row-hover" :to="{ name: 'sightings' }">
+        <Icon :path="iconBack" :size="1" />
+        All sightings
+      </RouterLink>
+
+      <header class="page-head">
+        <div>
+          <span class="eyebrow">Sighting record</span>
+          <h1>{{ new Date(sighting.capturedAt).toLocaleString() }}</h1>
+          <p class="position readout">
+            {{ sighting.location.lat.toFixed(5) }}, {{ sighting.location.lon.toFixed(5) }}
+            <span v-if="sighting.siteName"> · {{ sighting.siteName }}</span>
+          </p>
         </div>
+        <ConditionChip
+          :condition="sighting.condition"
+          :status="sighting.status"
+          :verified="sighting.verified"
+          :severity="sighting.severity"
+        />
+      </header>
 
-        <p v-if="!photos.length" class="muted">No photographs were attached to this sighting.</p>
-
-        <figure v-for="photo in photos" :key="photo.id" class="plate">
-          <div class="frame">
-            <img
-              v-if="imageUrls[photo.id]"
-              :src="imageUrls[photo.id]"
-              :alt="`Reef photograph ${photo.id}`"
-            />
-            <div v-else class="frame-empty">Image unavailable</div>
-
-            <PatchLattice
-              v-if="showLattice && photo.prediction?.patches?.length"
-              :patches="photo.prediction.patches"
-              :grid="photo.prediction.patchGrid"
-              variant="overlay"
-            />
+      <div class="body">
+        <section class="photos">
+          <div class="section-head">
+            <span class="eyebrow">Photographs / {{ photos.length }}</span>
+            <button
+              v-if="photos.some((photo) => photo.prediction?.patches?.length)"
+              type="button"
+              class="btn btn-ghost"
+              @click="showLattice = !showLattice"
+            >
+              {{ showLattice ? 'Hide model grid' : 'Show model grid' }}
+            </button>
           </div>
 
-          <figcaption v-if="photo.prediction">
-            <span class="readout severity">
-              {{ Math.round(photo.prediction.severity * 100) }}%
-            </span>
-            <span class="caption-text">
-              bleached extent · {{ photo.prediction.label }} at
-              {{ Math.round(photo.prediction.confidence * 100) }}% confidence ·
-              model {{ photo.prediction.modelVersion }}
-            </span>
-          </figcaption>
-          <figcaption v-else class="muted">Awaiting model analysis.</figcaption>
-        </figure>
-      </section>
-
-      <aside class="side">
-        <section class="panel block">
-          <span class="eyebrow">Capture</span>
-          <dl class="meta">
-            <div>
-              <dt>Contributor</dt>
-              <dd>{{ sighting.contributorName }}</dd>
-            </div>
-            <div>
-              <dt>Captured</dt>
-              <dd class="readout">{{ new Date(sighting.capturedAt).toLocaleString() }}</dd>
-            </div>
-            <div>
-              <dt>Received</dt>
-              <dd class="readout">{{ new Date(sighting.createdAt).toLocaleString() }}</dd>
-            </div>
-            <div>
-              <dt>Fix</dt>
-              <dd>{{ sighting.locationSource === 'gps' ? 'GPS' : 'Dropped pin' }}</dd>
-            </div>
-            <div v-if="sighting.locationAccuracyM !== undefined">
-              <dt>Accuracy</dt>
-              <dd class="readout">±{{ Math.round(sighting.locationAccuracyM) }} m</dd>
-            </div>
-            <div v-if="sighting.depthM !== undefined">
-              <dt>Depth</dt>
-              <dd class="readout">{{ sighting.depthM.toFixed(1) }} m</dd>
-            </div>
-            <div v-if="sighting.selfAssessedCondition">
-              <dt>Diver's call</dt>
-              <dd>{{ sighting.selfAssessedCondition }}</dd>
-            </div>
-          </dl>
-          <p v-if="sighting.note" class="note">“{{ sighting.note }}”</p>
-        </section>
-
-        <section class="panel block">
-          <span class="eyebrow">Review history</span>
-          <p v-if="!verifications.length" class="muted">
-            No expert has reviewed this sighting yet. Until then its condition is model output only.
+          <p v-if="!photos.length" class="muted small">
+            No photographs were attached to this sighting.
           </p>
-          <ol v-else class="history">
-            <li v-for="entry in verifications" :key="entry.id">
-              <span class="readout when">{{ new Date(entry.createdAt).toLocaleString() }}</span>
-              <p class="what">
-                <strong>{{ entry.verifierName }}</strong>
-                {{ decisionWording[entry.decision] }}
-                <template v-if="entry.label"> as {{ entry.label }}</template>
-                <template v-if="entry.rejectReason"> ({{ entry.rejectReason.replace('_', ' ') }})</template>
-              </p>
-              <p v-if="entry.comment" class="comment">{{ entry.comment }}</p>
-            </li>
-          </ol>
+
+          <figure v-for="photo in photos" :key="photo.id" class="plate">
+            <div class="frame well" :style="{ '--natural-width': `${photo.width}px` }">
+              <img
+                v-if="imageUrls[photo.id]"
+                :src="imageUrls[photo.id]"
+                :alt="`Reef photograph from this sighting`"
+              />
+              <div v-else class="frame-empty">Image unavailable</div>
+
+              <PatchLattice
+                v-if="showLattice && photo.prediction?.patches?.length"
+                :patches="photo.prediction.patches"
+                :grid="photo.prediction.patchGrid"
+                variant="overlay"
+              />
+            </div>
+
+            <figcaption v-if="photo.prediction" class="caption card card-pad">
+              <span class="readout severity">
+                {{ Math.round(photo.prediction.severity * 100) }}%
+              </span>
+              <span class="caption-text">
+                bleached extent · reads
+                <strong>{{ photo.prediction.label }}</strong>
+                · model
+                <span class="readout">{{ photo.prediction.modelVersion }}</span>
+                · <span class="readout">{{ photo.width }}×{{ photo.height }}</span>
+              </span>
+              <div class="caption-metrics">
+                <MetricBar label="Extent" :value="photo.prediction.severity" tone="bone" />
+                <MetricBar label="Confidence" :value="photo.prediction.confidence" tone="reef" />
+              </div>
+            </figcaption>
+            <figcaption v-else class="muted small">Awaiting model analysis.</figcaption>
+          </figure>
         </section>
-      </aside>
-    </div>
-  </template>
+
+        <aside class="side">
+          <section class="section">
+            <span class="eyebrow">Capture</span>
+            <dl class="meta">
+              <div>
+                <dt>Contributor</dt>
+                <dd>{{ sighting.contributorName }}</dd>
+              </div>
+              <div>
+                <dt>Captured</dt>
+                <dd class="readout">{{ new Date(sighting.capturedAt).toLocaleString() }}</dd>
+              </div>
+              <div>
+                <dt>Received</dt>
+                <dd class="readout">{{ new Date(sighting.createdAt).toLocaleString() }}</dd>
+              </div>
+              <div>
+                <dt>Fix</dt>
+                <dd>{{ sighting.locationSource === 'gps' ? 'GPS' : 'Dropped pin' }}</dd>
+              </div>
+              <div v-if="sighting.locationAccuracyM !== undefined">
+                <dt>Accuracy</dt>
+                <dd class="readout">±{{ Math.round(sighting.locationAccuracyM) }} m</dd>
+              </div>
+              <div v-if="sighting.depthM !== undefined">
+                <dt>Depth</dt>
+                <dd class="readout">{{ sighting.depthM.toFixed(1) }} m</dd>
+              </div>
+              <div v-if="sighting.selfAssessedCondition">
+                <dt>Diver's call</dt>
+                <dd>{{ sighting.selfAssessedCondition }}</dd>
+              </div>
+            </dl>
+            <p v-if="sighting.note" class="quote">“{{ sighting.note }}”</p>
+          </section>
+
+          <section class="section">
+            <span class="eyebrow">Review history</span>
+            <p v-if="!verifications.length" class="muted small">
+              No expert has reviewed this sighting yet. Until then its condition is model
+              output only.
+            </p>
+            <ol v-else class="history">
+              <li v-for="entry in verifications" :key="entry.id">
+                <span class="when readout">{{ new Date(entry.createdAt).toLocaleString() }}</span>
+                <p class="what">
+                  <strong>{{ entry.verifierName }}</strong>
+                  {{ DECISION_WORDING[entry.decision] }}
+                  <template v-if="entry.label"> as {{ entry.label }}</template>
+                  <template v-if="entry.rejectReason">
+                    ({{ entry.rejectReason.replace('_', ' ') }})
+                  </template>
+                </p>
+                <p v-if="entry.comment" class="quote">{{ entry.comment }}</p>
+              </li>
+            </ol>
+          </section>
+        </aside>
+      </div>
+    </template>
+  </div>
 </template>
 
 <style scoped>
-.state {
-  padding: 4rem clamp(1.25rem, 3vw, 2rem);
-  color: var(--ink-muted);
-  display: grid;
-  gap: 1rem;
-  justify-items: start;
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  margin-bottom: 0.75rem;
+  color: var(--ink-3);
+  font-size: var(--step--1);
+  font-weight: 600;
+  text-decoration: none;
+  /* The scale grows from the left so the link does not drift away from the page
+     edge it is aligned to. */
+  transform-origin: left center;
 }
 
-.error {
-  color: var(--rust);
-}
-
-.head {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
+.page-head {
   align-items: flex-start;
-  justify-content: space-between;
-  padding: 1.5rem clamp(1.25rem, 3vw, 2rem) 1.25rem;
-  border-bottom: 1px solid var(--hairline);
-}
-
-.head h1 {
-  margin-top: 0.375rem;
-  font-size: var(--step-2);
 }
 
 .position {
   margin-top: 0.25rem;
-  color: var(--ink-muted);
+  color: var(--ink-3);
   font-size: var(--step--1);
 }
 
 .body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(19rem, 24rem);
-  gap: clamp(1rem, 2.5vw, 2rem);
-  padding: clamp(1.25rem, 3vw, 2rem);
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 23rem);
+  gap: clamp(1rem, 2vw, 1.75rem);
   align-items: start;
 }
 
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
+.photos {
+  display: grid;
+  gap: 0.75rem;
 }
 
+/* Capped against the viewport height rather than the column width: a 4:3 frame
+   allowed to fill a wide column pushes its own caption off screen, and the
+   caption carries the model's numbers. */
 .plate {
-  margin: 0 0 1.5rem;
   display: grid;
-  gap: 0.5rem;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+  width: min(100%, 80vh);
 }
 
 .frame {
   position: relative;
-  aspect-ratio: 4 / 3;
-  background: var(--shelf);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
+  /* Square, because the model tiles the centre square of the image. Any other
+     ratio here would crop to a different region than the one the patch grid
+     describes, and the overlay would annotate pixels that are not on screen. */
+  aspect-ratio: 1;
+  /* Never blow a photograph up much past its own resolution: upscaling a 224 px
+     dataset crop to fill a wide column adds no detail and looks broken. */
+  max-width: min(100%, max(var(--natural-width, 100%), 22rem));
+  margin-inline: auto;
+  border-radius: var(--r-lg);
   overflow: hidden;
 }
 
@@ -260,35 +285,45 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
 
 .frame-empty {
   display: grid;
   place-items: center;
   height: 100%;
-  color: var(--ink-faint);
+  color: var(--ink-4);
   font-size: var(--step--1);
 }
 
-figcaption {
-  display: flex;
+.caption {
+  display: grid;
+  gap: 0.625rem;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: baseline;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  font-size: var(--step--1);
-  color: var(--ink-muted);
 }
 
 .severity {
   font-size: var(--step-2);
   font-weight: 600;
-  color: var(--bone);
   line-height: 1;
+  color: var(--bone);
 }
 
 .caption-text {
-  max-width: 52ch;
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+
+.caption-text strong {
+  color: var(--ink);
+}
+
+.caption-metrics {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.375rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--line);
 }
 
 .side {
@@ -296,50 +331,8 @@ figcaption {
   gap: 0.875rem;
 }
 
-.block {
-  padding: 1rem;
-  display: grid;
-  gap: 0.75rem;
-}
-
-.meta {
-  margin: 0;
-  display: grid;
-  gap: 0.375rem;
-}
-
-.meta > div {
-  display: grid;
-  grid-template-columns: 7rem 1fr;
-  gap: 0.75rem;
-}
-
-.meta dt {
-  font-family: var(--font-mono);
-  font-size: var(--step--1);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.meta dd {
-  margin: 0;
-  font-size: var(--step--1);
-}
-
-.note {
-  padding-left: 0.75rem;
-  border-left: 2px solid var(--hairline);
-  color: var(--ink-muted);
-  font-style: italic;
-  font-size: var(--step--1);
-}
-
-.muted {
-  color: var(--ink-faint);
-  font-size: var(--step--1);
-}
-
+/* The timeline's left edge is drawn in the verification colour: this column is
+   the record of human decisions, and it should not look like model output. */
 .history {
   list-style: none;
   margin: 0;
@@ -350,23 +343,21 @@ figcaption {
 
 .history li {
   padding-left: 0.75rem;
-  border-left: 2px solid var(--verified);
+  border-left: 2px solid color-mix(in srgb, var(--verified) 60%, transparent);
 }
 
 .when {
-  font-size: 0.6875rem;
-  color: var(--ink-faint);
+  font-size: var(--step--2);
+  color: var(--ink-4);
 }
 
 .what {
   font-size: var(--step--1);
+  color: var(--ink-2);
 }
 
-.comment {
-  margin-top: 0.25rem;
-  color: var(--ink-muted);
-  font-size: var(--step--1);
-  font-style: italic;
+.what strong {
+  color: var(--ink);
 }
 
 @media (max-width: 66rem) {

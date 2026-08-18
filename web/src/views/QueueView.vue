@@ -2,13 +2,23 @@
 /**
  * Review queue — the screen researchers spend their time in.
  *
- * Designed for bursts of keyboard work: lowest-confidence sighting first, one
- * key per decision, next item prefetched so the queue never stalls.
+ * Designed for bursts of keyboard work: lowest-confidence sighting first, one key
+ * per decision, the next item prefetched so the queue never stalls. Every action
+ * shows its key on the button, because a reviewer who has done fifty of these
+ * should never need to reach for the mouse, and one who is on their first should
+ * not need a manual.
+ *
+ * The model's output is presented as a claim with its own confidence attached,
+ * never as a verdict: the patch lattice shows where it thinks the bleaching is,
+ * the bars show how sure it is, and the buttons treat confirming and correcting
+ * as equally normal outcomes.
  */
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import ConditionChip from '@/components/ConditionChip.vue'
 import PatchLattice from '@/components/PatchLattice.vue'
+import MetricBar from '@/components/ui/MetricBar.vue'
+import SelectMenu from '@/components/ui/SelectMenu.vue'
 import {
   ApiError,
   api,
@@ -29,19 +39,29 @@ const photos = ref<Photo[]>([])
 const imageUrl = ref<string | null>(null)
 const showLattice = ref(true)
 const rejecting = ref(false)
-const rejectReason = ref<RejectReason>('blurry')
+// A plain string, because the select speaks strings; narrowed back to the
+// API's union at the one place it is submitted.
+const rejectReason = ref('blurry')
 
 const current = computed(() => queue.value[0] ?? null)
 const activePhoto = computed(() => photos.value[0] ?? null)
 const prediction = computed(() => activePhoto.value?.prediction ?? null)
 
-const rejectReasons: { value: RejectReason; label: string }[] = [
-  { value: 'blurry', label: 'Too blurred to assess' },
-  { value: 'not_coral', label: 'Not a coral photograph' },
-  { value: 'duplicate', label: 'Duplicate submission' },
-  { value: 'spam', label: 'Spam' },
-  { value: 'other', label: 'Other' },
+/** Reasons carry a plain-language hint, because "other" needs a boundary. */
+const REJECT_REASONS = [
+  { value: 'blurry', label: 'Too blurred to assess', hint: 'No patch can be graded' },
+  { value: 'not_coral', label: 'Not a coral photograph', hint: 'Wrong subject entirely' },
+  { value: 'duplicate', label: 'Duplicate submission', hint: 'Same reef, same moment' },
+  { value: 'spam', label: 'Spam', hint: 'Deliberate noise' },
+  { value: 'other', label: 'Other', hint: 'Unusable for a reason not listed' },
 ]
+
+/** Share of patches the model called bleached — the lattice as one number. */
+const bleachedShare = computed(() => {
+  const patches = prediction.value?.patches ?? []
+  if (!patches.length) return 0
+  return patches.filter((patch) => patch.label === 'bleached').length / patches.length
+})
 
 async function loadQueue() {
   loading.value = true
@@ -99,8 +119,8 @@ async function decide(
     // Top up before the queue empties so review never pauses on a fetch.
     if (queue.value.length <= 3) {
       const page = await api.verificationQueue(25, 0)
-      const seen = new Set(queue.value.map((s) => s.id))
-      queue.value = [...queue.value, ...page.items.filter((s) => !seen.has(s.id))]
+      const seen = new Set(queue.value.map((item) => item.id))
+      queue.value = [...queue.value, ...page.items.filter((item) => !seen.has(item.id))]
       total.value = page.total
     }
   } catch (err) {
@@ -120,7 +140,16 @@ function correctTo(label: Condition) {
 }
 
 function onKey(event: KeyboardEvent) {
-  if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return
+  // Shortcuts must never fire while someone is typing or working a menu.
+  const target = event.target as HTMLElement | null
+  if (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target?.getAttribute('role') === 'listbox' ||
+    target?.getAttribute('aria-haspopup') === 'listbox'
+  ) {
+    return
+  }
 
   switch (event.key.toLowerCase()) {
     case 'c':
@@ -163,258 +192,274 @@ function formatCoord(value: number, positive: string, negative: string): string 
 </script>
 
 <template>
-  <header class="head">
-    <div>
-      <span class="eyebrow">Review queue / {{ total }} awaiting</span>
-      <h1>Confirm or correct the model</h1>
-    </div>
-    <p class="head-note">
-      Lowest-confidence sightings come first, so your time goes where the model is weakest.
-    </p>
-  </header>
-
-  <p v-if="error" class="error" role="alert">{{ error }}</p>
-
-  <div v-if="loading" class="state">Loading the queue…</div>
-
-  <div v-else-if="!current" class="state empty">
-    <h2>The queue is clear</h2>
-    <p>Every synced sighting has been reviewed. New submissions will appear here automatically.</p>
-  </div>
-
-  <div v-else class="review">
-    <figure class="plate">
-      <div class="frame">
-        <img v-if="imageUrl" :src="imageUrl" :alt="`Reef photograph submitted on ${current.capturedAt}`" />
-        <div v-else class="frame-empty">
-          {{ current.photoCount ? 'Loading photograph…' : 'This sighting has no photograph.' }}
-        </div>
-
-        <PatchLattice
-          v-if="showLattice && prediction?.patches?.length"
-          :patches="prediction.patches"
-          :grid="prediction.patchGrid"
-          variant="overlay"
-          animate
-        />
+  <div class="page">
+    <header class="page-head">
+      <div>
+        <span class="eyebrow">Review queue / {{ total }} awaiting</span>
+        <h1>Confirm or correct the model</h1>
       </div>
+      <p class="page-head-note">
+        Lowest-confidence sightings come first, so your time goes where the model is
+        weakest.
+      </p>
+    </header>
 
-      <figcaption>
-        <button type="button" class="btn btn-ghost" @click="showLattice = !showLattice">
-          {{ showLattice ? 'Hide model grid' : 'Show model grid' }}
-          <kbd>L</kbd>
-        </button>
-        <span v-if="prediction" class="readout scale">
-          <span class="swatch living" /> healthy
-          <span class="swatch bone" /> bleached
-          <span class="scale-note">cell opacity = confidence</span>
-        </span>
-      </figcaption>
-    </figure>
+    <p v-if="error" class="notice" role="alert">{{ error }}</p>
 
-    <aside class="inspector">
-      <section class="assessment panel">
-        <span class="eyebrow">Model assessment</span>
-        <p v-if="prediction" class="verdict">
-          <span class="readout severity">{{ Math.round(prediction.severity * 100) }}%</span>
-          <span class="verdict-text">
-            bleached extent — {{ prediction.label }} at
-            {{ Math.round(prediction.confidence * 100) }}% confidence
-          </span>
-        </p>
-        <p v-else class="verdict-text muted">No model result yet for this sighting.</p>
+    <div v-if="loading" class="state">Loading the queue…</div>
 
-        <dl v-if="prediction" class="meta">
-          <div>
-            <dt>Grid</dt>
-            <dd class="readout">{{ prediction.patchGrid }}×{{ prediction.patchGrid }}</dd>
-          </div>
-          <div>
-            <dt>Model</dt>
-            <dd class="readout">{{ prediction.modelVersion }}</dd>
-          </div>
-          <div v-if="prediction.inferenceMs">
-            <dt>Inference</dt>
-            <dd class="readout">{{ prediction.inferenceMs }} ms</dd>
-          </div>
-        </dl>
-      </section>
+    <div v-else-if="!current" class="state">
+      <h2>The queue is clear</h2>
+      <p>
+        Every synced sighting has been reviewed. New submissions appear here as soon as
+        the model finishes with them.
+      </p>
+    </div>
 
-      <section class="panel details">
-        <span class="eyebrow">Sighting</span>
-        <dl class="meta">
-          <div>
-            <dt>Captured</dt>
-            <dd class="readout">{{ new Date(current.capturedAt).toLocaleString() }}</dd>
-          </div>
-          <div>
-            <dt>Position</dt>
-            <dd class="readout">
-              {{ formatCoord(current.location.lat, 'N', 'S') }},
-              {{ formatCoord(current.location.lon, 'E', 'W') }}
-            </dd>
-          </div>
-          <div v-if="current.depthM !== undefined">
-            <dt>Depth</dt>
-            <dd class="readout">{{ current.depthM.toFixed(1) }} m</dd>
-          </div>
-          <div v-if="current.siteName">
-            <dt>Site</dt>
-            <dd>{{ current.siteName }}</dd>
-          </div>
-          <div>
-            <dt>Contributor</dt>
-            <dd>{{ current.contributorName }}</dd>
-          </div>
-          <div>
-            <dt>Fix</dt>
-            <dd>{{ current.locationSource === 'gps' ? 'GPS' : 'Dropped pin' }}</dd>
-          </div>
-        </dl>
-        <p v-if="current.note" class="note">“{{ current.note }}”</p>
-        <RouterLink class="detail-link" :to="{ name: 'sighting', params: { id: current.id } }">
-          Open full record
-        </RouterLink>
-      </section>
-
-      <section class="decide">
-        <span class="eyebrow">Your decision</span>
-
-        <div v-if="!rejecting" class="actions">
-          <button
-            type="button"
-            class="btn btn-primary"
-            :disabled="submitting || !prediction"
-            @click="confirmModel"
-          >
-            Confirm {{ prediction?.label ?? 'assessment' }} <kbd>C</kbd>
-          </button>
-
-          <div class="correct">
-            <span class="correct-label">Correct to</span>
-            <button type="button" class="btn" :disabled="submitting" @click="correctTo('healthy')">
-              Healthy <kbd>H</kbd>
-            </button>
-            <button type="button" class="btn" :disabled="submitting" @click="correctTo('bleached')">
-              Bleached <kbd>B</kbd>
-            </button>
+    <div v-else class="review">
+      <figure class="plate">
+        <div class="frame well" :style="{ '--natural-width': `${activePhoto?.width ?? 0}px` }">
+          <img
+            v-if="imageUrl"
+            :src="imageUrl"
+            :alt="`Reef photograph captured on ${new Date(current.capturedAt).toLocaleDateString()}`"
+          />
+          <div v-else class="frame-empty">
+            {{ current.photoCount ? 'Loading photograph…' : 'This sighting has no photograph.' }}
           </div>
 
-          <button type="button" class="btn btn-danger" :disabled="submitting" @click="rejecting = true">
-            Reject photograph <kbd>R</kbd>
-          </button>
+          <PatchLattice
+            v-if="showLattice && prediction?.patches?.length"
+            :patches="prediction.patches"
+            :grid="prediction.patchGrid"
+            variant="overlay"
+            animate
+          />
         </div>
 
-        <div v-else class="reject-form">
-          <div class="field">
-            <label for="reason">Why is it unusable?</label>
-            <select id="reason" v-model="rejectReason">
-              <option v-for="option in rejectReasons" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
-          <div class="reject-actions">
+        <figcaption>
+          <button type="button" class="btn btn-ghost" @click="showLattice = !showLattice">
+            {{ showLattice ? 'Hide model grid' : 'Show model grid' }}
+            <span class="kbd">L</span>
+          </button>
+
+          <span v-if="prediction" class="scale">
+            <span class="swatch swatch-reef" aria-hidden="true" />healthy
+            <span class="swatch swatch-bone" aria-hidden="true" />bleached
+            <span class="faint">cell opacity is confidence</span>
+          </span>
+        </figcaption>
+      </figure>
+
+      <aside class="inspector">
+        <section class="section">
+          <span class="eyebrow">Model assessment</span>
+
+          <template v-if="prediction">
+            <p class="verdict">
+              <span class="readout severity">{{ Math.round(prediction.severity * 100) }}%</span>
+              <span class="verdict-text">
+                bleached extent — reads
+                <strong>{{ prediction.label }}</strong>
+              </span>
+            </p>
+
+            <!-- Extent, confidence and the lattice's own tally, in that order:
+                 what it found, how sure it is, and how much of the grid agrees. -->
+            <div class="metrics">
+              <MetricBar label="Extent" :value="prediction.severity" tone="bone" />
+              <MetricBar label="Confidence" :value="prediction.confidence" tone="reef" />
+              <MetricBar
+                label="Patches"
+                :value="bleachedShare"
+                tone="bone"
+                :display="`${prediction.patches.filter((p) => p.label === 'bleached').length}/${prediction.patches.length}`"
+              />
+            </div>
+
+            <dl class="meta">
+              <div>
+                <dt>Grid</dt>
+                <dd class="readout">{{ prediction.patchGrid }}×{{ prediction.patchGrid }}</dd>
+              </div>
+              <div>
+                <dt>Model</dt>
+                <dd class="readout">{{ prediction.modelVersion }}</dd>
+              </div>
+              <div v-if="prediction.inferenceMs">
+                <dt>Inference</dt>
+                <dd class="readout">{{ prediction.inferenceMs }} ms</dd>
+              </div>
+            </dl>
+          </template>
+
+          <p v-else class="muted small">No model result yet for this sighting.</p>
+        </section>
+
+        <section class="section">
+          <span class="eyebrow">Sighting</span>
+          <dl class="meta">
+            <div>
+              <dt>Captured</dt>
+              <dd class="readout">{{ new Date(current.capturedAt).toLocaleString() }}</dd>
+            </div>
+            <div>
+              <dt>Position</dt>
+              <dd class="readout">
+                {{ formatCoord(current.location.lat, 'N', 'S') }},
+                {{ formatCoord(current.location.lon, 'E', 'W') }}
+              </dd>
+            </div>
+            <div v-if="current.depthM !== undefined">
+              <dt>Depth</dt>
+              <dd class="readout">{{ current.depthM.toFixed(1) }} m</dd>
+            </div>
+            <div v-if="current.siteName">
+              <dt>Site</dt>
+              <dd>{{ current.siteName }}</dd>
+            </div>
+            <div>
+              <dt>Contributor</dt>
+              <dd>{{ current.contributorName }}</dd>
+            </div>
+            <div>
+              <dt>Fix</dt>
+              <dd>{{ current.locationSource === 'gps' ? 'GPS' : 'Dropped pin' }}</dd>
+            </div>
+          </dl>
+          <p v-if="current.note" class="quote">“{{ current.note }}”</p>
+          <RouterLink
+            class="small"
+            :to="{ name: 'sighting', params: { id: current.id } }"
+          >
+            Open the full record
+          </RouterLink>
+        </section>
+
+        <!-- The decision block is the only accented surface on the screen, so
+             where to act is never in question. -->
+        <section class="decide">
+          <span class="eyebrow">Your decision</span>
+
+          <div v-if="!rejecting" class="actions">
             <button
               type="button"
-              class="btn btn-danger"
-              :disabled="submitting"
-              @click="decide('rejected', undefined, rejectReason)"
+              class="btn btn-primary btn-block"
+              :disabled="submitting || !prediction"
+              @click="confirmModel"
             >
-              Reject
+              Confirm {{ prediction?.label ?? 'assessment' }}
+              <span class="kbd">C</span>
             </button>
-            <button type="button" class="btn btn-ghost" @click="rejecting = false">Cancel</button>
-          </div>
-        </div>
-      </section>
 
-      <section v-if="queue.length > 1" class="upnext">
-        <span class="eyebrow">Next in queue</span>
-        <ul>
-          <li v-for="sighting in queue.slice(1, 5)" :key="sighting.id">
-            <PatchLattice
-              v-if="sighting.severity !== undefined"
-              :patches="[]"
-              :grid="5"
-              class="upnext-glyph"
-            />
-            <span class="readout upnext-date">
-              {{ new Date(sighting.capturedAt).toLocaleDateString() }}
-            </span>
-            <ConditionChip
-              :condition="sighting.condition"
-              :status="sighting.status"
-              :verified="sighting.verified"
-              :severity="sighting.severity"
-            />
-          </li>
-        </ul>
-      </section>
-    </aside>
+            <div class="correct">
+              <span class="correct-label">Correct to</span>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                :disabled="submitting"
+                @click="correctTo('healthy')"
+              >
+                Healthy <span class="kbd">H</span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                :disabled="submitting"
+                @click="correctTo('bleached')"
+              >
+                Bleached <span class="kbd">B</span>
+              </button>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-danger btn-block"
+              :disabled="submitting"
+              @click="rejecting = true"
+            >
+              Reject photograph <span class="kbd">R</span>
+            </button>
+          </div>
+
+          <div v-else class="reject">
+            <div class="field">
+              <span class="field-label">Why is it unusable?</span>
+              <SelectMenu
+                v-model="rejectReason"
+                :options="REJECT_REASONS"
+                ariaLabel="Rejection reason"
+                block
+              />
+            </div>
+            <div class="reject-actions">
+              <button
+                type="button"
+                class="btn btn-danger"
+                :disabled="submitting"
+                @click="decide('rejected', undefined, rejectReason as RejectReason)"
+              >
+                Reject
+              </button>
+              <button type="button" class="btn btn-ghost" @click="rejecting = false">
+                Cancel <span class="kbd">Esc</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="queue.length > 1" class="section">
+          <span class="eyebrow">Next in queue</span>
+          <ul class="upnext">
+            <li v-for="sighting in queue.slice(1, 5)" :key="sighting.id" class="row-hover-wide">
+              <span class="readout upnext-date">
+                {{ new Date(sighting.capturedAt).toLocaleDateString() }}
+              </span>
+              <span v-if="sighting.confidence !== undefined" class="readout upnext-conf">
+                {{ Math.round(sighting.confidence * 100) }}% sure
+              </span>
+              <ConditionChip
+                :condition="sighting.condition"
+                :status="sighting.status"
+                :verified="sighting.verified"
+                :severity="sighting.severity"
+              />
+            </li>
+          </ul>
+        </section>
+      </aside>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.head {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem 2rem;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding: 1.5rem clamp(1.25rem, 3vw, 2rem) 1.25rem;
-  border-bottom: 1px solid var(--hairline);
-}
-
-.head h1 {
-  margin-top: 0.375rem;
-  font-size: var(--step-2);
-}
-
-.head-note {
-  max-width: 34ch;
-  color: var(--ink-muted);
-  font-size: var(--step--1);
-}
-
-.error {
-  margin: 1rem clamp(1.25rem, 3vw, 2rem) 0;
-  padding: 0.5rem 0.75rem;
-  border-left: 2px solid var(--rust);
-  background: color-mix(in srgb, var(--rust) 12%, transparent);
-  font-size: var(--step--1);
-}
-
-.state {
-  padding: 4rem clamp(1.25rem, 3vw, 2rem);
-  color: var(--ink-muted);
-}
-
-.state.empty h2 {
-  color: var(--ink);
-  margin-bottom: 0.5rem;
-}
-
 .review {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(21rem, 26rem);
-  gap: clamp(1rem, 2.5vw, 2rem);
-  padding: clamp(1.25rem, 3vw, 2rem);
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 25rem);
+  gap: clamp(1rem, 2vw, 1.75rem);
   align-items: start;
 }
 
+/* The plate is only as wide as the frame can be tall, so the caption row lines
+   up with the photograph instead of stretching across the empty column beside
+   it. Both numbers are the frame's max-height. */
 .plate {
-  margin: 0;
   display: grid;
   gap: 0.75rem;
+  width: min(100%, 66vh);
 }
 
 .frame {
   position: relative;
+  /* Square matches how the model tiles the image, so the lattice lines up with
+     the pixels on screen. */
   aspect-ratio: 1;
-  max-height: 68vh;
-  background: var(--shelf);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
+  max-height: 66vh;
+  /* Cap the upscale: a 224 px crop stretched across the review column is blurry
+     without being any more informative. */
+  max-width: min(100%, max(var(--natural-width, 100%), 26rem));
+  margin-inline: auto;
+  border-radius: var(--r-lg);
   overflow: hidden;
 }
 
@@ -422,23 +467,22 @@ function formatCoord(value: number, positive: string, negative: string): string 
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
 
 .frame-empty {
   display: grid;
   place-items: center;
   height: 100%;
-  color: var(--ink-faint);
+  color: var(--ink-4);
   font-size: var(--step--1);
 }
 
 figcaption {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem 1rem;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem 1rem;
 }
 
 .scale {
@@ -446,178 +490,136 @@ figcaption {
   align-items: center;
   gap: 0.375rem;
   font-size: var(--step--1);
-  color: var(--ink-muted);
+  color: var(--ink-3);
 }
 
 .swatch {
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 2px;
-  display: inline-block;
+  width: 0.6875rem;
+  height: 0.6875rem;
+  border-radius: 3px;
 }
 
-.swatch.living {
-  background: var(--living);
+.swatch-reef {
+  background: var(--reef);
 }
 
-.swatch.bone {
+.swatch-bone {
   background: var(--bone);
   margin-left: 0.5rem;
 }
 
-.scale-note {
+.scale .faint {
   margin-left: 0.5rem;
-  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
 }
 
 .inspector {
   display: grid;
   gap: 0.875rem;
   position: sticky;
-  top: 1rem;
-}
-
-.assessment,
-.details {
-  padding: 1rem;
-  display: grid;
-  gap: 0.75rem;
+  top: clamp(1.25rem, 2.4vw, 2rem);
 }
 
 .verdict {
   display: flex;
   align-items: baseline;
-  gap: 0.625rem;
   flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .severity {
   font-size: var(--step-4);
   font-weight: 600;
   line-height: 1;
+  letter-spacing: -0.03em;
   color: var(--bone);
 }
 
 .verdict-text {
-  color: var(--ink-muted);
+  max-width: 20ch;
+  color: var(--ink-3);
   font-size: var(--step--1);
-  max-width: 22ch;
 }
 
-.verdict-text.muted {
-  color: var(--ink-faint);
+.verdict-text strong {
+  color: var(--ink);
 }
 
-.meta {
-  margin: 0;
+.metrics {
   display: grid;
   gap: 0.375rem;
-}
-
-.meta > div {
-  display: grid;
-  grid-template-columns: 6.5rem 1fr;
-  gap: 0.75rem;
-}
-
-.meta dt {
-  font-family: var(--font-mono);
-  font-size: var(--step--1);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.meta dd {
-  margin: 0;
-  font-size: var(--step--1);
-}
-
-.note {
-  padding-left: 0.75rem;
-  border-left: 2px solid var(--hairline);
-  color: var(--ink-muted);
-  font-style: italic;
-  font-size: var(--step--1);
-}
-
-.detail-link {
-  font-size: var(--step--1);
+  padding: 0.625rem;
+  border-radius: var(--r-md);
+  background: var(--surface--1);
 }
 
 .decide {
   display: grid;
   gap: 0.75rem;
-  padding: 1rem;
-  border: 1px solid var(--shallow);
-  border-radius: var(--radius);
-  background: var(--shelf-raised);
+  padding: 1.125rem;
+  border: 1px solid color-mix(in srgb, var(--reef) 26%, transparent);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  box-shadow: var(--glow-accent), var(--sheen);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
 }
 
 .actions {
   display: grid;
-  gap: 0.625rem;
+  gap: 0.5rem;
 }
 
 .correct {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
 }
 
 .correct-label {
+  margin-right: 0.125rem;
   font-size: var(--step--1);
-  color: var(--ink-muted);
+  color: var(--ink-3);
 }
 
-.reject-form {
+.reject {
   display: grid;
   gap: 0.75rem;
 }
 
 .reject-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.375rem;
 }
 
-kbd {
-  padding: 0.0625rem 0.3125rem;
-  border: 1px solid currentColor;
-  border-radius: 2px;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  opacity: 0.6;
-}
-
-.upnext ul {
+.upnext {
   list-style: none;
-  margin: 0.5rem 0 0;
+  margin: 0;
   padding: 0;
   display: grid;
-  gap: 1px;
-  background: var(--hairline);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+  gap: 0.25rem;
 }
 
 .upnext li {
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  padding: 0.5rem 0.625rem;
-  background: var(--shelf);
-}
-
-.upnext-glyph {
-  width: 1.25rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: var(--r-sm);
+  background: var(--surface--1);
+  color: var(--ink-3);
 }
 
 .upnext-date {
   font-size: var(--step--1);
-  color: var(--ink-muted);
+}
+
+.upnext-conf {
   margin-right: auto;
+  font-size: var(--step--2);
+  color: var(--ink-4);
 }
 
 @media (max-width: 66rem) {
