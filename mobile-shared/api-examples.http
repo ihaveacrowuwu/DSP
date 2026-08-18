@@ -1,0 +1,212 @@
+### Muraka API — reference requests
+###
+### Every call a mobile client makes, in the order it makes them. Runnable from
+### VS Code REST Client, JetBrains HTTP Client, or by translating to curl.
+###
+### Start the stack first:
+###   docker compose -f deploy/docker-compose.yml up -d
+###   docker compose -f deploy/docker-compose.yml exec api seed -sightings 500
+
+@host = http://localhost:8090
+@contentType = application/json
+
+### --- is it up? -------------------------------------------------------------
+
+GET {{host}}/healthz
+
+###
+
+GET {{host}}/readyz
+
+### --- sign in ---------------------------------------------------------------
+### Capture accessToken and refreshToken from the response. The refresh token is
+### single-use: store the new one on every refresh.
+
+# @name login
+POST {{host}}/v1/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "diver@muraka.test",
+  "password": "muraka-diver-2026"
+}
+
+###
+
+@accessToken = {{login.response.body.accessToken}}
+@refreshToken = {{login.response.body.refreshToken}}
+
+### Register instead (new accounts are always contributors)
+
+POST {{host}}/v1/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "new.diver@muraka.test",
+  "password": "at-least-ten-characters",
+  "displayName": "New Dive Guide"
+}
+
+### --- profile and totals ----------------------------------------------------
+
+GET {{host}}/v1/me
+Authorization: Bearer {{accessToken}}
+
+### --- submit a sighting -----------------------------------------------------
+### Step 1: metadata. `id` is a client-generated UUIDv7 and is the idempotency
+### key. Replay this exact request: the second call returns 200, not 201, and
+### creates nothing. That is what makes the offline queue safe to retry.
+
+POST {{host}}/v1/sightings
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "id": "018f3c2a-0000-7000-8000-000000000001",
+  "lat": 4.1755,
+  "lon": 73.5093,
+  "locationSource": "gps",
+  "locationAccuracyM": 8.0,
+  "depthM": 7.5,
+  "capturedAt": "2026-08-18T09:14:22Z",
+  "note": "North side of the thila, patchy pale tissue",
+  "selfAssessedCondition": "bleached"
+}
+
+### Step 2: one call per photograph. Also idempotent, on photoId.
+### Point `file` at a real JPEG on disk before running this.
+
+POST {{host}}/v1/sightings/018f3c2a-0000-7000-8000-000000000001/photos
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=----MurakaBoundary
+
+------MurakaBoundary
+Content-Disposition: form-data; name="photoId"
+
+018f3c2b-0000-7000-8000-000000000001
+------MurakaBoundary
+Content-Disposition: form-data; name="file"; filename="reef.jpg"
+Content-Type: image/jpeg
+
+< ./reef.jpg
+------MurakaBoundary--
+
+### --- read it back ----------------------------------------------------------
+### Poll this after upload. Status walks pending_photos -> processing ->
+### awaiting_verification, then verified or rejected once an expert decides.
+### `photos[].prediction` carries patchGrid and the patches array for the overlay.
+
+GET {{host}}/v1/sightings/018f3c2a-0000-7000-8000-000000000001
+Authorization: Bearer {{accessToken}}
+
+### My sightings, newest first. Contributors only ever see their own.
+
+GET {{host}}/v1/sightings?limit=25&offset=0
+Authorization: Bearer {{accessToken}}
+
+### Photograph bytes. Needs the bearer token, so an image loader has to be
+### configured with the auth header — a bare URL will 401.
+
+GET {{host}}/v1/photos/018f3c2b-0000-7000-8000-000000000001/image
+Authorization: Bearer {{accessToken}}
+
+### --- token refresh ---------------------------------------------------------
+### On 401: refresh once, store BOTH new tokens, retry the original request.
+### Serialise this — two concurrent refreshes will kill the session, because the
+### second presents an already-used token.
+
+POST {{host}}/v1/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### --- reference data -------------------------------------------------------
+### Public: usable before sign-in, e.g. to centre a map.
+
+GET {{host}}/v1/atolls
+
+###
+
+GET {{host}}/v1/sites
+Authorization: Bearer {{accessToken}}
+
+### --- sign out --------------------------------------------------------------
+
+POST {{host}}/v1/auth/logout
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### --- delete the account ---------------------------------------------------
+### Anonymises rather than erases: sightings survive as scientific record with
+### the personal link severed. Say so in the confirmation dialog.
+
+DELETE {{host}}/v1/me
+Authorization: Bearer {{accessToken}}
+
+### --- error shapes worth handling ------------------------------------------
+
+### 422 with per-field detail
+POST {{host}}/v1/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "not-an-email",
+  "password": "short",
+  "displayName": ""
+}
+
+### 401 without a token
+GET {{host}}/v1/sightings
+
+### 403 — a contributor reaching for a researcher endpoint
+GET {{host}}/v1/verifications/queue
+Authorization: Bearer {{accessToken}}
+
+### --- researcher endpoints (not used by the contributor app) ---------------
+### Included so mobile work can verify its own submissions end to end.
+
+# @name researcherLogin
+POST {{host}}/v1/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "researcher@muraka.test",
+  "password": "muraka-research-2026"
+}
+
+###
+
+@researcherToken = {{researcherLogin.response.body.accessToken}}
+
+### Review queue: lowest model confidence first
+
+GET {{host}}/v1/verifications/queue?limit=10
+Authorization: Bearer {{researcherToken}}
+
+### Record a decision. confirmed/corrected need `label`; rejected needs
+### `rejectReason`. Appends to history — the model's prediction is preserved.
+
+POST {{host}}/v1/sightings/018f3c2a-0000-7000-8000-000000000001/verification
+Authorization: Bearer {{researcherToken}}
+Content-Type: {{contentType}}
+
+{
+  "decision": "confirmed",
+  "label": "bleached",
+  "comment": "Consistent with the surrounding colony"
+}
+
+### Map data. Clustered below zoom 11, individual points above.
+
+GET {{host}}/v1/map/points?zoom=7&bbox=71.8,-1.2,74.2,7.4
+Authorization: Bearer {{researcherToken}}
+
+### Condition over time
+
+GET {{host}}/v1/trends?bucket=month
+Authorization: Bearer {{researcherToken}}

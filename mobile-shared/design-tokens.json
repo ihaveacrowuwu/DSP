@@ -1,0 +1,120 @@
+{
+  "$comment": "Shared design decisions for the Muraka dashboard, Android app and iOS app. Colour is derived from the phenomenon: living coral tissue reads teal, bleached coral reads bone-white (because that is literally its colour), and rust is reserved for destructive actions so it never competes with data. Mirror of web/src/assets/theme.css — change both together.",
+
+  "color": {
+    "dark": {
+      "abyss": "#061A23",
+      "shelf": "#0C2833",
+      "shelfRaised": "#113340",
+      "shallow": "#1B4A5C",
+      "hairline": "#1D3F4D",
+      "ink": "#E8F1F2",
+      "inkMuted": "#8EA9B3",
+      "inkFaint": "#5C7B87"
+    },
+    "light": {
+      "abyss": "#EEF2F1",
+      "shelf": "#FFFFFF",
+      "shelfRaised": "#F7FAF9",
+      "shallow": "#CFDCD9",
+      "hairline": "#D8E2E0",
+      "ink": "#0D2B33",
+      "inkMuted": "#4A6873",
+      "inkFaint": "#7E969E"
+    },
+    "condition": {
+      "$comment": "The scale runs from living tissue to bare skeleton. Do not substitute a red/green scale.",
+      "dark": {
+        "living": "#35C79A",
+        "pale": "#9FD9C4",
+        "bone": "#EFE6D8",
+        "livingDim": "#1F6F5A",
+        "boneDim": "#B9AE9E"
+      },
+      "light": {
+        "living": "#10826A",
+        "pale": "#57A68D",
+        "bone": "#B08D5F",
+        "livingDim": "#A9DDCD",
+        "boneDim": "#D9C5A4"
+      }
+    },
+    "signal": {
+      "$comment": "rust is for destructive actions and failures only; verified marks expert-reviewed provenance.",
+      "dark": { "rust": "#D9542B", "amber": "#E0A33E", "verified": "#6FB3D9" },
+      "light": { "rust": "#B8431F", "amber": "#A9761C", "verified": "#2B6F96" }
+    },
+    "severityRamp": {
+      "$comment": "Stops for the bleached-extent scale, 0 to 1. Interpolate in sRGB.",
+      "0.0": "#35C79A",
+      "0.35": "#9FD9C4",
+      "0.7": "#EFE6D8",
+      "1.0": "#FFFFFF"
+    }
+  },
+
+  "typography": {
+    "$comment": "No webfonts anywhere (the project forbids external service dependencies), so personality comes from the pairing. Every measured quantity — coordinate, depth, severity, count — is set in mono like an instrument readout. Small uppercase mono labels act as section markers.",
+    "roles": {
+      "ui": {
+        "android": "Roboto / system default",
+        "ios": "SF Pro Text",
+        "web": "system sans stack"
+      },
+      "readout": {
+        "$comment": "Use tabular figures so columns of numbers align.",
+        "android": "Roboto Mono",
+        "ios": "SF Mono",
+        "web": "ui-monospace stack"
+      }
+    },
+    "scale": {
+      "caption": 12,
+      "body": 14,
+      "bodyLarge": 16,
+      "title": 22,
+      "headline": 30,
+      "display": 40
+    },
+    "eyebrow": {
+      "$comment": "Section markers: mono, uppercase, letterspaced. Prefer carrying a value — 'QUEUE / 148 PENDING' rather than 'QUEUE'.",
+      "size": 12,
+      "letterSpacing": 0.14,
+      "textTransform": "uppercase"
+    }
+  },
+
+  "geometry": {
+    "radiusSmall": 3,
+    "radius": 6,
+    "radiusLarge": 10,
+    "hairlineWidth": 1
+  },
+
+  "spacing": { "xs": 4, "sm": 8, "md": 12, "lg": 16, "xl": 24, "xxl": 40 },
+
+  "motion": {
+    "$comment": "Two deliberate moments only: the patch lattice sweeping in as if inference were scanning the image, and queue items leaving. Respect the platform reduce-motion setting.",
+    "durationFast": 160,
+    "durationBase": 220,
+    "easing": "cubic-bezier(0.2, 0, 0.2, 1)",
+    "latticeCellStagger": { "perRowMs": 40, "perColumnMs": 12 }
+  },
+
+  "patchLattice": {
+    "$comment": "The signature element, shared by all three clients. Cells cover the CENTRE SQUARE of the photo, matching how the server tiles it.",
+    "defaultGrid": 5,
+    "cellGap": 1,
+    "opacityFloor": 0.35,
+    "opacityRange": 0.55,
+    "opacityFormula": "opacityFloor + confidence * opacityRange",
+    "overlayBlendMode": "hard-light",
+    "glyphSizeDp": 36
+  },
+
+  "provenance": {
+    "$comment": "NFR13: a model label must never be mistaken for an expert verdict, and the difference must survive greyscale and colour blindness. Encode it in shape, not colour.",
+    "verified": { "border": "solid", "markerFill": "filled", "label": "expert" },
+    "predicted": { "border": "dashed", "markerFill": "hollow", "label": "model" }
+  }
+}
