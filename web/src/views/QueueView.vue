@@ -28,6 +28,7 @@ import {
   type RejectReason,
   type Sighting,
 } from '@/lib/api'
+import { LOW_RESOLUTION_TIP, dimensions, isLowResolution } from '@/lib/photos'
 
 const queue = ref<Sighting[]>([])
 const total = ref(0)
@@ -218,7 +219,7 @@ function formatCoord(value: number, positive: string, negative: string): string 
 
     <div v-else class="review">
       <figure class="plate">
-        <div class="frame well" :style="{ '--natural-width': `${activePhoto?.width ?? 0}px` }">
+        <div class="frame well">
           <img
             v-if="imageUrl"
             :src="imageUrl"
@@ -247,6 +248,20 @@ function formatCoord(value: number, positive: string, negative: string): string 
             <span class="swatch swatch-reef" aria-hidden="true" />healthy
             <span class="swatch swatch-bone" aria-hidden="true" />bleached
             <span class="faint">cell opacity is confidence</span>
+          </span>
+
+          <!-- The source resolution belongs on the screen where the verdict is
+               given: whether the photograph is good enough to judge is part of
+               the judgement. -->
+          <span v-if="activePhoto" class="source">
+            <span class="readout">{{ dimensions(activePhoto.width, activePhoto.height) }}</span>
+            <span
+              v-if="isLowResolution(activePhoto.width, activePhoto.height)"
+              class="faint low-res"
+              :data-tip="LOW_RESOLUTION_TIP"
+              data-tip-side="top"
+              >low resolution</span
+            >
           </span>
         </figcaption>
       </figure>
@@ -440,13 +455,19 @@ function formatCoord(value: number, positive: string, negative: string): string 
   align-items: start;
 }
 
-/* The plate is only as wide as the frame can be tall, so the caption row lines
-   up with the photograph instead of stretching across the empty column beside
-   it. Both numbers are the frame's max-height. */
+/* One width for every photograph, whatever resolution it arrived at. See the
+ * same rule in SightingDetailView for the reasoning; in short, a frame that
+ * shrank to the source's pixel width made low-resolution crops too small to
+ * judge, and judging them is this screen's entire purpose.
+ *
+ * 100% keeps it in the column, 66vh keeps the caption and the accept/correct row
+ * on screen with it, and 44rem is the upscale ceiling. The frame is square, so
+ * its width is also its height — the max-height this used to carry was saying
+ * the same thing twice. */
 .plate {
   display: grid;
   gap: 0.75rem;
-  width: min(100%, 66vh);
+  width: min(100%, 66vh, 44rem);
 }
 
 .frame {
@@ -454,11 +475,6 @@ function formatCoord(value: number, positive: string, negative: string): string 
   /* Square matches how the model tiles the image, so the lattice lines up with
      the pixels on screen. */
   aspect-ratio: 1;
-  max-height: 66vh;
-  /* Cap the upscale: a 224 px crop stretched across the review column is blurry
-     without being any more informative. */
-  max-width: min(100%, max(var(--natural-width, 100%), 26rem));
-  margin-inline: auto;
   border-radius: var(--r-lg);
   overflow: hidden;
 }
@@ -512,6 +528,21 @@ figcaption {
   margin-left: 0.5rem;
   font-family: var(--font-mono);
   font-size: var(--step--2);
+}
+
+.source {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: var(--step--1);
+  color: var(--ink-3);
+}
+
+.low-res {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  border-bottom: 1px dotted var(--line-strong);
+  cursor: help;
 }
 
 .inspector {

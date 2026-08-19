@@ -1,339 +1,220 @@
-/* Muraka design tokens.
+/* theme.css — every colour in the interface.
  *
- * Direction: a scientific instrument, not a brochure. Colour is derived from the
- * phenomenon being measured — living coral tissue reads teal, bleached coral
- * reads bone-white, because that is literally what bleaching looks like. Rust is
- * reserved for destructive actions so it never competes with the data.
+ * The palette is derived from the phenomenon being measured rather than chosen
+ * for taste: living coral tissue reads teal, bleached skeleton reads bone-white,
+ * because that is literally what bleaching looks like underwater. Rust is
+ * reserved for destructive actions and cyan for expert verification, so neither
+ * ever competes with the condition scale for meaning.
  *
- * No webfonts: the project forbids external service dependencies, so personality
- * comes from a deliberate mono/sans pairing. Every measurement (coordinate,
- * depth, severity, count) is set in mono like an instrument readout.
+ * Two schemes, one vocabulary. Dark is the working default (the map is dark and
+ * a bright chrome around it fights the data); light is chart paper for daylight
+ * and printing. Both are reachable explicitly via [data-theme] so the sidebar
+ * switch can override the OS, and the system preference applies when it hasn't.
  */
 
 :root {
-  /* --- ground: a chart at depth */
-  --abyss: #061a23;
-  --shelf: #0c2833;
-  --shelf-raised: #113340;
-  --shallow: #1b4a5c;
-  --hairline: #1d3f4d;
+  /* ── ground ────────────────────────────────────────────────────────────
+     A water column, not a backdrop: light falls off with depth, and two faint
+     blooms suggest shallows without ever becoming a texture. Fixed attachment
+     so the ground stays still while panels scroll over it. */
+  --abyss: #04121a;
+  --ground:
+    radial-gradient(80% 55% at 12% -8%, rgba(46, 200, 162, 0.11) 0%, transparent 70%),
+    radial-gradient(70% 60% at 105% 108%, rgba(99, 184, 224, 0.09) 0%, transparent 68%),
+    linear-gradient(178deg, #072330 0%, #05161f 52%, #030d14 100%);
 
-  /* --- ink */
-  --ink: #e8f1f2;
-  --ink-muted: #8ea9b3;
-  --ink-faint: #5c7b87;
+  /* Frosted strata. -1 is a recessed well (inputs, tracks, photo mattes), 1 is
+     the standard panel, 2 a raised element on a panel, 3 a hover/pressed face. */
+  --surface--1: rgba(3, 14, 20, 0.42);
+  --surface-1: rgba(150, 214, 226, 0.05);
+  --surface-2: rgba(150, 214, 226, 0.1);
+  --surface-3: rgba(150, 214, 226, 0.16);
+  /* Floating chrome that sits over unknown content: the rail, the map overlays,
+     menus, the calendar. A tint alone is not enough — blurred over a bright
+     saturated photograph it becomes a wash of that photograph's colour and takes
+     the labels with it — so this is a scrim of the ground colour, thin enough to
+     see through and dark enough to keep small text legible over anything. Every
+     floating surface uses this one value so they all read as the same material. */
+  --chrome: rgba(7, 27, 37, 0.62);
 
-  /* --- the condition scale: living tissue -> skeleton */
-  --living: #35c79a;
-  --living-dim: #1f6f5a;
-  --pale: #9fd9c4;
-  --bone: #efe6d8;
-  --bone-dim: #b9ae9e;
+  --line: rgba(150, 214, 226, 0.13);
+  --line-strong: rgba(150, 214, 226, 0.24);
 
-  /* --- signals */
-  --rust: #d9542b;
-  --rust-dim: #8a3a20;
-  --amber: #e0a33e;
-  --verified: #6fb3d9;
+  /* ── ink ───────────────────────────────────────────────────────────────── */
+  --ink: #e9f4f6;
+  --ink-2: #b4ced6;
+  --ink-3: #86a4ae;
+  --ink-4: #5f7c86;
 
-  /* --- geometry */
-  --radius-sm: 3px;
-  --radius: 6px;
-  --radius-lg: 10px;
+  /* ── the sea floor: the basemap the reef map draws its geography on ──────
+     Read as a nautical chart, not as scenery: shallower is lighter. Three
+     depths — the abyss the page sits on, the slope inside the 1000 m isobath,
+     the platform inside the 200 m one — so the atoll chain lifts out of the
+     ocean floor. Both schemes keep that direction.
 
-  --rail-width: 13.5rem;
-  --measure: 68ch;
+     Every one of these is deliberately desaturated and blue-biased. The
+     condition scale owns teal-through-bone, and a sandy island or a green
+     lagoon would put basemap colour on the same axis as the measurement —
+     a viewer would not know whether a pale patch was a reef or a beach. */
+  --sea-abyss: #03121c;
+  --sea-slope: #072736;
+  --sea-shelf: #0e4a61;
+  --sea-shelf-line: rgba(150, 214, 226, 0.26);
+  --sea-reef: rgba(150, 214, 226, 0.42);
+  --sea-land: #5d7683;
 
-  /* --- type */
-  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI',
-    Inter, system-ui, sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'JetBrains Mono', Menlo,
-    Consolas, 'Liberation Mono', monospace;
+  /* ── the condition scale: living tissue -> skeleton ────────────────────── */
+  --reef: #2ec8a2;
+  --reef-deep: #17705d;
+  --reef-pale: #8adcc5;
+  --reef-wash: rgba(46, 200, 162, 0.14);
+  --bone: #f0e7d9;
+  --bone-dim: #bdb0a0;
+  --bone-wash: rgba(240, 231, 217, 0.13);
 
-  --step--1: 0.75rem;
-  --step-0: 0.875rem;
-  --step-1: 1rem;
-  --step-2: 1.375rem;
-  --step-3: 1.875rem;
-  --step-4: 2.5rem;
+  /* ── signals ───────────────────────────────────────────────────────────── */
+  --rust: #e2643d;
+  --rust-wash: rgba(226, 100, 61, 0.14);
+  --amber: #e3ad4d;
+  --verified: #67bce4;
+  --verified-wash: rgba(103, 188, 228, 0.14);
 
-  --shadow-panel: 0 1px 0 rgb(255 255 255 / 4%) inset, 0 8px 24px rgb(0 0 0 / 35%);
-  --transition: 160ms cubic-bezier(0.2, 0, 0.2, 1);
+  /* ── derived roles ─────────────────────────────────────────────────────── */
+  --accent: var(--reef);
+  --accent-ink: #04231c; /* text on a solid accent fill */
+  --field-bg: var(--surface--1);
+  --scroll-thumb: rgba(150, 214, 226, 0.16);
+  --scroll-thumb-hover: rgba(150, 214, 226, 0.3);
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 4px 14px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-float: 0 16px 40px rgba(0, 0, 0, 0.42), 0 2px 8px rgba(0, 0, 0, 0.28);
+  /* One hairline of light along the top edge of a frosted surface. This is what
+     makes glass read as glass rather than as a flat tinted rectangle. */
+  --sheen: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --glow-accent: 0 0 0 1px rgba(46, 200, 162, 0.28), 0 4px 18px rgba(46, 200, 162, 0.18);
 }
 
-/* Light mode: chart paper. Same semantics, inverted ground. */
+/* Light scheme — same semantics, inverted ground. Applied when the OS asks for
+   light and the user hasn't pinned dark, or when pinned explicitly below. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme='dark']) {
-    --abyss: #eef2f1;
-    --shelf: #ffffff;
-    --shelf-raised: #f7faf9;
-    --shallow: #cfdcd9;
-    --hairline: #d8e2e0;
+    --abyss: #eef3f3;
+    --ground:
+      radial-gradient(80% 55% at 10% -10%, rgba(16, 130, 106, 0.09) 0%, transparent 70%),
+      radial-gradient(70% 60% at 104% 106%, rgba(43, 111, 150, 0.07) 0%, transparent 68%),
+      linear-gradient(178deg, #f3f7f7 0%, #e9f0f0 55%, #eef2f2 100%);
 
-    --ink: #0d2b33;
-    --ink-muted: #4a6873;
-    --ink-faint: #7e969e;
+    --surface--1: rgba(255, 255, 255, 0.66);
+    --surface-1: rgba(255, 255, 255, 0.6);
+    --surface-2: rgba(13, 43, 51, 0.05);
+    --surface-3: rgba(13, 43, 51, 0.1);
+    --chrome: rgba(248, 252, 252, 0.66);
 
-    --living: #10826a;
-    --living-dim: #a9ddcd;
-    --pale: #57a68d;
-    --bone: #b08d5f;
-    --bone-dim: #d9c5a4;
+    --line: rgba(13, 43, 51, 0.12);
+    --line-strong: rgba(13, 43, 51, 0.22);
 
-    --rust: #b8431f;
-    --amber: #a9761c;
-    --verified: #2b6f96;
+    --ink: #0c2a32;
+    --ink-2: #3d5c66;
+    --ink-3: #64828c;
+    --ink-4: #8aa0a8;
 
-    --shadow-panel: 0 1px 2px rgb(13 43 51 / 8%), 0 8px 20px rgb(13 43 51 / 6%);
+    --sea-abyss: #b9d4e0;
+    --sea-slope: #cde2ec;
+    --sea-shelf: #f4fafb;
+    --sea-shelf-line: rgba(13, 43, 51, 0.2);
+    --sea-reef: rgba(13, 43, 51, 0.32);
+    --sea-land: #8c9ea6;
+
+    --reef: #0f8168;
+    --reef-deep: #0a5b49;
+    --reef-pale: #47a289;
+    --reef-wash: rgba(15, 129, 104, 0.1);
+    /* Bone-white is invisible on paper, so on light ground the bleached end of
+       the scale is read as parched sand instead. The scale keeps its direction:
+       saturated life -> drained skeleton. */
+    --bone: #a4855c;
+    --bone-dim: #c8b795;
+    --bone-wash: rgba(164, 133, 92, 0.12);
+
+    --rust: #b4441f;
+    --rust-wash: rgba(180, 68, 31, 0.1);
+    --amber: #a3741b;
+    --verified: #2a6d93;
+    --verified-wash: rgba(42, 109, 147, 0.11);
+
+    --accent-ink: #ffffff;
+    --scroll-thumb: rgba(13, 43, 51, 0.18);
+    --scroll-thumb-hover: rgba(13, 43, 51, 0.32);
+
+    --shadow-1: 0 1px 2px rgba(13, 43, 51, 0.07);
+    --shadow-2: 0 2px 8px rgba(13, 43, 51, 0.08), 0 1px 2px rgba(13, 43, 51, 0.05);
+    --shadow-float: 0 14px 34px rgba(13, 43, 51, 0.14), 0 2px 6px rgba(13, 43, 51, 0.07);
+    --sheen: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    --glow-accent: 0 0 0 1px rgba(15, 129, 104, 0.3), 0 4px 16px rgba(15, 129, 104, 0.14);
   }
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+/* Pinned light: identical to the block above. Duplicated rather than combined
+   into one selector list because a media query cannot be factored out of one —
+   and the light values must apply on a dark-preferring OS too. */
+:root[data-theme='light'] {
+  --abyss: #eef3f3;
+  --ground:
+    radial-gradient(80% 55% at 10% -10%, rgba(16, 130, 106, 0.09) 0%, transparent 70%),
+    radial-gradient(70% 60% at 104% 106%, rgba(43, 111, 150, 0.07) 0%, transparent 68%),
+    linear-gradient(178deg, #f3f7f7 0%, #e9f0f0 55%, #eef2f2 100%);
+
+  --surface--1: rgba(255, 255, 255, 0.66);
+  --surface-1: rgba(255, 255, 255, 0.6);
+  --surface-2: rgba(13, 43, 51, 0.05);
+  --surface-3: rgba(13, 43, 51, 0.1);
+  --chrome: rgba(248, 252, 252, 0.66);
+
+  --line: rgba(13, 43, 51, 0.12);
+  --line-strong: rgba(13, 43, 51, 0.22);
+
+  --ink: #0c2a32;
+  --ink-2: #3d5c66;
+  --ink-3: #64828c;
+  --ink-4: #8aa0a8;
+
+  --sea-abyss: #b9d4e0;
+  --sea-slope: #cde2ec;
+  --sea-shelf: #f4fafb;
+  --sea-shelf-line: rgba(13, 43, 51, 0.2);
+  --sea-reef: rgba(13, 43, 51, 0.32);
+  --sea-land: #8c9ea6;
+
+  --reef: #0f8168;
+  --reef-deep: #0a5b49;
+  --reef-pale: #47a289;
+  --reef-wash: rgba(15, 129, 104, 0.1);
+  --bone: #a4855c;
+  --bone-dim: #c8b795;
+  --bone-wash: rgba(164, 133, 92, 0.12);
+
+  --rust: #b4441f;
+  --rust-wash: rgba(180, 68, 31, 0.1);
+  --amber: #a3741b;
+  --verified: #2a6d93;
+  --verified-wash: rgba(42, 109, 147, 0.11);
+
+  --accent-ink: #ffffff;
+  --scroll-thumb: rgba(13, 43, 51, 0.18);
+  --scroll-thumb-hover: rgba(13, 43, 51, 0.32);
+
+  --shadow-1: 0 1px 2px rgba(13, 43, 51, 0.07);
+  --shadow-2: 0 2px 8px rgba(13, 43, 51, 0.08), 0 1px 2px rgba(13, 43, 51, 0.05);
+  --shadow-float: 0 14px 34px rgba(13, 43, 51, 0.14), 0 2px 6px rgba(13, 43, 51, 0.07);
+  --sheen: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --glow-accent: 0 0 0 1px rgba(15, 129, 104, 0.3), 0 4px 16px rgba(15, 129, 104, 0.14);
 }
 
-html {
-  color-scheme: dark light;
+:root[data-theme='light'] {
+  color-scheme: light;
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--abyss);
-  color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: var(--step-0);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-
-h1,
-h2,
-h3,
-h4 {
-  margin: 0;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-}
-
-h1 {
-  font-size: var(--step-3);
-}
-h2 {
-  font-size: var(--step-2);
-}
-h3 {
-  font-size: var(--step-1);
-}
-
-p {
-  margin: 0;
-}
-
-a {
-  color: var(--living);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
-}
-
-button {
-  font: inherit;
-  cursor: pointer;
-}
-
-:focus-visible {
-  outline: 2px solid var(--living);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-}
-
-/* ---------------------------------------------------------------- primitives */
-
-/* Small uppercase mono labels: the interface's section markers. They carry a
-   value where possible ("QUEUE / 148 PENDING") rather than decorating. */
-.eyebrow {
-  font-family: var(--font-mono);
-  font-size: var(--step--1);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-/* Any measured quantity. Tabular figures so columns of numbers line up. */
-.readout {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
-}
-
-.panel {
-  background: var(--shelf);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.875rem;
-  border: 1px solid var(--shallow);
-  border-radius: var(--radius-sm);
-  background: var(--shelf-raised);
-  color: var(--ink);
-  font-size: var(--step-0);
-  font-weight: 500;
-  transition: background var(--transition), border-color var(--transition);
-}
-
-.btn:hover:not(:disabled) {
-  background: var(--shallow);
-}
-
-.btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: var(--living);
-  border-color: var(--living);
-  color: #04231c;
-  font-weight: 600;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--pale);
-  border-color: var(--pale);
-}
-
-.btn-danger {
-  border-color: var(--rust-dim);
-  color: var(--rust);
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: var(--rust);
-  border-color: var(--rust);
-  color: #fff;
-}
-
-.btn-ghost {
-  background: transparent;
-  border-color: transparent;
-  color: var(--ink-muted);
-}
-
-.btn-ghost:hover:not(:disabled) {
-  background: var(--shelf-raised);
-  color: var(--ink);
-}
-
-.field {
-  display: grid;
-  gap: 0.3125rem;
-}
-
-.field > label {
-  font-family: var(--font-mono);
-  font-size: var(--step--1);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-muted);
-}
-
-.field input,
-.field select,
-.field textarea {
-  padding: 0.5rem 0.625rem;
-  border: 1px solid var(--shallow);
-  border-radius: var(--radius-sm);
-  background: var(--abyss);
-  color: var(--ink);
-  font: inherit;
-}
-
-.field input:focus,
-.field select:focus,
-.field textarea:focus {
-  border-color: var(--living);
-  outline: none;
-}
-
-/* Condition chips. ML-only and expert-verified must never look alike (NFR13):
-   verified carries a filled marker and a solid border, predicted stays outlined
-   and dashed — legible without relying on colour alone. */
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.125rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid;
-  font-family: var(--font-mono);
-  font-size: var(--step--1);
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-
-.chip::before {
-  content: '';
-  width: 0.4375rem;
-  height: 0.4375rem;
-  border-radius: 50%;
-  border: 1px solid currentColor;
-}
-
-.chip-verified::before {
-  background: currentColor;
-}
-
-.chip-predicted {
-  border-style: dashed;
-}
-
-.chip-healthy {
-  color: var(--living);
-  border-color: var(--living-dim);
-}
-
-.chip-bleached {
-  color: var(--bone);
-  border-color: var(--bone-dim);
-}
-
-.chip-pending {
-  color: var(--ink-faint);
-  border-color: var(--hairline);
-}
-
-.chip-rejected {
-  color: var(--rust);
-  border-color: var(--rust-dim);
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+:root[data-theme='dark'] {
+  color-scheme: dark;
 }

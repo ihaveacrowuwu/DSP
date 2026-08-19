@@ -1,0 +1,253 @@
+/* base.css — reset, structural tokens, scrollbars, accessibility.
+ *
+ * Layer order is load-bearing: base -> theme -> components. Structural tokens
+ * (geometry, motion, type, depth) live here because they never change with the
+ * colour scheme; every colour lives in theme.css.
+ *
+ * Muraka's house style: an instrument that happens to be pleasant to hold.
+ * Panels are frosted and heavily rounded, motion is spring-driven but settles
+ * quickly, and every measured quantity is set in mono so a column of numbers
+ * reads like a readout rather than prose.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+
+:root {
+  /* ── type ──────────────────────────────────────────────────────────────
+     No webfonts anywhere: the project forbids external service dependencies,
+     so personality comes from the sans/mono pairing instead of a typeface. */
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI',
+    Inter, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'JetBrains Mono', Menlo,
+    Consolas, 'Liberation Mono', monospace;
+
+  /* The existing scale, kept verbatim — this interface is deliberately compact
+     and the overhaul must not inflate it. 14px body, 12px labels. */
+  --step--2: 0.6875rem;
+  --step--1: 0.75rem;
+  --step-0: 0.875rem;
+  --step-1: 1rem;
+  --step-2: 1.375rem;
+  --step-3: 1.875rem;
+  --step-4: 2.5rem;
+
+  /* ── geometry ──────────────────────────────────────────────────────────
+     Rounder than the system this borrows from: the smallest chip still reads
+     as a soft form, and the sidebar is nearly a lozenge. Radii step by ~4px
+     so nested corners stay visually concentric (outer − padding = inner). */
+  --r-xs: 7px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-pill: 999px;
+
+  --rail-w: 3.5rem;
+  --rail-w-open: 13.25rem;
+  --rail-gap: 0.625rem;
+  /* Where page content starts, so nothing important hides under the rail while
+     the rail still floats over a full-bleed map. */
+  --content-inset: calc(var(--rail-w) + var(--rail-gap) * 2);
+  --measure: 68ch;
+
+  /* ── depth ──────────────────────────────────────────────────────────────
+     Deliberately shallow. A heavy blur turns whatever is behind a panel into an
+     abstract smear, which looks like frosted plastic rather than glass; at this
+     radius you can still make out the shape of the map or the photograph under a
+     surface, which is what makes it read as something you are looking through. */
+  --blur-sm: 3px;
+  --blur: 6px;
+  --blur-lg: 10px;
+
+  /* ── motion ────────────────────────────────────────────────────────────
+     One spring, deliberately calmer than a toy: it overshoots ~13% and lands
+     without a second bounce. Playful enough that the interface feels alive,
+     restrained enough for a screen scientists work in all day. */
+  --ease-spring: linear(
+    0, 0.32 8%, 0.68 17%, 0.94 25%, 1.09 33%, 1.13 39%,
+    1.11 45%, 1.06 54%, 1.02 65%, 1.004 78%, 1
+  );
+  /* The landing half of a jelly squash: rounded peak, asymptotic settle, so the
+     pill never arrives at rest with velocity still in it. */
+  --ease-rebound: linear(
+    0, 0.36 16%, 0.66 30%, 0.9 42%, 1.05 51%, 1.09 57%, 1.086 62%,
+    1.06 69%, 1.032 77%, 1.013 85%, 1.004 92%, 1
+  );
+  /* Travel curve for the sliding pill: quick launch, small overshoot, and a
+     faint counter-swing so it reads as one soft body rather than a rectangle
+     being teleported. */
+  --ease-travel: linear(
+    0, 0.19 5%, 0.36 10%, 0.51 15%, 0.64 20%, 0.75 25%, 0.88 34%,
+    0.96 43%, 1.001 52%, 1.011 62%, 1.008 72%, 1.002 80%,
+    0.9987 88%, 0.9993 94%, 1
+  );
+  --ease-out: cubic-bezier(0.32, 0, 0.24, 1);
+
+  --dur-micro: 0.12s;
+  --dur-fast: 0.16s;
+  --dur: 0.24s;
+  --dur-slow: 0.34s;
+
+  /* ── stacking ──────────────────────────────────────────────────────────
+     Bottom to top: page chrome < map overlays < menus < the floating rail <
+     tooltips. The rail sits above menus because it is navigation, not content,
+     and it is the one surface that must never be occluded. */
+  --z-overlay: 20;
+  --z-menu: 60;
+  --z-rail: 80;
+  --z-tooltip: 120;
+}
+
+/* Below this width the rail lies along the bottom edge instead of the left, so
+   content no longer needs to keep clear of a left inset. */
+@media (max-width: 55rem) {
+  :root {
+    --content-inset: 0px;
+  }
+}
+
+html {
+  color-scheme: dark light;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-width: 20rem;
+  background: var(--ground);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--step-0);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.18;
+}
+
+h1 {
+  font-size: var(--step-3);
+}
+h2 {
+  font-size: var(--step-2);
+}
+h3 {
+  font-size: var(--step-1);
+}
+
+p,
+figure,
+dl,
+dd {
+  margin: 0;
+}
+
+a {
+  color: var(--reef);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: color var(--dur-fast) linear;
+}
+
+a:hover {
+  color: var(--reef-pale);
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* Buttons are styled exclusively through .btn variants (see components.css).
+   Only the font and cursor are normalised here — a bare <button> is a bug. */
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--reef);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--reef) 35%, transparent);
+}
+
+/* ── scrollbars ─────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: var(--r-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+  background-clip: padding-box;
+}
+
+/* ── accessibility ──────────────────────────────────────────────────────── */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Motion is decoration here, never information: every state this interface
+   animates is also legible from a static frame. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Killing the transition alone leaves hover growth snapping instead of
+     easing, which is worse than no effect. Only the scale/rotate longhands are
+     reset — this codebase reserves them for pointer feedback and never for
+     resting layout, so clearing them cannot move anything. */
+  :where(*:hover, *:active, *:focus-visible) {
+    scale: none !important;
+    rotate: none !important;
+  }
+}

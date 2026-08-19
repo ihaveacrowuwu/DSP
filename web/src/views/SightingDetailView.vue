@@ -21,9 +21,11 @@ import {
   api,
   fetchPhotoObjectUrl,
   type Photo,
+  type Prediction,
   type Sighting,
   type Verification,
 } from '@/lib/api'
+import { dimensions, isLowResolution, lowResolutionNote } from '@/lib/photos'
 
 const route = useRoute()
 
@@ -34,6 +36,17 @@ const imageUrls = ref<Record<string, string>>({})
 const showLattice = ref(true)
 const loading = ref(true)
 const error = ref<string | null>(null)
+
+/**
+ * The lattice as one number: how much of the grid the model called bleached.
+ *
+ * Worth showing next to the extent score because they can disagree. A photograph
+ * can read 40% bleached extent off two badly bleached cells out of twenty-five,
+ * and the tally is what makes that visible without counting squares by eye.
+ */
+function bleachedPatches(prediction: Prediction): number {
+  return prediction.patches.filter((patch) => patch.label === 'bleached').length
+}
 
 /** The interface's own voice, not the database's enum values. */
 const DECISION_WORDING: Record<Verification['decision'], string> = {
@@ -121,7 +134,7 @@ onUnmounted(() => {
           </p>
 
           <figure v-for="photo in photos" :key="photo.id" class="plate">
-            <div class="frame well" :style="{ '--natural-width': `${photo.width}px` }">
+            <div class="frame well">
               <img
                 v-if="imageUrls[photo.id]"
                 :src="imageUrls[photo.id]"
@@ -137,23 +150,71 @@ onUnmounted(() => {
               />
             </div>
 
-            <figcaption v-if="photo.prediction" class="caption card card-pad">
-              <span class="readout severity">
-                {{ Math.round(photo.prediction.severity * 100) }}%
-              </span>
-              <span class="caption-text">
-                bleached extent · reads
-                <strong>{{ photo.prediction.label }}</strong>
-                · model
-                <span class="readout">{{ photo.prediction.modelVersion }}</span>
-                · <span class="readout">{{ photo.width }}×{{ photo.height }}</span>
-              </span>
-              <div class="caption-metrics">
-                <MetricBar label="Extent" :value="photo.prediction.severity" tone="bone" />
-                <MetricBar label="Confidence" :value="photo.prediction.confidence" tone="reef" />
-              </div>
+            <figcaption class="assessment card card-pad">
+              <template v-if="photo.prediction">
+                <span class="eyebrow">Model assessment</span>
+
+                <p class="verdict">
+                  <span class="readout severity">
+                    {{ Math.round(photo.prediction.severity * 100) }}%
+                  </span>
+                  <span class="verdict-text">
+                    bleached extent — reads
+                    <strong>{{ photo.prediction.label }}</strong>
+                  </span>
+                </p>
+
+                <!-- Extent, confidence, then the lattice's own tally: what it
+                     found, how sure it is, and how much of the grid agrees. -->
+                <div class="metrics">
+                  <MetricBar label="Extent" :value="photo.prediction.severity" tone="bone" />
+                  <MetricBar label="Confidence" :value="photo.prediction.confidence" tone="reef" />
+                  <MetricBar
+                    v-if="photo.prediction.patches.length"
+                    label="Patches"
+                    :value="bleachedPatches(photo.prediction) / photo.prediction.patches.length"
+                    tone="bone"
+                    :display="`${bleachedPatches(photo.prediction)}/${photo.prediction.patches.length}`"
+                  />
+                </div>
+
+                <dl class="meta">
+                  <div>
+                    <dt>Model</dt>
+                    <dd class="readout">{{ photo.prediction.modelVersion }}</dd>
+                  </div>
+                  <div v-if="photo.prediction.patchGrid">
+                    <dt>Grid</dt>
+                    <dd class="readout">
+                      {{ photo.prediction.patchGrid }}×{{ photo.prediction.patchGrid }}
+                    </dd>
+                  </div>
+                  <div v-if="photo.prediction.inferenceMs !== undefined">
+                    <dt>Inference</dt>
+                    <dd class="readout">{{ photo.prediction.inferenceMs }} ms</dd>
+                  </div>
+                  <div>
+                    <dt>Resolution</dt>
+                    <dd class="readout">{{ dimensions(photo.width, photo.height) }}</dd>
+                  </div>
+                </dl>
+
+                <!-- Printed in full rather than hidden behind a hover: the panel
+                     has the room, and whether a photograph is good enough to
+                     judge is part of the judgement. -->
+                <p v-if="isLowResolution(photo.width, photo.height)" class="low-res">
+                  {{ lowResolutionNote(photo.width, photo.height) }}
+                </p>
+              </template>
+
+              <template v-else>
+                <span class="eyebrow">Model assessment</span>
+                <p class="muted small">
+                  Awaiting model analysis. The photograph is stored; the grader has not
+                  reached it yet.
+                </p>
+              </template>
             </figcaption>
-            <figcaption v-else class="muted small">Awaiting model analysis.</figcaption>
           </figure>
         </section>
 
@@ -257,26 +318,50 @@ onUnmounted(() => {
   gap: 0.75rem;
 }
 
-/* Capped against the viewport height rather than the column width: a 4:3 frame
-   allowed to fill a wide column pushes its own caption off screen, and the
-   caption carries the model's numbers. */
+/* The photograph and the model's reading of it, side by side.
+ *
+ * The panel keeps its place at every width the two-column body survives, and the
+ * frame gives up size to make room. This was flex-wrap first, which let the panel
+ * drop below the photograph when it no longer fit — and at 1366px, the commonest
+ * laptop width, it did: the numbers landed under a 700px-tall frame, off screen,
+ * which is the layout this change exists to remove.
+ *
+ * So the tracks are explicit. Track one is capped, never flexible, so the frame
+ * cannot grow past its upscale ceiling; track two has a floor of 17rem, which is
+ * what a MetricBar needs before its label starts eliding. When the column cannot
+ * satisfy both, grid honours the floor and the frame shrinks — still one size for
+ * every photograph, which was always the point.
+ *
+ * `align-items: start` keeps the panel the height of its own content. A card
+ * stretched to 44rem tall with five rows in it reads as something unfinished. */
 .plate {
   display: grid;
-  gap: 0.625rem;
-  margin-bottom: 1rem;
-  width: min(100%, 80vh);
+  grid-template-columns: minmax(0, min(80vh, 44rem)) minmax(17rem, 1fr);
+  align-items: start;
+  gap: 0.875rem;
+  margin-bottom: 1.25rem;
 }
 
+/* One width for every photograph, whatever resolution it arrived at.
+ *
+ * This used to be capped against each image's own pixel width, on the principle
+ * that upscaling a 224 px dataset crop adds no detail. True, but it made the frame
+ * vary from 22rem to the full column depending on the source — so the same reef
+ * could not be compared with itself, and the small ones were too small to judge,
+ * which is the whole job on this page. The frame is furniture: fixed, with the
+ * panel beside it saying when a photograph has less detail than it fills.
+ *
+ * The size itself comes from the grid track above: 80vh so a square frame is
+ * never taller than the screen, and 44rem as the upscale ceiling — past roughly
+ * 3x a 224 px crop, softness is all that is being added, and stopping there is
+ * also what leaves room for the panel beside it. */
 .frame {
   position: relative;
+  width: 100%;
   /* Square, because the model tiles the centre square of the image. Any other
      ratio here would crop to a different region than the one the patch grid
      describes, and the overlay would annotate pixels that are not on screen. */
   aspect-ratio: 1;
-  /* Never blow a photograph up much past its own resolution: upscaling a 224 px
-     dataset crop to fill a wide column adds no detail and looks broken. */
-  max-width: min(100%, max(var(--natural-width, 100%), 22rem));
-  margin-inline: auto;
   border-radius: var(--r-lg);
   overflow: hidden;
 }
@@ -295,35 +380,55 @@ onUnmounted(() => {
   font-size: var(--step--1);
 }
 
-.caption {
+/* The model's reading, in the space beside the photograph. This used to sit under
+   the frame, which put the numbers below the fold on a laptop and left the column
+   next to the image empty. 18rem is the point below which the rows stop being
+   readable, so that is where it wraps instead of shrinking. */
+.assessment {
   display: grid;
-  gap: 0.625rem;
-  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.verdict {
+  display: flex;
   align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .severity {
-  font-size: var(--step-2);
+  font-size: var(--step-3);
   font-weight: 600;
   line-height: 1;
   color: var(--bone);
 }
 
-.caption-text {
+.verdict-text {
   color: var(--ink-3);
   font-size: var(--step--1);
 }
 
-.caption-text strong {
+.verdict-text strong {
   color: var(--ink);
 }
 
-.caption-metrics {
-  grid-column: 1 / -1;
+.metrics {
   display: grid;
   gap: 0.375rem;
-  padding-top: 0.625rem;
+  padding-top: 0.75rem;
   border-top: 1px solid var(--line);
+}
+
+.assessment .meta {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+}
+
+/* Stated plainly, not as a warning chip: it is a fact about the photograph's
+   resolution, not a problem with the sighting. */
+.low-res {
+  color: var(--ink-4);
+  font-size: var(--step--2);
 }
 
 .side {
@@ -363,6 +468,15 @@ onUnmounted(() => {
 @media (max-width: 66rem) {
   .body {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Narrow enough that a 17rem panel beside the frame would leave the photograph
+   too small to read. Below here the panel goes under it, which is the one place
+   that arrangement is the right answer. */
+@media (max-width: 46rem) {
+  .plate {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>

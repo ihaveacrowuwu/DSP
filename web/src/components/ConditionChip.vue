@@ -51,10 +51,12 @@ const provenance = computed(() => {
 </template>
 
 <style scoped>
+/* "expert" / "model" rides inside the chip rather than beside it, so provenance
+   travels with the label everywhere the chip is used. */
 .provenance {
-  font-size: 0.6875rem;
+  font-size: var(--step--2);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.7;
+  opacity: 0.72;
 }
 </style>

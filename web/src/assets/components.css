@@ -1,0 +1,772 @@
+/* components.css — shared primitives.
+ *
+ * Everything here is used by three or more screens. Anything narrower belongs in
+ * a component's own scoped block, and anything that depends on runtime data
+ * belongs in a style binding. Nothing in this file uses !important; where a rule
+ * needs to win it does so by being more specific.
+ */
+
+/* ══ page scaffolding ═══════════════════════════════════════════════════════
+   Content is laid out full-bleed and only inset by padding, so the map can pan
+   underneath the floating rail while text never hides behind it. */
+
+.page {
+  min-height: 100%;
+  padding: clamp(1.25rem, 2.4vw, 2rem) clamp(1.25rem, 2.6vw, 2.25rem);
+  padding-left: max(var(--content-inset), 1.25rem);
+}
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.875rem 2rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.page-head h1 {
+  margin-top: 0.3125rem;
+  font-size: var(--step-2);
+}
+
+.page-head-note {
+  max-width: 40ch;
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+
+/* A control row: filters, toggles and actions on one line, wrapping as one
+   group so a narrow window never strands a single control on its own row. */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.toolbar-spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ══ surfaces ═══════════════════════════════════════════════════════════════ */
+
+/* No backdrop-filter on any of the in-page surfaces below. A card sits on the
+   page's own gradient and nothing else — there is no content behind it to see
+   through, so a blur would cost a full-surface filter pass every scroll frame and
+   change not one pixel. Blur is reserved for the surfaces that genuinely float
+   over something: the rail, the map overlays, menus, the calendar, tooltips. */
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-2), var(--sheen);
+}
+
+.card-pad {
+  padding: 1.125rem;
+}
+
+/* Cards that stack in a column and hold one titled section each. */
+.section {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.125rem;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1), var(--sheen);
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+/* A recessed well inside a card: tracks, inline notes, photo mattes. */
+.well {
+  background: var(--surface--1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+/* ══ text primitives ════════════════════════════════════════════════════════ */
+
+/* Section markers. They carry a value where one exists ("QUEUE / 148 AWAITING")
+   rather than decorating, which is why they are small enough to sit above a
+   heading without competing with it. */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+
+/* Any measured quantity: coordinates, depths, percentages, versions, counts.
+   Tabular figures so stacked numbers align on the digit. */
+.readout {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.muted {
+  color: var(--ink-3);
+}
+
+.faint {
+  color: var(--ink-4);
+}
+
+.small {
+  font-size: var(--step--1);
+}
+
+/* Key hints sit inside buttons in the review queue, so they inherit colour and
+   stay legible against both a filled and a ghost face. */
+.kbd {
+  padding: 0.0625rem 0.3125rem;
+  border: 1px solid currentColor;
+  border-radius: var(--r-xs);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  line-height: 1.35;
+  opacity: 0.55;
+}
+
+/* ══ buttons ════════════════════════════════════════════════════════════════
+   Every button in the app is .btn plus a variant. A bare button element is a
+   bug. Hover grows rather than glows: the press feedback is the personality,
+   and it costs one composited property instead of a repaint. */
+
+.btn {
+  --btn-scale: 1.02;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4375rem;
+  padding: 0.4375rem 0.8125rem;
+  min-height: 2rem;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: scale var(--dur) var(--ease-spring),
+    background-color var(--dur-fast) linear,
+    border-color var(--dur-fast) linear,
+    box-shadow var(--dur-fast) linear;
+}
+
+.btn:hover:not(:disabled) {
+  scale: var(--btn-scale);
+}
+
+.btn:active:not(:disabled) {
+  scale: 0.98;
+}
+
+.btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+/* Primary: a solid reef fill. Deliberately not a gradient — a flat accent reads
+   as an instrument control, and it keeps the one truly important action on a
+   screen unmistakable. */
+.btn-primary {
+  background: var(--reef);
+  border-color: color-mix(in srgb, var(--reef) 70%, #000);
+  color: var(--accent-ink);
+  box-shadow: var(--shadow-1), var(--sheen);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--reef) 88%, #fff);
+}
+
+.btn-secondary {
+  background: var(--surface-2);
+  border-color: var(--line);
+  color: var(--ink);
+  box-shadow: var(--sheen);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+}
+
+.btn-ghost {
+  color: var(--ink-2);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.btn-danger {
+  background: var(--rust-wash);
+  border-color: color-mix(in srgb, var(--rust) 34%, transparent);
+  color: var(--rust);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--rust) 22%, transparent);
+  border-color: color-mix(in srgb, var(--rust) 55%, transparent);
+}
+
+.btn-icon {
+  padding: 0.375rem;
+  min-height: 0;
+  border-radius: var(--r-sm);
+}
+
+.btn-sm {
+  --btn-scale: 1.035;
+  padding: 0.25rem 0.5625rem;
+  min-height: 1.625rem;
+  font-size: var(--step--2);
+  border-radius: var(--r-sm);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* ══ fields ═════════════════════════════════════════════════════════════════ */
+
+.field {
+  display: grid;
+  gap: 0.3125rem;
+  min-width: 0;
+}
+
+.field > label,
+.field-label {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.input {
+  width: 100%;
+  padding: 0.4375rem 0.625rem;
+  min-height: 2rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--field-bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--step-0);
+  transition: border-color var(--dur-fast) linear, box-shadow var(--dur-fast) linear;
+}
+
+.input::placeholder {
+  color: var(--ink-4);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--reef);
+  box-shadow: 0 0 0 3px var(--reef-wash);
+}
+
+.input-invalid,
+.input-invalid:focus {
+  border-color: var(--rust);
+  box-shadow: 0 0 0 3px var(--rust-wash);
+}
+
+/* A checkbox and its label as one hit target. */
+.check-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--step--1);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: color var(--dur-fast) linear;
+}
+
+.check-row:hover {
+  color: var(--ink);
+}
+
+/* ══ chips ══════════════════════════════════════════════════════════════════
+   Provenance is carried by shape, never by colour alone (NFR13): an expert
+   verdict has a filled marker and a solid edge, model output stays dashed and
+   hollow. Someone who cannot separate teal from bone still reads which is which. */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid;
+  border-radius: var(--r-pill);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.chip::before {
+  content: '';
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chip-verified::before {
+  background: currentColor;
+}
+
+.chip-predicted {
+  border-style: dashed;
+}
+
+.chip-healthy {
+  color: var(--reef);
+  border-color: color-mix(in srgb, var(--reef) 45%, transparent);
+  background: var(--reef-wash);
+}
+
+.chip-bleached {
+  color: var(--bone);
+  border-color: color-mix(in srgb, var(--bone) 45%, transparent);
+  background: var(--bone-wash);
+}
+
+.chip-pending {
+  color: var(--ink-3);
+  border-color: var(--line-strong);
+}
+
+.chip-rejected {
+  color: var(--rust);
+  border-color: color-mix(in srgb, var(--rust) 45%, transparent);
+  background: var(--rust-wash);
+}
+
+.chip-plain {
+  color: var(--ink-2);
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+}
+
+.chip-plain::before {
+  display: none;
+}
+
+/* ══ description lists ══════════════════════════════════════════════════════
+   The metadata pattern used on every record: mono uppercase term, value right
+   of it, values in a shared column so the block scans vertically. */
+
+.meta {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.meta > div {
+  display: grid;
+  grid-template-columns: 6.75rem minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.meta dt {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+
+.meta dd {
+  margin: 0;
+  font-size: var(--step--1);
+  min-width: 0;
+}
+
+/* A quoted contributor note. */
+.quote {
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--line-strong);
+  color: var(--ink-2);
+  font-style: italic;
+  font-size: var(--step--1);
+}
+
+/* ══ tables ═════════════════════════════════════════════════════════════════ */
+
+.table-wrap {
+  overflow-x: auto;
+  border-radius: var(--r-lg);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 0.5625rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--step--1);
+  vertical-align: middle;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Rows brighten on hover. They do NOT scale: scaling a <tr> scales the row's
+   whole box, which pushes past the wrapper's width and makes a horizontal
+   scrollbar appear and disappear as the pointer moves down the table. */
+.data-table tbody tr {
+  transition: background-color var(--dur-fast) linear;
+}
+
+.data-table tbody tr:hover {
+  background: var(--surface-2);
+}
+
+/* ── clickable rows ─────────────────────────────────────────────────────────
+   A row that navigates is a target, so it grows on hover like any other list
+   row — but the growth happens per cell, not per row. Each `.cell-body` is an
+   inline-block hugging its own content and anchored to its column's edge, so it
+   grows within the column it belongs to. The row's box never changes, which is
+   what keeps the table's width and the scrollbar stable. */
+
+.data-table tbody tr[data-row-link] {
+  cursor: pointer;
+}
+
+.cell-body {
+  display: inline-block;
+  /* Anchored to the reading edge so the column stays aligned as it grows; the
+     right-aligned column anchors the other way for the same reason. */
+  transform-origin: left center;
+  /*
+   * Short, monotonic, and scale only — this is the one place in the app where the
+   * spring is the wrong curve.
+   *
+   * Growing text by 2.5% is a sub-pixel change on 12px mono, and the browser
+   * re-rasterises every glyph at every intermediate size. The spring produced ~15
+   * distinct scales including an overshoot past the target and a tail of steps too
+   * small to see (1.02504, 1.02501, 1.025) — a dozen re-rasterisations of the same
+   * apparent size, which is what read as the text boiling. A short ease-out lands
+   * in a handful of frames and never reverses direction.
+   *
+   * Colour is deliberately NOT transitioned (and never should be, per the
+   * guideline): it repaints every glyph on every frame of the scale, and the two
+   * compounding is what made the shimmer obvious rather than subtle.
+   */
+  transition: scale 0.13s var(--ease-out);
+}
+
+.cell-right .cell-body {
+  transform-origin: right center;
+}
+
+.data-table tbody tr[data-row-link]:hover .cell-body {
+  scale: 1.025;
+  color: var(--ink);
+  /* Promote for the duration of the hover so the compositor scales one cached
+     raster instead of the text being re-rasterised at each step. Scoped to the
+     hovered row, so this is eight layers at a time rather than one per cell in
+     the whole table. */
+  will-change: transform;
+}
+
+.data-table tbody tr[data-row-link]:active .cell-body {
+  scale: 0.995;
+}
+
+.cell-right {
+  text-align: right;
+}
+
+.cell-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+/* ══ list rows ══════════════════════════════════════════════════════════════
+   Any clickable text row: grow slightly, brighten the text, never move the
+   border. Narrow rows take the fuller scale, wide ones the subtle variant. */
+
+/* Same reasoning as .cell-body: scale only, and short enough not to spend a dozen
+   frames re-rasterising text at indistinguishable sizes. */
+.row-hover {
+  transition: scale 0.15s var(--ease-out);
+}
+
+.row-hover:hover {
+  scale: 1.02;
+  color: var(--ink);
+}
+
+.row-hover:active {
+  scale: 0.98;
+}
+
+.row-hover-wide {
+  transition: scale 0.15s var(--ease-out);
+}
+
+.row-hover-wide:hover {
+  scale: 1.008;
+  color: var(--ink);
+}
+
+.row-hover-wide:active {
+  scale: 0.994;
+}
+
+/* ══ figures ════════════════════════════════════════════════════════════════ */
+
+/* A large single number with a caption under it: queue depths, totals. */
+.figure-block {
+  display: grid;
+  gap: 0.125rem;
+}
+
+.figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step-3);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.figure-alarm {
+  color: var(--rust);
+}
+
+.figure-label {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+
+/* ══ states ═════════════════════════════════════════════════════════════════ */
+
+.state {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+  padding: clamp(2rem, 8vh, 4.5rem) 0;
+  color: var(--ink-3);
+  max-width: 52ch;
+}
+
+.state h2 {
+  color: var(--ink);
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--rust) 32%, transparent);
+  border-left-width: 2px;
+  border-radius: var(--r-md);
+  background: var(--rust-wash);
+  color: var(--ink);
+  font-size: var(--step--1);
+}
+
+/* A placeholder bar while a request is in flight. The sweep is the only thing
+   in the interface that loops: it means "still working". */
+.skeleton {
+  border-radius: var(--r-sm);
+  background: linear-gradient(
+      90deg,
+      var(--surface-1) 0%,
+      var(--surface-3) 50%,
+      var(--surface-1) 100%
+    )
+    0 0 / 220% 100%;
+  animation: sweep 1.4s linear infinite;
+}
+
+/* ══ keyframes ══════════════════════════════════════════════════════════════ */
+
+@keyframes sweep {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* Content arriving beside a pill or inside an expanding rail: a short overshoot
+   in from the left, so the label looks pulled along rather than switched on. */
+@keyframes slide-in {
+  0% {
+    opacity: 0;
+    translate: -6px 0;
+  }
+  55% {
+    opacity: 1;
+  }
+  72% {
+    translate: 2px 0;
+  }
+  100% {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    scale: 0.94;
+    translate: 0 4px;
+  }
+  100% {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+  }
+}
+
+/* The jelly pill. A pill that only slid would read as a rectangle being moved;
+   stretching along the travel axis on launch and squashing on arrival makes it
+   read as one soft body that has mass. Magnitudes come from custom properties
+   written by usePillMotion, so a one-item hop deforms less than an end-to-end
+   jump — the deformation reports how far the pill actually travelled. */
+@keyframes pill-jelly-down {
+  0% {
+    transform: scaleY(var(--pill-sy, 1.3)) scaleX(var(--pill-sx, 0.92));
+    transform-origin: center top;
+  }
+  30% {
+    transform: scaleY(var(--pill-sy2, 1.18)) scaleX(var(--pill-sx2, 0.95));
+    transform-origin: center bottom;
+  }
+  44% {
+    transform: scaleY(var(--pill-qy, 0.82)) scaleX(var(--pill-qx, 1.05));
+    transform-origin: center bottom;
+    animation-timing-function: var(--ease-rebound);
+  }
+  100% {
+    transform: scaleY(1) scaleX(1);
+    transform-origin: center center;
+  }
+}
+
+@keyframes pill-jelly-up {
+  0% {
+    transform: scaleY(var(--pill-sy, 1.3)) scaleX(var(--pill-sx, 0.92));
+    transform-origin: center bottom;
+  }
+  30% {
+    transform: scaleY(var(--pill-sy2, 1.18)) scaleX(var(--pill-sx2, 0.95));
+    transform-origin: center top;
+  }
+  44% {
+    transform: scaleY(var(--pill-qy, 0.82)) scaleX(var(--pill-qx, 1.05));
+    transform-origin: center top;
+    animation-timing-function: var(--ease-rebound);
+  }
+  100% {
+    transform: scaleY(1) scaleX(1);
+    transform-origin: center center;
+  }
+}
+
+@keyframes pill-jelly-right {
+  0% {
+    transform: scaleX(var(--pill-sy, 1.3)) scaleY(var(--pill-sx, 0.92));
+    transform-origin: left center;
+  }
+  30% {
+    transform: scaleX(var(--pill-sy2, 1.18)) scaleY(var(--pill-sx2, 0.95));
+    transform-origin: right center;
+  }
+  44% {
+    transform: scaleX(var(--pill-qy, 0.82)) scaleY(var(--pill-qx, 1.05));
+    transform-origin: right center;
+    animation-timing-function: var(--ease-rebound);
+  }
+  100% {
+    transform: scaleX(1) scaleY(1);
+    transform-origin: center center;
+  }
+}
+
+@keyframes pill-jelly-left {
+  0% {
+    transform: scaleX(var(--pill-sy, 1.3)) scaleY(var(--pill-sx, 0.92));
+    transform-origin: right center;
+  }
+  30% {
+    transform: scaleX(var(--pill-sy2, 1.18)) scaleY(var(--pill-sx2, 0.95));
+    transform-origin: left center;
+  }
+  44% {
+    transform: scaleX(var(--pill-qy, 0.82)) scaleY(var(--pill-qx, 1.05));
+    transform-origin: left center;
+    animation-timing-function: var(--ease-rebound);
+  }
+  100% {
+    transform: scaleX(1) scaleY(1);
+    transform-origin: center center;
+  }
+}
+
+.pill-jelly-down {
+  animation: pill-jelly-down var(--pill-anim-dur, 0.38s) var(--ease-out);
+}
+.pill-jelly-up {
+  animation: pill-jelly-up var(--pill-anim-dur, 0.38s) var(--ease-out);
+}
+.pill-jelly-right {
+  animation: pill-jelly-right var(--pill-anim-dur, 0.38s) var(--ease-out);
+}
+.pill-jelly-left {
+  animation: pill-jelly-left var(--pill-anim-dur, 0.38s) var(--ease-out);
+}
