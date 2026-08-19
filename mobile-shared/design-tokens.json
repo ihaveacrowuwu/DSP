@@ -1,120 +1,158 @@
 {
-  "$comment": "Shared design decisions for the Muraka dashboard, Android app and iOS app. Colour is derived from the phenomenon: living coral tissue reads teal, bleached coral reads bone-white (because that is literally its colour), and rust is reserved for destructive actions so it never competes with data. Mirror of web/src/assets/theme.css — change both together.",
+  "$comment": "Shared design decisions for the Muraka dashboard, Android app and iOS app. REGENERATED from web/src/assets/theme.css after the dashboard's design overhaul. Read `policy` before using anything else: this file is deliberately NOT a mirror of the web theme any more, because the apps are native-first.",
 
-  "color": {
+  "policy": {
+    "rule": "Platform guidelines govern chrome. The family resemblance lives in the data.",
+    "detail": [
+      "Android follows Material 3 and iOS follows Apple's Human Interface Guidelines with Liquid Glass. Where a platform guideline and the dashboard's appearance disagree, THE PLATFORM WINS. That is a project decision, not a default.",
+      "So the apps take from this file only what carries meaning: the condition scale, the severity ramp, the provenance encoding, the patch-lattice maths, and the accent used as a seed/tint. Everything under `webOnly` is how the dashboard happens to render, and must not be ported.",
+      "The three clients are recognisable as one product because a bleached reef is bone-white everywhere, a model label is dashed everywhere, and every measurement is monospaced everywhere — not because they share corner radii."
+    ],
+    "portable": ["accent", "condition", "severityRamp", "signal", "provenance", "patchLattice", "readout"],
+    "notPortable": ["webOnly.surfaces", "webOnly.geometry", "webOnly.motion", "webOnly.depth"]
+  },
+
+  "accent": {
+    "$comment": "One accent, used as the Material 3 seed colour and the iOS tint. Under Material 3, dynamic colour from the user's wallpaper is CORRECT and should be preferred where available — see platform.android.dynamicColour. This value is the fallback seed and the iOS tint.",
+    "dark": "#2EC8A2",
+    "light": "#0F8168",
+    "onAccent": { "dark": "#04231C", "light": "#FFFFFF" }
+  },
+
+  "condition": {
+    "$comment": "The scale runs from living tissue to bare skeleton, because that is literally what bleaching looks like. Never substitute a red/green scale — it is the wrong metaphor and it fails for the ~8% of men with red-green colour blindness. These are DATA colours: they must not be re-tinted by Material dynamic colour or by any platform theming, because they carry scientific meaning.",
     "dark": {
-      "abyss": "#061A23",
-      "shelf": "#0C2833",
-      "shelfRaised": "#113340",
-      "shallow": "#1B4A5C",
-      "hairline": "#1D3F4D",
-      "ink": "#E8F1F2",
-      "inkMuted": "#8EA9B3",
-      "inkFaint": "#5C7B87"
+      "healthy": "#2EC8A2",
+      "healthyDim": "#17705D",
+      "mid": "#8ADCC5",
+      "bleached": "#F0E7D9",
+      "bleachedDim": "#BDB0A0"
     },
     "light": {
-      "abyss": "#EEF2F1",
-      "shelf": "#FFFFFF",
-      "shelfRaised": "#F7FAF9",
-      "shallow": "#CFDCD9",
-      "hairline": "#D8E2E0",
-      "ink": "#0D2B33",
-      "inkMuted": "#4A6873",
-      "inkFaint": "#7E969E"
+      "$comment": "On a light surface bone-white is invisible, so the bleached end becomes parched sand. The direction of the scale is preserved: saturated life to drained skeleton.",
+      "healthy": "#0F8168",
+      "healthyDim": "#0A5B49",
+      "mid": "#47A289",
+      "bleached": "#A4855C",
+      "bleachedDim": "#C8B795"
     },
-    "condition": {
-      "$comment": "The scale runs from living tissue to bare skeleton. Do not substitute a red/green scale.",
-      "dark": {
-        "living": "#35C79A",
-        "pale": "#9FD9C4",
-        "bone": "#EFE6D8",
-        "livingDim": "#1F6F5A",
-        "boneDim": "#B9AE9E"
-      },
-      "light": {
-        "living": "#10826A",
-        "pale": "#57A68D",
-        "bone": "#B08D5F",
-        "livingDim": "#A9DDCD",
-        "boneDim": "#D9C5A4"
-      }
-    },
-    "signal": {
-      "$comment": "rust is for destructive actions and failures only; verified marks expert-reviewed provenance.",
-      "dark": { "rust": "#D9542B", "amber": "#E0A33E", "verified": "#6FB3D9" },
-      "light": { "rust": "#B8431F", "amber": "#A9761C", "verified": "#2B6F96" }
-    },
-    "severityRamp": {
-      "$comment": "Stops for the bleached-extent scale, 0 to 1. Interpolate in sRGB.",
-      "0.0": "#35C79A",
-      "0.35": "#9FD9C4",
-      "0.7": "#EFE6D8",
-      "1.0": "#FFFFFF"
-    }
+    "usage": "Graphic and fill colour only. For text, use the platform's on-surface colour and carry the meaning with shape plus a word ('bleached 62%'), per NFR13. Do not set body text in these."
   },
 
-  "typography": {
-    "$comment": "No webfonts anywhere (the project forbids external service dependencies), so personality comes from the pairing. Every measured quantity — coordinate, depth, severity, count — is set in mono like an instrument readout. Small uppercase mono labels act as section markers.",
-    "roles": {
-      "ui": {
-        "android": "Roboto / system default",
-        "ios": "SF Pro Text",
-        "web": "system sans stack"
-      },
-      "readout": {
-        "$comment": "Use tabular figures so columns of numbers align.",
-        "android": "Roboto Mono",
-        "ios": "SF Mono",
-        "web": "ui-monospace stack"
-      }
-    },
-    "scale": {
-      "caption": 12,
-      "body": 14,
-      "bodyLarge": 16,
-      "title": 22,
-      "headline": 30,
-      "display": 40
-    },
-    "eyebrow": {
-      "$comment": "Section markers: mono, uppercase, letterspaced. Prefer carrying a value — 'QUEUE / 148 PENDING' rather than 'QUEUE'.",
-      "size": 12,
-      "letterSpacing": 0.14,
-      "textTransform": "uppercase"
-    }
+  "severityRamp": {
+    "$comment": "Bleached-extent scale, 0 to 1. Interpolate in sRGB. Matches the dashboard legend and the map markers exactly.",
+    "dark": { "0.0": "#2EC8A2", "0.35": "#8ADCC5", "0.7": "#F0E7D9", "1.0": "#BDB0A0" },
+    "light": { "0.0": "#0F8168", "0.35": "#47A289", "0.7": "#A4855C", "1.0": "#C8B795" },
+    "unassessed": { "dark": "#5F7C86", "light": "#8AA0A8" }
   },
 
-  "geometry": {
-    "radiusSmall": 3,
-    "radius": 6,
-    "radiusLarge": 10,
-    "hairlineWidth": 1
-  },
-
-  "spacing": { "xs": 4, "sm": 8, "md": 12, "lg": 16, "xl": 24, "xxl": 40 },
-
-  "motion": {
-    "$comment": "Two deliberate moments only: the patch lattice sweeping in as if inference were scanning the image, and queue items leaving. Respect the platform reduce-motion setting.",
-    "durationFast": 160,
-    "durationBase": 220,
-    "easing": "cubic-bezier(0.2, 0, 0.2, 1)",
-    "latticeCellStagger": { "perRowMs": 40, "perColumnMs": 12 }
-  },
-
-  "patchLattice": {
-    "$comment": "The signature element, shared by all three clients. Cells cover the CENTRE SQUARE of the photo, matching how the server tiles it.",
-    "defaultGrid": 5,
-    "cellGap": 1,
-    "opacityFloor": 0.35,
-    "opacityRange": 0.55,
-    "opacityFormula": "opacityFloor + confidence * opacityRange",
-    "overlayBlendMode": "hard-light",
-    "glyphSizeDp": 36
+  "signal": {
+    "$comment": "rust is destructive actions and failures only; amber is a warning; verified marks expert-reviewed provenance. Map these onto the platform's error/warning roles rather than hardcoding where an equivalent exists (M3 `error`, iOS `systemRed`).",
+    "dark": { "rust": "#E2643D", "amber": "#E3AD4D", "verified": "#67BCE4" },
+    "light": { "rust": "#B4441F", "amber": "#A3741B", "verified": "#2A6D93" }
   },
 
   "provenance": {
-    "$comment": "NFR13: a model label must never be mistaken for an expert verdict, and the difference must survive greyscale and colour blindness. Encode it in shape, not colour.",
-    "verified": { "border": "solid", "markerFill": "filled", "label": "expert" },
-    "predicted": { "border": "dashed", "markerFill": "hollow", "label": "model" }
-  }
+    "$comment": "NFR13. A model label must never be mistaken for an expert verdict, and the distinction must survive greyscale, colour blindness and a screenshot in the project. Encode it in SHAPE and WORDS, never in colour alone. Express it with each platform's own chip/badge component — an M3 FilterChip or an iOS bordered label — not by reproducing the web's markup.",
+    "verified": { "border": "solid", "markerFill": "filled", "word": "expert" },
+    "predicted": { "border": "dashed", "markerFill": "hollow", "word": "model" }
+  },
+
+  "readout": {
+    "$comment": "Every measured quantity — coordinate, depth, severity, count, model version — is monospaced with tabular figures, so columns of numbers align and the interface reads like an instrument. This is the strongest piece of family resemblance and it costs nothing on either platform.",
+    "android": "Roboto Mono, or the platform monospace family",
+    "ios": "SF Mono, via UIFont.monospacedDigitSystemFont for figures inside otherwise-proportional text",
+    "tabularFigures": true
+  },
+
+  "patchLattice": {
+    "$comment": "The signature element, shared by all three clients: the model tiles a photograph into a grid and judges each cell, and drawing that grid is drawing the model's actual reasoning. CORRECTED after the dashboard overhaul — the two opacity formulas below differ, and the earlier single formula was wrong for the overlay case.",
+    "defaultGrid": 5,
+    "cellGapDp": 1,
+    "glyph": {
+      "$comment": "Small standalone version in a list row, with no photograph behind it. Uses the full opacity range.",
+      "opacity": "0.45 + confidence * 0.55",
+      "sizeDp": 34
+    },
+    "overlay": {
+      "$comment": "Drawn on top of the photograph. The range stops well short of solid on purpose: past roughly 0.7 the cells stop annotating the reef and start replacing it, and a contributor cannot check a judgement against coral they can no longer see.",
+      "opacity": "0.28 + confidence * 0.42",
+      "blendMode": "hard-light",
+      "blendFallback": "If the platform cannot blend cheaply, draw the cells at the stated opacity with normal compositing — do not raise the opacity to compensate."
+    },
+    "geometry": "Cells cover the CENTRE SQUARE of the photograph, matching how the server tiles it. Letterbox the image the same way or the cells will not line up with what was actually classified.",
+    "source": "Reference implementation: web/src/components/PatchLattice.vue"
+  },
+
+  "typeScale": {
+    "$comment": "Sizes the dashboard uses, in points/dp. Provided for reference only: prefer the platform type ramp (Material 3 Display/Headline/Title/Body/Label, iOS Dynamic Type text styles) and let it scale with the user's accessibility setting. BOTH APPS MUST SUPPORT DYNAMIC TYPE / FONT SCALING — a fixed 14pt body is a bug, not a design.",
+    "caption": 12,
+    "body": 14,
+    "bodyLarge": 16,
+    "title": 22,
+    "headline": 30,
+    "display": 40
+  },
+
+  "platform": {
+    "android": {
+      "designSystem": "Material 3 (Material Design 3). Follow m3.material.io, including its component choices, shape scale, elevation and motion tokens.",
+      "dynamicColour": "PREFER dynamic colour from the wallpaper on Android 12+, seeded fallback from `accent.light` / `accent.dark` below that. Dynamic colour applies to chrome only — app bars, navigation, buttons, surfaces. It must NEVER be applied to `condition`, `severityRamp` or `signal`, which are data.",
+      "surfaces": "Use the M3 surface roles (surface, surfaceContainerLow…Highest, onSurface, onSurfaceVariant, outline, outlineVariant). Do not port the dashboard's glass surfaces.",
+      "shape": "M3 shape scale (4 / 8 / 12 / 16 / 28dp). Ignore the web radii entirely.",
+      "motion": "M3 motion tokens / MotionScheme springs. Ignore the web's easing curves.",
+      "darkMode": "Required (NFR14). Both schemes must be correct, not just tinted."
+    },
+    "ios": {
+      "designSystem": "Apple Human Interface Guidelines, with the iOS 26 Liquid Glass design language. UIKit, not SwiftUI — a project requirement, not a preference.",
+      "tint": "Set the accent as the app's tint colour; let system controls inherit it.",
+      "surfaces": "Use system materials and the Liquid Glass effects for chrome. Use semantic colours (systemBackground, secondarySystemBackground, label, secondaryLabel, separator) so light/dark and increased-contrast come free. Do not hardcode the dashboard's surface values.",
+      "shape": "Concentric corner radii per HIG, expressed with the platform's corner configuration rather than fixed numbers.",
+      "motion": "System animation and the platform's glass transitions. Ignore the web's easing curves.",
+      "degradation": "Liquid Glass is a surface treatment, not a structural dependency: the app must fall back to standard UIKit materials where the effect is unavailable.",
+      "darkMode": "Required (NFR14), via semantic colours rather than manual branching."
+    }
+  },
+
+  "webOnly": {
+    "$comment": "How the dashboard renders. Recorded so the three clients can be compared and so this file stays a complete picture — NOT for porting. Under the native-first rule these have no authority on either platform.",
+    "surfaces": {
+      "dark": {
+        "ground": "#04121A",
+        "surfaceRecessed": "rgba(3, 14, 20, 0.42)",
+        "surface1": "rgba(150, 214, 226, 0.05)",
+        "surface2": "rgba(150, 214, 226, 0.10)",
+        "surface3": "rgba(150, 214, 226, 0.16)",
+        "chrome": "rgba(7, 27, 37, 0.62)",
+        "line": "rgba(150, 214, 226, 0.13)",
+        "lineStrong": "rgba(150, 214, 226, 0.24)",
+        "ink": "#E9F4F6",
+        "ink2": "#B4CED6",
+        "ink3": "#86A4AE",
+        "ink4": "#5F7C86"
+      },
+      "light": {
+        "ground": "#EEF3F3",
+        "surfaceRecessed": "rgba(255, 255, 255, 0.66)",
+        "surface1": "rgba(255, 255, 255, 0.60)",
+        "surface2": "rgba(13, 43, 51, 0.05)",
+        "surface3": "rgba(13, 43, 51, 0.10)",
+        "chrome": "rgba(248, 252, 252, 0.66)",
+        "line": "rgba(13, 43, 51, 0.12)",
+        "lineStrong": "rgba(13, 43, 51, 0.22)",
+        "ink": "#0C2A32",
+        "ink2": "#3D5C66",
+        "ink3": "#64828C",
+        "ink4": "#8AA0A8"
+      }
+    },
+    "geometry": { "xs": 7, "sm": 10, "md": 14, "lg": 18, "xl": 24, "pill": 999 },
+    "depth": { "blurSmall": 3, "blur": 6, "blurLarge": 10 },
+    "motion": {
+      "durations": { "micro": 120, "fast": 160, "base": 240, "slow": 340 },
+      "$comment": "The web uses linear() springs for its pill and hover feedback. Both platforms have their own spring systems; use those."
+    }
+  },
+
+  "maintenance": "When web/src/assets/theme.css changes, update `accent`, `condition`, `severityRamp`, `signal` and `webOnly` here in the same commit. The portable sections are the contract between three clients; letting them drift is how the apps ended up specified against a palette the dashboard no longer had."
 }

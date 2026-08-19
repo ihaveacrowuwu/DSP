@@ -7,8 +7,14 @@ platforms cannot drift apart.
 - **API contract:** [`docs/openapi.yaml`](../docs/openapi.yaml) — authoritative.
 - **Sync protocol:** [`sync-protocol.md`](sync-protocol.md) — the offline queue,
   in detail. Read this before writing any networking code.
-- **Design tokens:** [`design-tokens.json`](design-tokens.json) — the same colour
-  and type decisions the dashboard uses, so all three clients look related.
+- **Integration reference:** [`integration.md`](integration.md) — roles, enums,
+  validation rules, the error catalogue and the sighting state machine. Read
+  alongside the sync protocol.
+- **Design tokens:** [`design-tokens.json`](design-tokens.json) — the decisions that
+  cross platforms. Read its `policy` block first: the apps are native-first, so this
+  is deliberately not a mirror of the web theme.
+- **Design language:** [`design-language.md`](design-language.md) — how Material 3
+  and Liquid Glass apply here, and what must match the dashboard exactly.
 - **Reference requests:** [`api-examples.http`](api-examples.http) — copy-pasteable
   calls for every endpoint a mobile client uses.
 
@@ -47,6 +53,10 @@ These come from the project's requirements and apply to both platforms.
    verdicts must be visually distinct — different marker shape, not colour alone.
    The dashboard uses a dashed outline for model output and a filled marker for
    verified; match that idea, in each platform's idiom.
+   **Follow the platform, not the dashboard's chrome.** Material 3 governs the
+   Android app and the HIG plus Liquid Glass govern the iOS app; where either
+   disagrees with how the web looks, the platform wins. See
+   [`design-language.md`](design-language.md).
 4. **Bleached reads as bone-white, healthy as living teal.** Severity ramps from
    teal to white because that is what bleaching looks like. Do not substitute a
    red/green scale.
@@ -119,7 +129,11 @@ A photo's prediction carries `patchGrid` (e.g. 5) and a `patches` array of
 the image:
 
 - cell fill: living teal for `healthy`, bone white for `bleached`
-- cell opacity: `0.35 + confidence × 0.55`, so a hesitant model looks hesitant
+- cell opacity, **two different formulas** — over a photograph use
+  `0.28 + confidence × 0.42`, and for the small standalone glyph in a list row use
+  `0.45 + confidence × 0.55`. A hesitant model should look hesitant, but over a
+  photograph the cells must stay an annotation: past roughly 0.7 they replace the
+  reef and nobody can check the judgement against it
 - the grid covers the **centre square** of the image, matching how the server
   tiled it — letterbox the photo the same way or the cells will not line up
 
