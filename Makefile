@@ -8,7 +8,7 @@ GO      := go
 .DEFAULT_GOAL := help
 
 .PHONY: help up down logs ps restart seed reset-data smoke test test-go test-ml test-web \
-        build fmt vet typecheck dev-api dev-ml dev-web psql
+        build fmt vet typecheck dev dev-api dev-ml dev-web psql
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -48,7 +48,7 @@ reset-data: ## Delete all sightings, then reseed
 
 ## ---------------------------------------------------------------- tests
 
-test: test-go test-ml ## Run all unit tests
+test: test-go test-ml test-web ## Run all unit tests
 
 test-go: ## Go unit tests
 	cd backend && $(GO) test ./...
@@ -56,8 +56,8 @@ test-go: ## Go unit tests
 test-ml: ## ML service tests (fake mode; needs no model)
 	cd ml/service && ./.venv/Scripts/python -m pytest tests/ -q
 
-test-web: ## Typecheck the dashboard
-	cd web && npm run typecheck
+test-web: ## Typecheck the dashboard and run its unit tests
+	cd web && npm run typecheck && npm test
 
 smoke: ## End-to-end pipeline test against the running stack
 	python scripts/smoke_test.py
@@ -85,5 +85,11 @@ dev-api: ## Run the API on the host against the containerised database
 dev-ml: ## Run the ML service on the host with reload
 	cd ml/service && ./.venv/Scripts/python -m uvicorn app.main:app --reload --port 8000
 
-dev-web: ## Run the Vite dev server
+dev-web: ## Dashboard with hot reload on :5180 (replaces the static web container)
+	@echo "Freeing :5180 — the static web container serves the last build there."
+	-$(COMPOSE) stop web
 	cd web && npm run dev
+
+dev: ## Backing services in Docker + the dashboard with hot reload
+	$(COMPOSE) up -d --build postgres ml api
+	@$(MAKE) --no-print-directory dev-web

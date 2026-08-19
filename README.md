@@ -54,6 +54,31 @@ Then open the dashboard at **http://localhost:5180** and sign in as
 
 Ports are overridable if they clash: `make up API_PORT=9090 WEB_PORT=5190`.
 
+### Working on the dashboard
+
+`make up` serves the dashboard as a **static production build** behind nginx, which
+is what the demo demo should run. It does not pick up source edits — a change needs
+`make restart S=web` to be rebuilt.
+
+For frontend work, run the dev server instead and get hot module reload: edits to a
+component or to the design tokens apply in place, without a page reload and without
+losing where you were in the app.
+
+```bash
+make dev-web            # hot reload on the same URL, :5180
+make dev                # the same, plus starting postgres/api/ml first
+```
+
+`make dev-web` stops the static `web` container so the dev server can own port
+5180 — the URL never changes, only what is answering on it. Vite is set to
+`strictPort`, so if something else holds 5180 it says so instead of quietly moving
+to another port and leaving you looking at a stale build. `make up` puts the static
+container back.
+
+The API, ML service and database keep running in Docker throughout; only the
+dashboard moves to the host. Same pattern as the existing `dev-api` and `dev-ml`
+targets.
+
 | Service | URL |
 |---|---|
 | Dashboard | http://localhost:5180 |
