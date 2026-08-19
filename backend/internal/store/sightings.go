@@ -298,10 +298,15 @@ func (s *Store) MapPoints(ctx context.Context, f SightingFilter, zoom int) ([]Ma
 		return out, rows.Err()
 	}
 
-	// One web-mercator tile spans 360/2^zoom degrees; an eighth of that gives
-	// roughly 20-40 clusters across a viewport, which keeps the payload bounded
-	// (NFR3) while still resolving individual reefs as the user zooms in.
-	cell := coord(45.0 / math.Pow(2, float64(zoom)))
+	// One web-mercator tile spans 360/2^zoom degrees; a forty-eighth of that is
+	// the grid. An eighth was the original choice and it was too coarse: the
+	// Maldives is a 9-degree ribbon barely 1 degree wide, so at national zoom the
+	// whole country collapsed into about seven cells and the map became seven
+	// enormous dots that said nothing about where bleaching was. At a
+	// forty-eighth the same view returns 50-80 clusters, which traces the atoll
+	// chain and still keeps the payload two orders of magnitude below the raw
+	// data (NFR3). Anything finer stops being a cluster and starts being noise.
+	cell := coord(7.5 / math.Pow(2, float64(zoom)))
 
 	rows, err := s.pool.Query(ctx, effectiveLabelCTE+`
 		SELECT ST_Y(ST_Centroid(ST_Collect(s.location::geometry))),
