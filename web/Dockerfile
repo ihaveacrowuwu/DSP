@@ -8,11 +8,20 @@ RUN npm install
 
 COPY . .
 
-# Vite inlines VITE_* at build time, so the API URL is a build argument.
+# Vite inlines VITE_* at build time, so these are build arguments.
+#
+# The map needs none of them: its geography is committed under public/basemap and
+# is copied in with the rest of the build. The tile arguments exist only for
+# someone who wants raster imagery underneath it, and default to empty so the
+# image never reaches for a third-party tile server. An earlier version of this
+# file defaulted to a public style URL, which quietly made the container depend on
+# a service the project is not allowed to depend on.
 ARG VITE_API_BASE_URL=""
-ARG VITE_MAP_STYLE_URL="https://tiles.openfreemap.org/styles/positron"
+ARG VITE_MAP_TILE_URL=""
+ARG VITE_MAP_TILE_ATTRIBUTION=""
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
-    VITE_MAP_STYLE_URL=$VITE_MAP_STYLE_URL
+    VITE_MAP_TILE_URL=$VITE_MAP_TILE_URL \
+    VITE_MAP_TILE_ATTRIBUTION=$VITE_MAP_TILE_ATTRIBUTION
 
 RUN npm run build
 
