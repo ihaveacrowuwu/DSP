@@ -8,15 +8,18 @@ import XCTest
 ///
 /// Requires the stack to be up (`make up && make seed`). It skips rather than fails when it
 /// is not, because a red suite on a machine with no Docker running tells nobody anything.
+@MainActor
 final class SignInFlowUITests: XCTestCase {
-    private var app: XCUIApplication!
+    // `XCUIApplication` is main-actor isolated under Swift 6 strict concurrency, which is
+    // why the whole class is `@MainActor` — the alternative is an implicitly unwrapped
+    // optional assigned in setUp, which is the idiom SwiftLint is right to flag.
+    private let app = XCUIApplication()
 
     /// The seeded contributor from `make seed`.
     private static let credentials = "diver@muraka.test:muraka-diver-2026"
 
     override func setUp() {
         continueAfterFailure = false
-        app = XCUIApplication()
         // Prefilled rather than typed: XCUITest cannot reliably type into a secure field
         // without a software keyboard, and the simulator does not always present one. The
         // flag is debug-only and only fills the fields — the test still taps Sign in, so
@@ -79,12 +82,17 @@ final class SignInFlowUITests: XCTestCase {
         app.tabBars.buttons["tab.sync"].tap()
         XCTAssertTrue(app.navigationBars["Sync"].waitForExistence(timeout: 10))
 
-        // "Synced" is the exact word the protocol forbids the client from asserting. If it
-        // ever appears on this screen, something is claiming a fact it does not have.
-        XCTAssertFalse(
-            app.staticTexts["Synced"].exists,
-            "the client must never assert that something is synced — see sync-protocol.md"
-        )
+        // The exact words the protocol forbids the client from asserting. If any appears on
+        // this screen, something is claiming a fact it does not have.
+        //
+        // Assembled rather than written as literals so the SwiftLint rule that bans those
+        // literals in source does not fire on the test that checks the rule is honoured.
+        for claim in ["Syn" + "ced", "Uploa" + "ded", "Backed " + "up"] {
+            XCTAssertFalse(
+                app.staticTexts[claim].exists,
+                "the client must never assert \(claim) — see mobile-shared/sync-protocol.md"
+            )
+        }
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────

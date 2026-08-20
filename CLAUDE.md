@@ -48,11 +48,13 @@ backend/      Go API, worker, seed loader. chi router, pgx, argon2id, JWT
 ml/           service/ = FastAPI + ONNX (CPU, fake mode by default)
               training/ = M1 Pro recipes. Only configs/baseline.yaml exists so far
 web/          Vue 3 + TypeScript dashboard, MapLibre, Vite
-android/      Not started. Kotlin + Compose + M3
-ios/          Not started. Swift + UIKit + Liquid Glass
+android/      Kotlin + Compose + M3. Multi-module Gradle; see its README
+ios/          Swift + UIKit + Liquid Glass. XcodeGen; the .xcodeproj is generated
 mobile-shared/ The contract both apps build against
 deploy/       docker-compose.yml for the whole stack
 scripts/      smoke_test.py — end-to-end pipeline check
+              check_status_vocabulary.py — fails if the two apps disagree about a
+              contributor-facing status, or if either claims a sighting is delivered
               build_basemap.py — regenerates the dashboard's offline Maldives
               basemap from Natural Earth. Only needed if the geography or the
               clip box changes; its output is committed
@@ -100,12 +102,18 @@ interaction, `.btn` plus a variant on every button, MDI icons only via
 do not float over content. Read the file headers — they explain the reasoning,
 including several bugs that are easy to reintroduce.
 
-## Current status (2026-08-19)
+## Current status (2026-08-21)
 
 Built and running: Go API and worker, ML service (**fake mode — no trained model
-yet**), Vue dashboard, database, 10k seeded sightings, Docker stack.
+yet**), Vue dashboard, database, seeded sightings, Docker stack, **and both mobile
+apps**.
 
-Not started: both mobile apps, and the ML training track.
+Both contributor apps are feature-complete against the `mobile-shared` contract: all
+six screens, the offline outbox, reconciliation, token refresh, the patch lattice and
+the provenance encoding. They were built and verified against the running stack — see
+`docs/evidence/mobile/` for screenshots of every screen on both platforms.
+
+Not started: the ML training track.
 
 Measured so far: sync→label ~1.5s (target ≤30s), map with 10k sightings 22ms
 (target <2s).
@@ -115,7 +123,35 @@ committed as 67 KB of vector GeoJSON (`web/public/basemap/maldives.json`), so th
 path has no tile server, no glyph server and no network. See D22/D23 in `docs/08` and
 the header of `web/src/lib/mapStyle.ts`.
 
-Known gaps: no DB-backed integration tests (all 40 Go tests are pure unit tests),
-dashboard tests cover only the map style, the basemap and the photo-resolution rule
-(`web/src/lib/*.test.ts`, 18 tests) and nothing else, no TLS in the demo config, no
-load test, no `TESTING.md` traceability document, and no trained model.
+Known gaps: no DB-backed integration tests on the **Go** side (all 40 Go tests are
+pure unit tests), dashboard tests cover only the map style, the basemap and the
+photo-resolution rule (`web/src/lib/*.test.ts`, 18 tests) and nothing else, no TLS in
+the demo config, no load test, no `TESTING.md` traceability document, and no trained
+model.
+
+On mobile, the gap is the acceptance checklist at the end of
+`mobile-shared/README.md`: the offline scenarios that need a device to be put into
+aeroplane mode and force-quit mid-upload have not been walked through yet, and neither
+has the NFR6 timing (under 60 seconds and 8 taps). The capture flow is five taps by
+construction, but that is a claim until somebody holds a stopwatch.
+
+## Mobile
+
+Both apps are native and share nothing but the contract in `mobile-shared/`. Two rules
+carry most of the design and are worth knowing before touching either:
+
+- **The server is the source of truth (D21).** The outbox is authoritative only about
+  what has NOT been delivered. There is no "Synced" status anywhere in either app, by
+  design — `scripts/check_status_vocabulary.py` fails the build if one appears, and if
+  the two apps ever disagree about a word.
+- **Platform guidelines govern chrome; the data carries the family resemblance.**
+  Material 3 with dynamic colour on Android, Liquid Glass on iOS — but the condition
+  scale, the severity ramp and the patch lattice are identical, and deliberately live
+  outside each platform's themable palette.
+
+```bash
+make android-install    # build and install on the running emulator
+make ios-build          # regenerate the Xcode project and build for the simulator
+make mobile             # unit tests for both
+make mobile-lint        # linters, the status-vocabulary check and the ATS check
+```

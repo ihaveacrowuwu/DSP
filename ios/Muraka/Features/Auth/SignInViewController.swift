@@ -197,7 +197,11 @@ final class SignInViewController: UIViewController {
 
     private func setBusy(_ busy: Bool) {
         submitButton.isEnabled = !busy
-        busy ? spinner.startAnimating() : spinner.stopAnimating()
+        if busy {
+            spinner.startAnimating()
+        } else {
+            spinner.stopAnimating()
+        }
     }
 
     private func show(message: String) {

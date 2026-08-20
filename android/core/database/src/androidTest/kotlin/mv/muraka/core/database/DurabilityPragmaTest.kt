@@ -1,10 +1,8 @@
 package mv.muraka.core.database
 
-import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import mv.muraka.core.database.di.DatabaseModule
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -26,29 +24,28 @@ class DurabilityPragmaTest {
 
     private lateinit var database: MurakaDatabase
 
-    /** Built exactly as `DatabaseModule` builds it, on disk — WAL is meaningless in memory. */
+    /**
+     * Built through `DatabaseModule` itself, on disk.
+     *
+     * Reconstructing the builder here was the first attempt and it was a mistake: the test
+     * then asserts against its own copy of the configuration rather than the app's, so the
+     * app could lose the pragma entirely and the test would still pass. On disk rather than
+     * in memory because WAL is meaningless for an in-memory database.
+     */
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        context.deleteDatabase(TEST_DB)
-        database = Room.databaseBuilder(context, MurakaDatabase::class.java, TEST_DB)
-            .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
-            .addCallback(
-                object : RoomDatabase.Callback() {
-                    override fun onOpen(db: SupportSQLiteDatabase) {
-                        db.query("PRAGMA synchronous = FULL").close()
-                        db.setForeignKeyConstraintsEnabled(true)
-                    }
-                },
-            )
-            .build()
-        // Room opens lazily; touch it so onOpen has run before anything is asserted.
+        context.deleteDatabase(MurakaDatabase.NAME)
+        database = DatabaseModule.database(context)
+        // Room opens lazily; touch it so the connection is configured before anything is read.
         database.openHelper.writableDatabase
     }
 
     @After
     fun tearDown() {
         database.close()
+        ApplicationProvider.getApplicationContext<android.content.Context>()
+            .deleteDatabase(MurakaDatabase.NAME)
     }
 
     @Test
@@ -75,8 +72,4 @@ class DurabilityPragmaTest {
             cursor.moveToFirst()
             cursor.getString(0).lowercase()
         }
-
-    private companion object {
-        const val TEST_DB = "muraka-durability-test.db"
-    }
 }

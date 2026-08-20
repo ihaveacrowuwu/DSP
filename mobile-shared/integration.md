@@ -157,12 +157,23 @@ Contributor-facing wording — the same strings on both platforms, and note the
 | Server | `pending_photos` | Photos pending |
 | Server | `processing` | Analysing |
 | Server | `awaiting_verification` | Awaiting expert review |
-| Server | `verified` | Verified |
+| Server | `verified` | Verified by an expert |
 | Server | `rejected` | Not usable |
+| Outbox | retries exhausted | Could not upload |
 
 There is deliberately no client-assertable "Synced". A local flag saying the upload
 worked is a claim, not a fact; the app either has the server's answer or it says it is
 still checking.
+
+> The two documents disagreed while the apps were being built: this table said "Verified" and
+> [`sync-protocol.md`](sync-protocol.md#reading-state-back) said "Verified by an expert". The
+> longer form won and both now say it, because it carries the provenance distinction NFR13
+> asks for **in the word itself** — so the status survives a greyscale screenshot with no chip
+> beside it. `Could not upload` was added for a queue item that has exhausted its retries; it
+> is client-assertable, because it is a fact about our own queue rather than a claim about the
+> server.
+>
+> `scripts/check_status_vocabulary.py` fails the build if the two apps ever drift apart again.
 
 ## Reconciling with the server
 

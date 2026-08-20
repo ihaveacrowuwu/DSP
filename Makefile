@@ -127,6 +127,16 @@ test-ios: ios-generate ## iOS unit tests on the simulator
 
 mobile: test-android test-ios ## Unit tests for both apps
 
-mobile-lint: ## Linters for both apps
+mobile-lint: ## Linters and cross-platform checks for both apps
 	cd android && ./gradlew ktlintCheck detekt
 	cd ios && swiftlint --quiet
+	@echo
+	python3 scripts/check_status_vocabulary.py
+	@echo
+	@# NFR4: the App Transport Security exception is a debug-only affordance for the local
+	@# stack, and a release build that carried one could talk to a dev server in clear text.
+	@if plutil -extract NSAppTransportSecurity xml1 -o - ios/Config/Info.plist >/dev/null 2>&1; then \
+		echo "FAIL: ios/Config/Info.plist (the RELEASE plist) has an ATS exception"; exit 1; \
+	else \
+		echo "release Info.plist carries no App Transport Security exception"; \
+	fi

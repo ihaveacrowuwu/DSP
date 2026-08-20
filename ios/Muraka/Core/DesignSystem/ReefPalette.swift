@@ -68,23 +68,37 @@ enum ReefPalette {
 
     /// Interpolates in the current trait collection's resolved colours, so a dark-mode ramp
     /// interpolates dark-mode stops rather than light ones.
+    /// A colour pulled apart into components, so two can be mixed.
+    ///
+    /// A named type rather than a four-member tuple: `(r1, g1, b1, a1)` and `(r2, g2, b2, a2)`
+    /// are exactly the sort of positional soup where a transposed pair goes unnoticed.
+    private struct Components {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+
+        init(_ colour: UIColor) {
+            colour.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        }
+
+        func mixed(towards other: Components, by fraction: CGFloat) -> UIColor {
+            UIColor(
+                red: red + (other.red - red) * fraction,
+                green: green + (other.green - green) * fraction,
+                blue: blue + (other.blue - blue) * fraction,
+                alpha: alpha + (other.alpha - alpha) * fraction
+            )
+        }
+    }
+
     private static func lerp(_ from: UIColor, _ to: UIColor, _ t: Double) -> UIColor {
         UIColor { traits in
-            let start = from.resolvedColor(with: traits)
-            let end = to.resolvedColor(with: traits)
-
-            var (r1, g1, b1, a1): (CGFloat, CGFloat, CGFloat, CGFloat) = (0, 0, 0, 0)
-            var (r2, g2, b2, a2): (CGFloat, CGFloat, CGFloat, CGFloat) = (0, 0, 0, 0)
-            start.getRed(&r1, green: &g1, blue: &b1, alpha: &a1)
-            end.getRed(&r2, green: &g2, blue: &b2, alpha: &a2)
-
-            let fraction = CGFloat(min(max(t, 0), 1))
-            return UIColor(
-                red: r1 + (r2 - r1) * fraction,
-                green: g1 + (g2 - g1) * fraction,
-                blue: b1 + (b2 - b1) * fraction,
-                alpha: a1 + (a2 - a1) * fraction
-            )
+            Components(from.resolvedColor(with: traits))
+                .mixed(
+                    towards: Components(to.resolvedColor(with: traits)),
+                    by: CGFloat(min(max(t, 0), 1))
+                )
         }
     }
 }

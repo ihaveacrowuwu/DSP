@@ -13,6 +13,7 @@ excluded:
   - DerivedData
   - .build
 
+
 # ── Rules enabled beyond the defaults ────────────────────────────────────────
 opt_in_rules:
   - array_init
@@ -98,6 +99,9 @@ identifier_name:
     - db
     - x
     - y
+    # The interpolation parameter in the severity ramp. `t` is the conventional name for it
+    # in every graphics text; `interpolationFraction` would be noise, not clarity.
+    - t
 
 cyclomatic_complexity:
   warning: 12
@@ -127,10 +131,16 @@ custom_rules:
     severity: warning
   no_local_synced_flag:
     name: "No client-asserted sync status"
-    # D21: the client may state 'waiting to upload' and 'uploading' and nothing else.
-    # A user-facing string reading "Synced" is the exact bug the protocol exists to
-    # prevent, so it is a lint error rather than a code-review hope.
-    regex: '"(Synced|synced|Uploaded|Saved to server)"'
+    # D21: the client may state 'waiting to upload', 'uploading' and 'could not upload',
+    # and nothing else. A user-facing string reading "Synced" is the exact bug the protocol
+    # exists to prevent, so it is a lint error rather than a code-review hope.
+    #
+    # `match_kinds: string` restricts it to actual string literals. Without that it fired on
+    # its own documentation — every comment explaining why "Synced" is forbidden contains the
+    # word — which is the classic way a well-meant custom rule gets disabled instead of fixed.
+    regex: '"(Synced|Uploaded|Saved to server|Backed up)"'
+    match_kinds:
+      - string
     message: "The client may never assert sync status. Show the server's status, or 'Checking…'. See mobile-shared/sync-protocol.md."
     severity: error
 
