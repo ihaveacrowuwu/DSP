@@ -1,0 +1,16 @@
+#include "Base.xcconfig"
+
+// HTTPS only. The App Transport Security exception below is scoped to the debug
+// configuration and never reaches a release build (NFR4).
+SLASH = /
+MURAKA_API_BASE_URL = https:$(SLASH)$(SLASH)muraka.invalid
+
+// No App Transport Security exception. See Config/Info.plist.
+INFOPLIST_FILE = Config/Info.plist
+
+SWIFT_COMPILATION_MODE = wholemodule
+ONLY_ACTIVE_ARCH = NO
+
+// Ship debug symbols separately so a crash report is symbolisable without the symbols
+// being inside the binary.
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym

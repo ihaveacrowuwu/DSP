@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The splash background only. Every other colour is a Compose token in
+         :core:designsystem — see ReefColors.kt. -->
+    <color name="splash_background">#04121A</color>
+</resources>

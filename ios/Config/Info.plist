@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  RELEASE Info.plist.
+
+  There is deliberately NO NSAppTransportSecurity key here. The debug build uses
+  Config/Info-Debug.plist, which is this file plus an ATS exception scoped to the local
+  development stack. `make mobile-lint` fails if this file ever grows one (NFR4).
+
+  Kept in sync by hand with Info-Debug.plist. The two differ by exactly one block.
+-->
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>$(DEVELOPMENT_LANGUAGE)</string>
+    <key>CFBundleDisplayName</key>
+    <string>Muraka</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+
+    <!-- Read at runtime by AppConfiguration. Not a secret: this project depends on no
+         keyed service at all (constraint 2). -->
+    <key>MurakaAPIBaseURL</key>
+    <string>$(MURAKA_API_BASE_URL)</string>
+
+    <!-- Permission strings say WHY, and are shown at the moment of capture rather than
+         on launch — mobile-shared/README.md non-negotiable 6. -->
+    <key>NSCameraUsageDescription</key>
+    <string>Muraka uses the camera to photograph the reef you are recording. Photographs stay on your device until you have a connection.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>A sighting is only useful to researchers if they know which reef it came from. If there is no fix you can drop a pin on the map instead.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Import reef photographs you already took on an action camera.</string>
+
+    <!-- Drains the outbox in the background so a sighting captured offline uploads
+         without the contributor reopening the app. There is no push infrastructure in
+         this project by design (constraint 4) — this is the OS waking us, not a server. -->
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array>
+        <string>mv.muraka.sync.drain</string>
+    </array>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>processing</string>
+    </array>
+
+    <!-- No storyboard: the window and root controller are built in code by
+         SceneDelegate, because UIKit-in-code reviews better than a XIB diff. -->
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <false/>
+        <key>UISceneConfigurations</key>
+        <dict>
+            <key>UIWindowSceneSessionRoleApplication</key>
+            <array>
+                <dict>
+                    <key>UISceneConfigurationName</key>
+                    <string>Default Configuration</string>
+                    <key>UISceneDelegateClassName</key>
+                    <string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+                </dict>
+            </array>
+        </dict>
+    </dict>
+    <key>UILaunchScreen</key>
+    <dict>
+        <key>UIColorName</key>
+        <string>LaunchBackground</string>
+    </dict>
+</dict>
+</plist>

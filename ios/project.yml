@@ -1,0 +1,182 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# XcodeGen project definition — the SINGLE source of truth for Muraka.xcodeproj.
+#
+# Why XcodeGen rather than a hand-managed .xcodeproj:
+#   • `project.pbxproj` is a generated artefact that merges terribly, and this is a
+#     solo project whose whole point is a reviewable history.
+#   • New Swift files are picked up automatically from the `sources` directories,
+#     so a file cannot be silently missing from the target.
+#   • Build settings become readable, diffable YAML and .xcconfig files.
+#
+# Regenerate after editing this file:
+#     cd ios && xcodegen generate      (or: make ios-generate)
+#
+# NEVER hand-edit Muraka.xcodeproj/project.pbxproj — it is gitignored and will be
+# overwritten.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Muraka
+
+options:
+  bundleIdPrefix: mv.muraka
+  deploymentTarget:
+    # 26.0, because Liquid Glass is a project requirement (NFR14) rather than a
+    # preference. Every glass API — UIGlassEffect, UIGlassContainerEffect, the glass
+    # button configurations, UICornerConfiguration — is iOS 26+, all four verified
+    # against the iPhoneSimulator26.5 SDK before this was written.
+    #
+    # Targeting 26.0 means the code calls them unconditionally instead of maintaining
+    # two visual designs behind `if #available`. The documented degradation path is
+    # still built and still exercised: Reduce Transparency and Increase Contrast turn
+    # the effect off at runtime, so GlassSurface has a real fallback that a reviewer
+    # can switch on in Settings. See docs/08 D26.
+    iOS: "26.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+  groupSortPosition: top
+  disabledValidations: []
+
+configs:
+  Debug: debug
+  Release: release
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    # Swift 6 strict concurrency. Warnings here are real data races — fix them with
+    # correct isolation (actor, @MainActor, Sendable), never by silencing.
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_UPCOMING_FEATURE_CONCISE_MAGIC_FILE: true
+    ENABLE_USER_SCRIPT_SANDBOXING: true
+    DEAD_CODE_STRIPPING: true
+    CLANG_ENABLE_MODULES: true
+    GCC_TREAT_WARNINGS_AS_ERRORS: true
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: false
+    CODE_SIGN_STYLE: Automatic
+    # Scoped to the simulator SDK deliberately. Unscoped, this also forbids signing for
+    # a device, so `Any iOS Device` fails outright and the app cannot be put on a phone.
+    "CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]": false
+    "CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]": false
+  configs:
+    debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+      SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+      ENABLE_TESTABILITY: true
+    release:
+      SWIFT_OPTIMIZATION_LEVEL: "-O"
+      SWIFT_COMPILATION_MODE: wholemodule
+      VALIDATE_PRODUCT: true
+
+packages:
+  # GRDB rather than Core Data. sync-protocol.md requires the outbox to run in WAL mode
+  # with `synchronous = FULL`, and GRDB exposes both directly; Core Data does not let
+  # you set the journal's synchronous level per store without dropping to raw pragmas
+  # against a store it also owns. The queue is the only thing between a captured
+  # sighting and lost data, so that control is the deciding factor.
+  GRDB:
+    url: https://github.com/groue/GRDB.swift
+    # EXACT, not `from:`. Swift Package Manager writes its lock file to
+    # Muraka.xcodeproj/project.xcworkspace/…/Package.resolved — inside the generated,
+    # gitignored project — so a `from:` range would have nothing pinning it in version
+    # control and two clones could resolve differently. Pinning here puts the version in
+    # the one file that IS reviewed, which is the same rule android/gradle/libs.versions.toml
+    # follows. Bump deliberately.
+    exactVersion: "7.11.1"
+
+targets:
+  # ── App ────────────────────────────────────────────────────────────────────
+  Muraka:
+    type: application
+    platform: iOS
+    sources:
+      - path: Muraka
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - package: GRDB
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      Release: Config/Release.xcconfig
+    entitlements:
+      path: Config/Muraka.entitlements
+      properties: {}
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(MURAKA_BUNDLE_ID)
+        PRODUCT_NAME: Muraka
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 1.0.0
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: true
+        # Portrait plus both landscapes: the layouts are responsive, and locking
+        # rotation would be a usability regression on a boat where the phone is held
+        # however the swell allows.
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: >-
+          UIInterfaceOrientationPortrait
+          UIInterfaceOrientationLandscapeLeft
+          UIInterfaceOrientationLandscapeRight
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    # NOTE: no `info:` block on purpose.
+    #
+    # The App Transport Security exception that lets the app talk to the local docker
+    # stack over plain HTTP must exist in the debug build and NOT in the release build
+    # (NFR4). A target has exactly one Info.plist, so the only way to vary it per
+    # configuration is to point INFOPLIST_FILE at a different file — which the
+    # xcconfigs do. Letting XcodeGen generate the plist would set INFOPLIST_FILE at
+    # target level, where it would override the xcconfig and silently ship the
+    # exception in release builds.
+    #
+    # Config/Info.plist is the release plist. Config/Info-Debug.plist is that file plus
+    # the ATS block, and nothing else. `make mobile-lint` fails if the release plist
+    # ever grows an NSAppTransportSecurity key.
+
+  # ── Unit tests (Swift Testing) ─────────────────────────────────────────────
+  MurakaTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: MurakaTests
+    dependencies:
+      - target: Muraka
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(MURAKA_BUNDLE_ID).tests
+        GENERATE_INFOPLIST_FILE: true
+
+  # ── UI tests (XCUITest) ────────────────────────────────────────────────────
+  MurakaUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: MurakaUITests
+    dependencies:
+      - target: Muraka
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(MURAKA_BUNDLE_ID).uitests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_TARGET_NAME: Muraka
+
+schemes:
+  Muraka:
+    build:
+      targets:
+        Muraka: all
+        MurakaTests: [test]
+        MurakaUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      coverageTargets:
+        - Muraka
+      targets:
+        - MurakaTests
+        - MurakaUITests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

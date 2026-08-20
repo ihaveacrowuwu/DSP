@@ -1,0 +1,19 @@
+// ────────────────────────────────────────────────────────────────────────────
+// Settings shared by every configuration.
+//
+// Muraka has NO API key and no third-party account anywhere (constraint 2 of
+// ../../CLAUDE.md), so unlike most projects there is no secrets file to keep out of
+// version control. What lives here instead is the two things a second developer would
+// otherwise have to edit a tracked file to change: the bundle identifier and the API
+// host.
+//
+// `#include?` (with the question mark) makes the include OPTIONAL, so a fresh clone
+// with no Local.xcconfig still builds.
+// ────────────────────────────────────────────────────────────────────────────
+
+// Declared BEFORE the include so Local.xcconfig can override it — a later assignment
+// wins. Bundle identifiers are globally unique across Apple developers, so anyone
+// running this on their own iPhone needs their own.
+MURAKA_BUNDLE_ID = mv.muraka
+
+#include? "Local.xcconfig"

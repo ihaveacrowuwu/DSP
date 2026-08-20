@@ -1,0 +1,33 @@
+// ────────────────────────────────────────────────────────────────────────────
+// Copy to `Local.xcconfig` (gitignored) if you need to change either value:
+//
+//     cp Config/Local.xcconfig.example Config/Local.xcconfig
+//
+// There is no API key to put here. Muraka depends on no keyed service at all — that
+// is a hard project constraint, not an oversight.
+// ────────────────────────────────────────────────────────────────────────────
+
+// ── Running against a dev stack from a PHYSICAL iPhone ──────────────────────
+// The simulator reaches the Mac on localhost; a phone cannot. Use the Mac's LAN
+// address, which `ipconfig getifaddr en0` prints.
+//
+// Remember the xcconfig comment gotcha: `//` starts a comment anywhere on a line, so
+// the slashes must come from $(SLASH).
+//
+// SLASH = /
+// MURAKA_API_BASE_URL = http:$(SLASH)$(SLASH)192.168.1.20:8090
+
+// ── Running on a physical iPhone at all ─────────────────────────────────────
+// Your team ID is the ten-character code under Xcode → Settings → Accounts →
+// (your Apple ID) → Manage Certificates. A free Apple ID has one.
+//
+// It belongs here rather than in project.yml because `xcodegen generate` rewrites the
+// project, so anything set in Xcode's Signing & Capabilities editor is lost on the
+// next regeneration. Set here, it survives.
+//
+// DEVELOPMENT_TEAM = ABCDE12345
+
+// Bundle identifiers are unique across every Apple developer account, so `mv.muraka`
+// cannot be signed by anyone else's team. Claim your own.
+//
+// MURAKA_BUNDLE_ID = com.yourname.muraka

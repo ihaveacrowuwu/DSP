@@ -1,0 +1,227 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Gradle Version Catalog — the SINGLE source of truth for every dependency.
+#
+# Never write a version string inside a build.gradle.kts. Add it here, then
+# reference it as libs.some.alias / libs.plugins.some.alias.
+#
+# Several pins below are deliberately NOT the newest release. Each one carries the
+# reason. Bumping any of them means re-reading the note first.
+# ─────────────────────────────────────────────────────────────────────────────
+
+[versions]
+# ── Build tooling ──────────────────────────────────────────────────────────
+agp = "8.13.2"
+kotlin = "2.2.21"
+ksp = "2.2.21-2.0.5"
+detekt = "1.23.8"
+ktlintGradle = "12.3.0"
+ktlintCli = "1.5.0"
+
+# ── SDK levels ─────────────────────────────────────────────────────────────
+# minSdk 26 (Android 8.0): the floor for adaptive icons, modern notification
+# behaviour, and java.time WITHOUT desugaring. Dynamic colour needs 31 and is
+# feature-detected at runtime rather than raising the floor.
+compileSdk = "36"
+minSdk = "26"
+targetSdk = "36"
+
+# ── AndroidX / Jetpack ─────────────────────────────────────────────────────
+coreKtx = "1.17.0"
+coreSplashscreen = "1.0.1"
+activityCompose = "1.12.4"
+lifecycle = "2.9.4"
+navigationCompose = "2.9.8"
+# Governs every androidx.compose.* artifact EXCEPT material3, pinned below.
+#
+# NOT the newest BOM, on purpose: 2026.06.01 pins compose-ui 1.12.0-beta01, which
+# requires compileSdk 37 AND AGP 9.1+. 2026.01.01 pins ui 1.10.2, which is happy on
+# compileSdk 36 / AGP 8.13 and still satisfies material3's requirement of ui >= 1.8.2.
+composeBom = "2026.01.01"
+
+# Material3 is pinned ABOVE the BOM, on purpose.
+#
+# The BOM pins material3 1.4.0, where the whole Material 3 Expressive surface —
+# `MaterialExpressiveTheme`, `MotionScheme`, the emphasized type roles,
+# `MaterialShapes` — is Kotlin-`internal` and cannot be called from app code.
+# (It looks public under `javap` because Kotlin `internal` compiles to public JVM
+# bytecode; only the Kotlin compiler enforces it.)
+#
+# Expressive first becomes public API in 1.5.0. `mobile-shared/design-language.md`
+# asks for "M3 motion tokens and Compose's MotionScheme springs", which is that
+# API — so this is a deliberate alpha trade-off taken to get the current Material
+# design language. alpha14 specifically: it carries the complete surface we use
+# while depending only on compose-ui 1.8.2, and every alpha from 19 onward needs
+# compose-ui 1.12.x, which drags in compileSdk 37 + AGP 9.
+material3 = "1.5.0-alpha14"
+room = "2.8.4"
+datastore = "1.1.7"
+work = "2.10.5"
+# 2.58 is the newest Hilt that actually works with AGP 8.x. 2.59.2+ rejects AGP 8
+# outright, and 2.59 — despite advertising AGP 8.4+ — references the AGP 9-only
+# `ScopedArtifact.POST_COMPILATION_CLASSES` and fails at configuration time.
+hilt = "2.58"
+hiltExt = "1.2.0"
+camerax = "1.6.1"
+exifinterface = "1.4.2"
+playServicesLocation = "21.4.0"
+
+# ── Networking & serialization ─────────────────────────────────────────────
+retrofit = "2.12.0"
+retrofitKotlinxConverter = "1.0.0"
+okhttp = "4.12.0"
+kotlinxSerialization = "1.9.0"
+coroutines = "1.10.2"
+coil = "3.3.0"
+
+# ── Desugaring ─────────────────────────────────────────────────────────────
+desugarJdkLibs = "2.1.5"
+
+# ── Testing ────────────────────────────────────────────────────────────────
+junit = "4.13.2"
+androidxTestJunit = "1.2.1"
+androidxTestRunner = "1.6.2"
+androidxTestCore = "1.6.1"
+espresso = "3.6.1"
+mockk = "1.14.7"
+turbine = "1.2.1"
+mockwebserver = "4.12.0"
+
+[libraries]
+# ── Gradle plugin artifacts, for build-logic's convention plugins ───────────
+# compileOnly dependencies of :build-logic:convention so it can reference AGP/KGP/KSP
+# types. Versions come from the same refs the app uses, so there is one source of truth.
+android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "symbol-processing-gradle-plugin", version.ref = "ksp" }
+
+# ── Core / lifecycle ───────────────────────────────────────────────────────
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle" }
+
+# ── Compose ────────────────────────────────────────────────────────────────
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+# Explicitly versioned so it overrides the BOM — see the `material3` note above.
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+
+# ── Dependency injection ───────────────────────────────────────────────────
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
+hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
+androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltExt" }
+androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltExt" }
+androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hiltExt" }
+
+# ── Persistence ────────────────────────────────────────────────────────────
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
+# ── Background work ────────────────────────────────────────────────────────
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
+
+# ── Capture & position ─────────────────────────────────────────────────────
+androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
+androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
+androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
+# Play Services Location needs NO API key and no account — it is the platform's
+# fused position provider, not a hosted service. Constraint 2 is about services
+# requiring registration; this is not one. A LocationManager fallback covers
+# devices without Play Services, so nothing depends on it being present.
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+
+# ── Networking ─────────────────────────────────────────────────────────────
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-kotlinx-serialization = { group = "com.jakewharton.retrofit", name = "retrofit2-kotlinx-serialization-converter", version.ref = "retrofitKotlinxConverter" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+# Pure-Kotlin coroutines, for the java-library modules that must not see Android.
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+# Just the @Inject/@Singleton annotations. Hilt itself only appears in impl modules.
+javax-inject = { group = "javax.inject", name = "javax.inject", version = "1" }
+
+# ── Images ─────────────────────────────────────────────────────────────────
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
+
+# ── Desugaring ─────────────────────────────────────────────────────────────
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
+
+# ── Unit testing (JVM) ─────────────────────────────────────────────────────
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "mockwebserver" }
+
+# ── Instrumented testing (device) ──────────────────────────────────────────
+androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestJunit" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
+androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
+androidx-work-testing = { group = "androidx.work", name = "work-testing", version.ref = "work" }
+mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
+hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
+
+[plugins]
+# ── Our own convention plugins, from the build-logic included build ─────────
+# These have no version: build-logic produces them, no repository resolves them.
+muraka-jvm-library = { id = "muraka.jvm.library" }
+muraka-android-library = { id = "muraka.android.library" }
+muraka-android-library-compose = { id = "muraka.android.library.compose" }
+muraka-hilt = { id = "muraka.hilt" }
+muraka-android-room = { id = "muraka.android.room" }
+
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }
+
+[bundles]
+compose = [
+    "androidx-compose-ui",
+    "androidx-compose-ui-graphics",
+    "androidx-compose-ui-tooling-preview",
+    "androidx-compose-material3",
+    "androidx-compose-material-icons-extended",
+]
+networking = [
+    "retrofit",
+    "retrofit-kotlinx-serialization",
+    "okhttp",
+    "okhttp-logging-interceptor",
+    "kotlinx-serialization-json",
+]
+camerax = [
+    "androidx-camera-core",
+    "androidx-camera-camera2",
+    "androidx-camera-lifecycle",
+    "androidx-camera-view",
+]
+unit-test = [
+    "junit",
+    "kotlinx-coroutines-test",
+    "mockk",
+    "turbine",
+]

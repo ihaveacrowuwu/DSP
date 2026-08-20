@@ -1,0 +1,106 @@
+# Detekt overrides. `buildUponDefaultConfig = true` is set in build.gradle.kts, so
+# this file records only where we deliberately differ from the defaults, and why.
+
+build:
+  maxIssues: 0
+
+complexity:
+  LongMethod:
+    # Composable functions are declarative; a 90-line body is often the clearest
+    # form. Real logic still belongs in a view model, which this limit protects.
+    active: true
+    threshold: 90
+    ignoreAnnotated: ['Composable']
+  LongParameterList:
+    # Stateless composables legitimately take many small parameters (state in,
+    # lambdas out) — that is the hoisting pattern, not a smell.
+    active: true
+    functionThreshold: 8
+    constructorThreshold: 12
+    ignoreAnnotated: ['Composable', 'Inject']
+  TooManyFunctions:
+    thresholdInFiles: 20
+    thresholdInClasses: 20
+    thresholdInInterfaces: 20
+    ignoreAnnotatedFunctions: ['Composable']
+    ignorePrivate: true
+    # Room DAOs are declarative query collections, not classes with behaviour.
+    excludes: ['**/database/dao/**']
+
+exceptions:
+  TooGenericExceptionCaught:
+    # Repository implementations catch broadly at the boundary and translate into
+    # ApiError, so no framework exception escapes the data layer (architecture rule 6).
+    excludes: ['**/data/repository/**', '**/sync/**', '**/network/**']
+  SwallowedException:
+    active: true
+  TooGenericExceptionThrown:
+    active: true
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][_A-Za-z0-9]*'
+
+style:
+  MagicNumber:
+    active: true
+    ignoreNumbers: ['-1', '0', '1', '2']
+    ignoreAnnotated: ['Composable', 'Preview']
+    excludes:
+      - '**/test/**'
+      - '**/androidTest/**'
+      - '**/core/testing/**'
+      # Design tokens: the condition hexes, the severity ramp stops and the two
+      # patch-lattice opacity formulas ARE the definitions. Naming them again
+      # would only add indirection between the token file and design-tokens.json.
+      - '**/core/designsystem/**'
+      # HTTP status codes and the backoff curve are quoted from sync-protocol.md.
+      - '**/network/ApiError.kt'
+      - '**/sync/RetryPolicy.kt'
+      # The UUIDv7 layout (48-bit timestamp, version nibble, variant bits) is a
+      # bit-manipulation spec; the literals are the specification.
+      - '**/common/Uuid7.kt'
+  MaxLineLength:
+    maxLineLength: 120
+    excludes: ['**/test/**', '**/androidTest/**']
+  UnusedPrivateMember:
+    ignoreAnnotated: ['Preview']
+  ReturnCount:
+    max: 4
+  ForbiddenComment:
+    # A bare TODO is fine only with an owner; see ../CLAUDE.md.
+    active: true
+    comments:
+      - reason: 'Add an owner and a reason: // TODO(nauhaan): why'
+        value: 'TODO:'
+      - reason: 'Fix it or record it in docs/08.'
+        value: 'FIXME:'
+  WildcardImport:
+    active: true
+    excludeImports:
+      - 'androidx.compose.foundation.layout.*'
+      - 'androidx.compose.material3.*'
+      - 'androidx.compose.runtime.*'
+      - 'java.util.*'
+  UnnecessaryAbstractClass:
+    excludes: ['**/di/**']
+
+coroutines:
+  GlobalCoroutineUsage:
+    active: true
+  InjectDispatcher:
+    # Dispatchers are injected via DispatcherProvider so tests are deterministic.
+    active: true
+  SuspendFunWithFlowReturnType:
+    active: true
+
+potential-bugs:
+  UnsafeCallOnNullableType:
+    active: true
+  LateinitUsage:
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**']
+  Deprecation:
+    active: true

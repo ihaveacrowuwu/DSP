@@ -8,7 +8,9 @@ GO      := go
 .DEFAULT_GOAL := help
 
 .PHONY: help up down logs ps restart seed reset-data smoke test test-go test-ml test-web \
-        build fmt vet typecheck dev dev-api dev-ml dev-web psql
+        build fmt vet typecheck dev dev-api dev-ml dev-web psql \
+        test-android test-ios android-build android-install android-lint \
+        ios-generate ios-build mobile mobile-lint
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -93,3 +95,38 @@ dev-web: ## Dashboard with hot reload on :5180 (replaces the static web containe
 dev: ## Backing services in Docker + the dashboard with hot reload
 	$(COMPOSE) up -d --build postgres ml api
 	@$(MAKE) --no-print-directory dev-web
+
+## ---------------------------------------------------------------- mobile
+
+# Android emulators reach the host through 10.0.2.2, never localhost; the iOS
+# simulator shares the host's loopback and uses localhost. Both are wired into
+# the debug build config, so `make up` then a run is all either app needs.
+
+android-build: ## Assemble the Android debug APK
+	cd android && ./gradlew assembleDebug
+
+android-install: ## Build and install on the running emulator or device
+	cd android && ./gradlew installDebug
+
+android-lint: ## ktlint, detekt and Android Lint
+	cd android && ./gradlew qualityCheck
+
+test-android: ## Android JVM unit tests
+	cd android && ./gradlew testDebugUnitTest
+
+ios-generate: ## Regenerate Muraka.xcodeproj from ios/project.yml
+	cd ios && xcodegen generate
+
+ios-build: ios-generate ## Build the iOS app for the simulator
+	cd ios && xcodebuild -project Muraka.xcodeproj -scheme Muraka \
+	  -destination 'platform=iOS Simulator,name=iPhone 17' build
+
+test-ios: ios-generate ## iOS unit tests on the simulator
+	cd ios && xcodebuild -project Muraka.xcodeproj -scheme Muraka \
+	  -destination 'platform=iOS Simulator,name=iPhone 17' test
+
+mobile: test-android test-ios ## Unit tests for both apps
+
+mobile-lint: ## Linters for both apps
+	cd android && ./gradlew ktlintCheck detekt
+	cd ios && swiftlint --quiet

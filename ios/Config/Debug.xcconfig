@@ -1,0 +1,22 @@
+#include "Base.xcconfig"
+
+// The iOS simulator shares the host's loopback, so the dev stack is simply localhost.
+// A physical iPhone on the same Wi-Fi needs the machine's LAN IP — set
+// MURAKA_API_BASE_URL in Config/Local.xcconfig, which is gitignored.
+//
+// NOTE: xcconfig treats `//` as a comment ANYWHERE on a line, so a URL cannot be
+// written literally. $(SLASH) rebuilds the pair after parsing. This is a real xcconfig
+// gotcha, not superstition: `http://localhost:8090` silently becomes `http:`.
+SLASH = /
+MURAKA_API_BASE_URL = http:$(SLASH)$(SLASH)localhost:8090
+
+// The debug plist carries the App Transport Security exception for the local stack.
+// Release points at Config/Info.plist, which has none (NFR4).
+INFOPLIST_FILE = Config/Info-Debug.plist
+
+// Debug-only diagnostics.
+OTHER_SWIFT_FLAGS = $(inherited) -D DEBUG
+
+// Faster incremental builds while developing.
+SWIFT_COMPILATION_MODE = incremental
+ONLY_ACTIVE_ARCH = YES

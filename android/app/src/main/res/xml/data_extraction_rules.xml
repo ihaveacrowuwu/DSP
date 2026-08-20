@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nothing is backed up. The outbox holds unsent reef photographs and the token store
+     holds session credentials; neither should leave the device, and a restored outbox
+     on another device would upload under whoever signs in there. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+    </device-transfer>
+</data-extraction-rules>

@@ -1,0 +1,6 @@
+# Copy to `local.properties` (gitignored) if Android Studio has not written one.
+#
+# Muraka needs no API key of any kind — constraint 2 of ../CLAUDE.md — so this file
+# holds only the SDK path.
+
+sdk.dir=/Users/<you>/Library/Android/sdk

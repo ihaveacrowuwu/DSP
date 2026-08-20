@@ -1,0 +1,36 @@
+# SwiftFormat configuration. Run: cd ios && swiftformat .
+#
+# SwiftFormat owns layout; SwiftLint owns correctness. Where they would overlap, the
+# rule is disabled in .swiftlint.yml rather than here.
+
+--swiftversion 6.0
+
+--exclude Muraka.xcodeproj,build,DerivedData,.build
+
+# Trailing commas in collection and argument literals: adding a line then touches one
+# line in the diff instead of two.
+--commas always
+
+# `{` on its own line after a wrapped signature, which reads better than cramming it
+# onto the last parameter.
+--wrapmultilinestatementbraces true
+
+--indent 4
+--maxwidth 120
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--closingparen balanced
+
+--self remove
+--importgrouping testable-bottom
+--stripunusedargs closure-only
+--header ignore
+
+# UIKit view controllers are built in code here; keeping MARK sections consistent is
+# most of what makes a 400-line controller navigable.
+--enable blankLinesAtStartOfScope
+--enable blankLinesAtEndOfScope
+--enable sortImports
+--enable redundantSelf
+--enable trailingSpace
