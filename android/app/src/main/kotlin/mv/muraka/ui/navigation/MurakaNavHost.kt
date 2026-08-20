@@ -1,7 +1,11 @@
 package mv.muraka.ui.navigation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material3.Badge
@@ -55,6 +59,10 @@ fun MurakaNavHost(
 
     Scaffold(
         modifier = modifier,
+        // Only the BOTTOM inset. Each screen has its own Scaffold with its own top app
+        // bar, which applies the status-bar inset itself — so letting this one apply it
+        // too leaves a second status bar's worth of empty space above every title.
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom),
         bottomBar = {
             AnimatedVisibility(visible = showChrome) {
                 NavigationBar {

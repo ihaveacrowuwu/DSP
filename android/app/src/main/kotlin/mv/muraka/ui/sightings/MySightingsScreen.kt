@@ -3,6 +3,7 @@ package mv.muraka.ui.sightings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -65,7 +66,9 @@ fun MySightingsScreen(
             }
 
             LazyColumn(
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                // Extra room at the bottom so the floating action button does not cover
+                // the last sighting — which on a short history is every sighting.
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 state.refreshError?.let { banner ->
