@@ -17,6 +17,10 @@ dependencies {
     implementation(projects.core.datastore)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.exifinterface)
+    // Used directly by the sync engine for the cached-detail blob. Retrofit and OkHttp
+    // arrive transitively through :core:network, which exposes them as `api` because
+    // they appear in MurakaApi's own signatures.
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.bundles.unit.test)
     testImplementation(projects.core.testing)
