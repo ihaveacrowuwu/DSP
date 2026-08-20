@@ -104,43 +104,41 @@ class SightingRepositoryImpl @Inject constructor(
      * outbox knows and nothing more.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun observeMySightings(): Flow<List<ContributorSighting>> =
-        tokens.session.flatMapLatest { session ->
-            val userId = session?.userId ?: return@flatMapLatest flowOf(emptyList())
+    override fun observeMySightings(): Flow<List<ContributorSighting>> = tokens.session.flatMapLatest { session ->
+        val userId = session?.userId ?: return@flatMapLatest flowOf(emptyList())
 
-            combine(
-                outbox.observeQueue(userId),
-                outbox.observePhotos(userId),
-                cache.observeSightings(userId),
-            ) { queued, queuedPhotos, cached ->
-                merge(queued, queuedPhotos, cached)
-            }
+        combine(
+            outbox.observeQueue(userId),
+            outbox.observePhotos(userId),
+            cache.observeSightings(userId),
+        ) { queued, queuedPhotos, cached ->
+            merge(queued, queuedPhotos, cached)
         }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun observeSighting(id: String): Flow<SightingWithDetail?> =
-        combine(
-            observeMySightings().map { list -> list.firstOrNull { it.id == id } },
-            cache.observeDetail(id),
-        ) { summary, detailRow ->
-            if (summary == null) return@combine null
+    override fun observeSighting(id: String): Flow<SightingWithDetail?> = combine(
+        observeMySightings().map { list -> list.firstOrNull { it.id == id } },
+        cache.observeDetail(id),
+    ) { summary, detailRow ->
+        if (summary == null) return@combine null
 
-            val detail = detailRow?.let { row ->
-                runCatching {
-                    json.decodeFromString(SightingDetailDto.serializer(), row.json).toDomain()
-                }.getOrNull()
-            }
-
-            SightingWithDetail(
-                summary = summary,
-                detail = detail,
-                photos = detail?.photos.orEmpty(),
-                verifications = detail?.verifications.orEmpty(),
-                pendingPhotoPaths = outbox.photosFor(id)
-                    .filter { it.state != OutboxState.CONFIRMED.wire }
-                    .map { it.localPath },
-            )
+        val detail = detailRow?.let { row ->
+            runCatching {
+                json.decodeFromString(SightingDetailDto.serializer(), row.json).toDomain()
+            }.getOrNull()
         }
+
+        SightingWithDetail(
+            summary = summary,
+            detail = detail,
+            photos = detail?.photos.orEmpty(),
+            verifications = detail?.verifications.orEmpty(),
+            pendingPhotoPaths = outbox.photosFor(id)
+                .filter { it.state != OutboxState.CONFIRMED.wire }
+                .map { it.localPath },
+        )
+    }
 
     override suspend fun refreshMySightings(): Result<Unit> = withContext(dispatchers.io) {
         val userId = tokens.current()?.userId

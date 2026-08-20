@@ -66,20 +66,16 @@ class AuthRepositoryImpl @Inject constructor(
 
     override fun observeProfile(): Flow<Profile?> = cachedProfileFlow()
 
-    override suspend fun register(
-        email: String,
-        password: String,
-        displayName: String,
-    ): Result<Profile> = withContext(dispatchers.io) {
-        call { api.register(RegisterRequest(email.trim().lowercase(), password, displayName.trim())) }
-            .mapCatching { startSession(it) }
-    }
-
-    override suspend fun signIn(email: String, password: String): Result<Profile> =
+    override suspend fun register(email: String, password: String, displayName: String): Result<Profile> =
         withContext(dispatchers.io) {
-            call { api.login(LoginRequest(email.trim().lowercase(), password)) }
+            call { api.register(RegisterRequest(email.trim().lowercase(), password, displayName.trim())) }
                 .mapCatching { startSession(it) }
         }
+
+    override suspend fun signIn(email: String, password: String): Result<Profile> = withContext(dispatchers.io) {
+        call { api.login(LoginRequest(email.trim().lowercase(), password)) }
+            .mapCatching { startSession(it) }
+    }
 
     override suspend fun signOut(): Result<Unit> = withContext(dispatchers.io) {
         val stored = tokens.current()

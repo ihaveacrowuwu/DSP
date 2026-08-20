@@ -119,10 +119,7 @@ data class ContributorSighting(
 }
 
 /** The signed-in account plus its authoritative totals. */
-data class Profile(
-    val user: User,
-    val stats: ContributorStats,
-)
+data class Profile(val user: User, val stats: ContributorStats)
 
 /** Who, if anyone, is signed in. */
 sealed interface SessionState {

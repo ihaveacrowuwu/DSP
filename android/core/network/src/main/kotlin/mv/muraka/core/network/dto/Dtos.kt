@@ -1,7 +1,6 @@
 package mv.muraka.core.network.dto
 
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -58,12 +57,7 @@ data class UserDto(
 )
 
 @Serializable
-data class ContributorStatsDto(
-    val total: Int = 0,
-    val verified: Int = 0,
-    val pending: Int = 0,
-    val rejected: Int = 0,
-)
+data class ContributorStatsDto(val total: Int = 0, val verified: Int = 0, val pending: Int = 0, val rejected: Int = 0)
 
 @Serializable
 data class SessionDto(
@@ -74,10 +68,7 @@ data class SessionDto(
 )
 
 @Serializable
-data class MeDto(
-    val user: UserDto,
-    val stats: ContributorStatsDto = ContributorStatsDto(),
-)
+data class MeDto(val user: UserDto, val stats: ContributorStatsDto = ContributorStatsDto())
 
 @Serializable
 data class PointDto(val lat: Double = 0.0, val lon: Double = 0.0)
@@ -106,12 +97,7 @@ data class SightingDto(
 )
 
 @Serializable
-data class PatchDto(
-    val row: Int = 0,
-    val col: Int = 0,
-    val label: String = "healthy",
-    val confidence: Double = 0.0,
-)
+data class PatchDto(val row: Int = 0, val col: Int = 0, val label: String = "healthy", val confidence: Double = 0.0)
 
 @Serializable
 data class PredictionDto(
@@ -211,9 +197,4 @@ data class PhotoUploadResponse(
 )
 
 @Serializable
-data class AtollDto(
-    val id: String,
-    val name: String = "",
-    val code: String = "",
-    val centroid: PointDto = PointDto(),
-)
+data class AtollDto(val id: String, val name: String = "", val code: String = "", val centroid: PointDto = PointDto())

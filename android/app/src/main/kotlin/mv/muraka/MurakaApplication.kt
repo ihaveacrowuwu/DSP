@@ -20,7 +20,9 @@ import javax.inject.Inject
  * construct it.
  */
 @HiltAndroidApp
-class MurakaApplication : Application(), Configuration.Provider {
+class MurakaApplication :
+    Application(),
+    Configuration.Provider {
 
     @Inject lateinit var workerFactory: HiltWorkerFactory
 

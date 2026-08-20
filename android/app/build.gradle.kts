@@ -105,6 +105,11 @@ android {
                 "AndroidGradlePluginVersion",
                 // Only English is shipped (androidResources.localeFilters).
                 "MissingTranslation",
+                // Lint suggests merging mipmap-anydpi-v26 into mipmap-anydpi because
+                // minSdk is already 26. Doing so makes AAPT2 fail to resolve
+                // @mipmap/ic_launcher at all — verified, not assumed. The -v26 qualifier
+                // is also what AGP's own templates emit for adaptive icons.
+                "ObsoleteSdkInt",
             )
     }
 }

@@ -19,12 +19,7 @@ data class User(
  * moment anything is rejected, verified or anonymised, and the number the contributor
  * sees would then disagree with the dashboard — see D21.
  */
-data class ContributorStats(
-    val total: Int,
-    val verified: Int,
-    val pending: Int,
-    val rejected: Int,
-)
+data class ContributorStats(val total: Int, val verified: Int, val pending: Int, val rejected: Int)
 
 /**
  * A session.
@@ -33,9 +28,4 @@ data class ContributorStats(
  * in the same transaction as [accessToken] or the next refresh fails and the contributor
  * is signed out for no reason.
  */
-data class Session(
-    val accessToken: String,
-    val refreshToken: String,
-    val expiresAt: Instant,
-    val user: User,
-)
+data class Session(val accessToken: String, val refreshToken: String, val expiresAt: Instant, val user: User)

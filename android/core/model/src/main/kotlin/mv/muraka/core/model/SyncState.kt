@@ -104,16 +104,15 @@ enum class SightingDisplayStatus(
          * stale server status exists, because that is a fact about our own queue; but a
          * row we merely *think* succeeded never outranks the server's answer.
          */
-        fun of(outboxState: OutboxState?, serverStatus: SightingStatus?): SightingDisplayStatus =
-            when (outboxState) {
-                OutboxState.QUEUED -> WAITING_TO_UPLOAD
-                OutboxState.SENDING -> UPLOADING
-                OutboxState.FAILED -> FAILED
-                // Sent, no server answer yet: the one case where "we do not know" is the
-                // truthful thing to display.
-                OutboxState.IN_DOUBT -> fromServer(serverStatus) ?: CHECKING
-                OutboxState.CONFIRMED, null -> fromServer(serverStatus) ?: CHECKING
-            }
+        fun of(outboxState: OutboxState?, serverStatus: SightingStatus?): SightingDisplayStatus = when (outboxState) {
+            OutboxState.QUEUED -> WAITING_TO_UPLOAD
+            OutboxState.SENDING -> UPLOADING
+            OutboxState.FAILED -> FAILED
+            // Sent, no server answer yet: the one case where "we do not know" is the
+            // truthful thing to display.
+            OutboxState.IN_DOUBT -> fromServer(serverStatus) ?: CHECKING
+            OutboxState.CONFIRMED, null -> fromServer(serverStatus) ?: CHECKING
+        }
 
         private fun fromServer(status: SightingStatus?): SightingDisplayStatus? = when (status) {
             SightingStatus.PENDING_PHOTOS -> PHOTOS_PENDING

@@ -39,34 +39,52 @@ object ErrorMapper {
         return fromStatus(response.code(), dto)
     }
 
+    /**
+     * Split three ways, by what the client should DO about each group.
+     *
+     * That is the same grouping `ApiError` itself uses, and keeping the mapper in the
+     * same shape means a new status code has one obvious home rather than being wedged
+     * into a `when` that already had seventeen branches.
+     */
     fun fromStatus(status: Int, dto: ErrorDto?): ApiError {
         val code = dto?.error.orEmpty()
-        return when {
-            status == UNPROCESSABLE -> ApiError.Validation(
-                // A 422 with no parseable body would otherwise be an empty terminal
-                // failure with nothing to show the contributor.
-                dto?.fields?.takeIf { it.isNotEmpty() }
-                    ?: mapOf("request" to dto?.message.orEmpty().ifBlank { "was rejected" }),
-            )
+        return terminal(status, code, dto)
+            ?: recoverable(status)
+            ?: transient(status)
+            ?: ApiError.BadRequest(code.ifBlank { "http_$status" })
+    }
 
-            status == CONFLICT && code == "email_taken" -> ApiError.EmailTaken
-            status == CONFLICT -> ApiError.IdOwnedByAnotherUser
-            status == PAYLOAD_TOO_LARGE -> ApiError.UploadTooLarge
-            status == NOT_FOUND -> ApiError.NotFound
+    /** Never retry. Surface something the contributor can act on. */
+    private fun terminal(status: Int, code: String, dto: ErrorDto?): ApiError? = when {
+        status == UNPROCESSABLE -> ApiError.Validation(
+            // A 422 with no parseable body would otherwise be an empty terminal failure
+            // with nothing to show the contributor.
+            dto?.fields?.takeIf { it.isNotEmpty() }
+                ?: mapOf("request" to dto?.message.orEmpty().ifBlank { "was rejected" }),
+        )
 
-            status == FORBIDDEN && code == "account_disabled" -> ApiError.AccountDisabled
-            status == FORBIDDEN -> ApiError.Forbidden
+        status == CONFLICT && code == "email_taken" -> ApiError.EmailTaken
+        status == CONFLICT -> ApiError.IdOwnedByAnotherUser
+        status == PAYLOAD_TOO_LARGE -> ApiError.UploadTooLarge
+        status == NOT_FOUND -> ApiError.NotFound
+        status == FORBIDDEN && code == "account_disabled" -> ApiError.AccountDisabled
+        status == FORBIDDEN -> ApiError.Forbidden
 
-            // `invalid_credentials` is a wrong password, not an expired token: refreshing
-            // would be pointless and would burn the refresh token for nothing.
-            status == UNAUTHORIZED && code == "invalid_credentials" -> ApiError.InvalidCredentials
-            status == UNAUTHORIZED -> ApiError.Unauthorized
+        // A wrong password, not an expired token. Refreshing would be pointless and
+        // would burn the single-use refresh token for nothing.
+        status == UNAUTHORIZED && code == "invalid_credentials" -> ApiError.InvalidCredentials
 
-            status == TOO_MANY_REQUESTS -> ApiError.RateLimited
-            status >= SERVER_ERROR_FLOOR -> ApiError.Server(status)
+        else -> null
+    }
 
-            else -> ApiError.BadRequest(code.ifBlank { "http_$status" })
-        }
+    /** Refresh once, then retry. */
+    private fun recoverable(status: Int): ApiError? = if (status == UNAUTHORIZED) ApiError.Unauthorized else null
+
+    /** Retry with backoff — the outcome is unknown. */
+    private fun transient(status: Int): ApiError? = when {
+        status == TOO_MANY_REQUESTS -> ApiError.RateLimited
+        status >= SERVER_ERROR_FLOOR -> ApiError.Server(status)
+        else -> null
     }
 
     /**

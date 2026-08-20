@@ -18,9 +18,7 @@ import javax.inject.Singleton
  * interceptor overwriting it with the stale one it just replaced.
  */
 @Singleton
-class AuthInterceptor @Inject constructor(
-    private val tokenStore: SessionTokenStore,
-) : Interceptor {
+class AuthInterceptor @Inject constructor(private val tokenStore: SessionTokenStore) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         if (request.header(AUTHORIZATION) != null) return chain.proceed(request)
@@ -49,9 +47,7 @@ class AuthInterceptor @Inject constructor(
  * [ServerClock].
  */
 @Singleton
-class ServerDateInterceptor @Inject constructor(
-    private val serverClock: ServerClock,
-) : Interceptor {
+class ServerDateInterceptor @Inject constructor(private val serverClock: ServerClock) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val response = chain.proceed(chain.request())
         response.header("Date")?.let { raw ->

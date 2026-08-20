@@ -39,39 +39,37 @@ class OutboxRepositoryImpl @Inject constructor(
 ) : OutboxRepository {
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun observeQueue(): Flow<List<QueuedItem>> =
-        tokens.session.flatMapLatest { session ->
-            val userId = session?.userId ?: return@flatMapLatest flowOf(emptyList())
+    override fun observeQueue(): Flow<List<QueuedItem>> = tokens.session.flatMapLatest { session ->
+        val userId = session?.userId ?: return@flatMapLatest flowOf(emptyList())
 
-            combine(
-                outbox.observeQueue(userId),
-                outbox.observePhotos(userId),
-            ) { rows, allPhotos ->
-                val photosBySighting = allPhotos.groupBy { it.sightingId }
-                rows.map { row ->
-                    val mine = photosBySighting[row.id].orEmpty()
-                    QueuedItem(
-                        sightingId = row.id,
-                        capturedAt = row.capturedAtInstant,
-                        state = row.outboxState,
-                        photosTotal = mine.size,
-                        // "Sent" here means the server acknowledged the upload call. It is
-                        // NOT a claim that the photograph is safe — that only follows the
-                        // read-back, which is what deletes the row entirely.
-                        photosSent = mine.count { it.state != OutboxState.QUEUED.wire },
-                        attempts = row.attempts,
-                        lastError = row.lastError,
-                        nextAttemptAt = row.nextAttemptAt?.let(Instant::ofEpochMilli),
-                    )
-                }
+        combine(
+            outbox.observeQueue(userId),
+            outbox.observePhotos(userId),
+        ) { rows, allPhotos ->
+            val photosBySighting = allPhotos.groupBy { it.sightingId }
+            rows.map { row ->
+                val mine = photosBySighting[row.id].orEmpty()
+                QueuedItem(
+                    sightingId = row.id,
+                    capturedAt = row.capturedAtInstant,
+                    state = row.outboxState,
+                    photosTotal = mine.size,
+                    // "Sent" here means the server acknowledged the upload call. It is
+                    // NOT a claim that the photograph is safe — that only follows the
+                    // read-back, which is what deletes the row entirely.
+                    photosSent = mine.count { it.state != OutboxState.QUEUED.wire },
+                    attempts = row.attempts,
+                    lastError = row.lastError,
+                    nextAttemptAt = row.nextAttemptAt?.let(Instant::ofEpochMilli),
+                )
             }
         }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun observePendingCount(): Flow<Int> =
-        tokens.session.flatMapLatest { session ->
-            session?.userId?.let(outbox::observePendingCount) ?: flowOf(0)
-        }
+    override fun observePendingCount(): Flow<Int> = tokens.session.flatMapLatest { session ->
+        session?.userId?.let(outbox::observePendingCount) ?: flowOf(0)
+    }
 
     override suspend fun retry(sightingId: String): Result<Unit> = withContext(dispatchers.io) {
         outbox.requeue(sightingId)
@@ -87,36 +85,35 @@ class OutboxRepositoryImpl @Inject constructor(
      * the server to reconcile two different images under one key. The old row and its file
      * go only once the replacement is durably written.
      */
-    override suspend fun retryWithSmallerPhotos(sightingId: String): Result<Unit> =
-        withContext(dispatchers.io) {
-            val pending = outbox.photosFor(sightingId).filter { it.state != OutboxState.CONFIRMED.wire }
-            if (pending.isEmpty()) return@withContext retry(sightingId)
+    override suspend fun retryWithSmallerPhotos(sightingId: String): Result<Unit> = withContext(dispatchers.io) {
+        val pending = outbox.photosFor(sightingId).filter { it.state != OutboxState.CONFIRMED.wire }
+        if (pending.isEmpty()) return@withContext retry(sightingId)
 
-            val replacements = mutableListOf<PhotoQueueEntity>()
-            for (photo in pending) {
-                val replacementId = Uuid7.generateString()
-                val file = photos.downscaleFurther(photo.id, replacementId)
-                    ?: return@withContext Result.failure(
-                        ApiError.Validation(mapOf("file" to "could not be made smaller")),
-                    )
-                replacements += photo.copy(
-                    id = replacementId,
-                    localPath = file.absolutePath,
-                    state = OutboxState.QUEUED.wire,
-                    attempts = 0,
-                    lastError = null,
+        val replacements = mutableListOf<PhotoQueueEntity>()
+        for (photo in pending) {
+            val replacementId = Uuid7.generateString()
+            val file = photos.downscaleFurther(photo.id, replacementId)
+                ?: return@withContext Result.failure(
+                    ApiError.Validation(mapOf("file" to "could not be made smaller")),
                 )
-            }
-
-            outbox.insertPhotos(replacements)
-            // Only now: the replacements exist on disk and in the queue, so nothing is
-            // lost if the process dies on the next line.
-            pending.forEach {
-                outbox.deletePhoto(it.id)
-                photos.delete(it.id)
-            }
-            retry(sightingId)
+            replacements += photo.copy(
+                id = replacementId,
+                localPath = file.absolutePath,
+                state = OutboxState.QUEUED.wire,
+                attempts = 0,
+                lastError = null,
+            )
         }
+
+        outbox.insertPhotos(replacements)
+        // Only now: the replacements exist on disk and in the queue, so nothing is
+        // lost if the process dies on the next line.
+        pending.forEach {
+            outbox.deletePhoto(it.id)
+            photos.delete(it.id)
+        }
+        retry(sightingId)
+    }
 
     /**
      * Gives up on a row, at the contributor's explicit instruction and never otherwise.

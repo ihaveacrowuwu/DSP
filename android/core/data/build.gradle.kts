@@ -17,6 +17,8 @@ dependencies {
     implementation(projects.core.datastore)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.exifinterface)
+    // For the Bitmap.scale KTX extension used when downscaling before upload.
+    implementation(libs.androidx.core.ktx)
     // Used directly by the sync engine for the cached-detail blob. Retrofit and OkHttp
     // arrive transitively through :core:network, which exposes them as `api` because
     // they appear in MurakaApi's own signatures.

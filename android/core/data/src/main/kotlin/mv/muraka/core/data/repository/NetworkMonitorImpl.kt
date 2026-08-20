@@ -27,9 +27,7 @@ import javax.inject.Singleton
  * claim from "associated with an access point".
  */
 @Singleton
-class NetworkMonitorImpl @Inject constructor(
-    @param:ApplicationContext private val context: Context,
-) : NetworkMonitor {
+class NetworkMonitorImpl @Inject constructor(@param:ApplicationContext private val context: Context) : NetworkMonitor {
 
     override val isOnline: Flow<Boolean> = callbackFlow {
         val manager = context.getSystemService(ConnectivityManager::class.java)
@@ -70,7 +68,6 @@ class NetworkMonitorImpl @Inject constructor(
         awaitClose { manager.unregisterNetworkCallback(callback) }
     }.distinctUntilChanged().conflate()
 
-    private fun ConnectivityManager.isCurrentlyValidated(): Boolean =
-        getNetworkCapabilities(activeNetwork)
-            ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
+    private fun ConnectivityManager.isCurrentlyValidated(): Boolean = getNetworkCapabilities(activeNetwork)
+        ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
 }

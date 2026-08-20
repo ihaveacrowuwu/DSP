@@ -4,7 +4,13 @@ import java.time.Instant
 
 /** A coordinate in WGS84, the only spatial type the client needs. */
 data class Position(val lat: Double, val lon: Double) {
-    val isValid: Boolean get() = lat in -90.0..90.0 && lon in -180.0..180.0
+    val isValid: Boolean get() = lat in LATITUDE_RANGE && lon in LONGITUDE_RANGE
+
+    companion object {
+        /** WGS84 bounds. The server rejects anything outside them with a terminal 422. */
+        val LATITUDE_RANGE = -90.0..90.0
+        val LONGITUDE_RANGE = -180.0..180.0
+    }
 }
 
 /**
@@ -61,12 +67,7 @@ data class Photo(
 )
 
 /** One cell of the inference grid. */
-data class Patch(
-    val row: Int,
-    val col: Int,
-    val label: Condition,
-    val confidence: Double,
-)
+data class Patch(val row: Int, val col: Int, val label: Condition, val confidence: Double)
 
 /**
  * What the model made of one photograph.
@@ -102,8 +103,4 @@ data class Verification(
 )
 
 /** Everything `GET /v1/sightings/{id}` returns. */
-data class SightingDetail(
-    val sighting: Sighting,
-    val photos: List<Photo>,
-    val verifications: List<Verification>,
-)
+data class SightingDetail(val sighting: Sighting, val photos: List<Photo>, val verifications: List<Verification>)

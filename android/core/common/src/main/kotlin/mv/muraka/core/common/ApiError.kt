@@ -13,10 +13,7 @@ package mv.muraka.core.common
  * type — the value is that `Result.failure(ApiError.Offline)` is exhaustively matchable
  * at the call site.
  */
-sealed class ApiError(
-    message: String,
-    cause: Throwable? = null,
-) : Exception(message, cause) {
+sealed class ApiError(message: String, cause: Throwable? = null) : Exception(message, cause) {
 
     // ── Terminal: never retry, surface something the contributor can act on ──────
 

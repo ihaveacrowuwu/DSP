@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
+import androidx.core.graphics.scale
 import androidx.exifinterface.media.ExifInterface
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.withContext
@@ -70,14 +71,13 @@ class PhotoStore @Inject constructor(
      * refused. The caller uploads the result under a **new** photo id, because the old one
      * may already be half-known to the server.
      */
-    suspend fun downscaleFurther(sourceId: String, targetId: String): File? =
-        withContext(dispatchers.io) {
-            val source = fileFor(sourceId)
-            if (!source.exists()) return@withContext null
-            val bitmap = BitmapFactory.decodeFile(source.absolutePath) ?: return@withContext null
-            val smaller = scaleToLongestEdge(bitmap, CaptureLimits.UPLOAD_MAX_EDGE_PX / 2)
-            writeAtomically(targetId, smaller, quality = RETRY_JPEG_QUALITY)
-        }
+    suspend fun downscaleFurther(sourceId: String, targetId: String): File? = withContext(dispatchers.io) {
+        val source = fileFor(sourceId)
+        if (!source.exists()) return@withContext null
+        val bitmap = BitmapFactory.decodeFile(source.absolutePath) ?: return@withContext null
+        val smaller = scaleToLongestEdge(bitmap, CaptureLimits.UPLOAD_MAX_EDGE_PX / 2)
+        writeAtomically(targetId, smaller, quality = RETRY_JPEG_QUALITY)
+    }
 
     /**
      * Deletes a photograph's bytes.
@@ -99,7 +99,11 @@ class PhotoStore @Inject constructor(
 
     // ── Internals ───────────────────────────────────────────────────────────
 
-    private fun writeAtomically(photoId: String, bitmap: Bitmap, quality: Int = CaptureLimits.UPLOAD_JPEG_QUALITY): File? {
+    private fun writeAtomically(
+        photoId: String,
+        bitmap: Bitmap,
+        quality: Int = CaptureLimits.UPLOAD_JPEG_QUALITY,
+    ): File? {
         val target = fileFor(photoId)
         val temporary = File(directory, "$photoId.jpg.part")
         return runCatching {
@@ -166,11 +170,9 @@ class PhotoStore @Inject constructor(
         val longest = maxOf(bitmap.width, bitmap.height)
         if (longest <= maxEdge) return bitmap
         val ratio = maxEdge.toFloat() / longest
-        return Bitmap.createScaledBitmap(
-            bitmap,
+        return bitmap.scale(
             (bitmap.width * ratio).toInt().coerceAtLeast(1),
             (bitmap.height * ratio).toInt().coerceAtLeast(1),
-            true,
         )
     }
 
@@ -189,9 +191,9 @@ class PhotoStore @Inject constructor(
                     ExifInterface.ORIENTATION_NORMAL,
                 )
             ) {
-                ExifInterface.ORIENTATION_ROTATE_90 -> 90f
-                ExifInterface.ORIENTATION_ROTATE_180 -> 180f
-                ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+                ExifInterface.ORIENTATION_ROTATE_90 -> QUARTER_TURN
+                ExifInterface.ORIENTATION_ROTATE_180 -> HALF_TURN
+                ExifInterface.ORIENTATION_ROTATE_270 -> THREE_QUARTER_TURN
                 else -> 0f
             }
         } ?: 0f
@@ -214,5 +216,9 @@ class PhotoStore @Inject constructor(
     private companion object {
         /** Lower than the first attempt: this path exists because the server said 413. */
         const val RETRY_JPEG_QUALITY = 70
+
+        const val QUARTER_TURN = 90f
+        const val HALF_TURN = 180f
+        const val THREE_QUARTER_TURN = 270f
     }
 }

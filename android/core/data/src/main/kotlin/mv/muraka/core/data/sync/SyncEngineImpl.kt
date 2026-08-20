@@ -1,7 +1,6 @@
 package mv.muraka.core.data.sync
 
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import mv.muraka.core.common.ApiError
@@ -154,28 +153,9 @@ class SyncEngineImpl @Inject constructor(
         val localPhotos = outbox.photosFor(row.id)
         outbox.setSightingState(row.id, OutboxState.SENDING.wire)
 
-        // A row that has never left the device cannot exist server-side, so the
-        // reconciliation GET would be a guaranteed 404 and a wasted round trip on the
-        // common path. Everything else asks first.
-        val neverSent = row.state == OutboxState.QUEUED.wire && row.attempts == 0
-
-        val alreadyHeld: Set<String> = if (neverSent) {
-            emptySet()
-        } else {
-            when (val fetched = fetchServerState(row.id)) {
-                is Fetch.Failed -> return handleFailure(row, fetched.error)
-                Fetch.Absent -> emptySet()
-                is Fetch.Found -> fetched.detail.photos.map { it.id }.toSet()
-            }
-        }
-
-        // Absent server-side, in either branch: send the metadata. `201` and `200` are
-        // treated identically — the client never has to know which it was.
-        if (alreadyHeld.isEmpty()) {
-            when (val created = createMetadata(row)) {
-                is Step.Failed -> return handleFailure(row, created.error)
-                Step.Ok -> Unit
-            }
+        val alreadyHeld = when (val known = establishServerState(row)) {
+            is Known.Failed -> return handleFailure(row, known.error)
+            is Known.PhotoIds -> known.ids
         }
 
         // Upload only what the server does not already hold. Re-sending a photograph it
@@ -191,8 +171,57 @@ class SyncEngineImpl @Inject constructor(
             }
         }
 
-        // Uploading is not finishing. Read the sighting back and let the server's answer
-        // be what the interface shows.
+        return confirmOrKeep(row, localPhotos, uploaded)
+    }
+
+    /** What the server already has, and whatever sending it takes to make that true. */
+    private sealed interface Known {
+        data class PhotoIds(val ids: Set<String>) : Known
+        data class Failed(val error: ApiError) : Known
+    }
+
+    /**
+     * Works out what the server holds, creating the metadata if it holds nothing.
+     *
+     * A row that has never left the device cannot exist server-side, so the reconciliation
+     * GET would be a guaranteed 404 and a wasted round trip on the common path. Everything
+     * else asks first.
+     */
+    private suspend fun establishServerState(row: SightingQueueEntity): Known {
+        val neverSent = row.state == OutboxState.QUEUED.wire && row.attempts == 0
+
+        val held: Set<String> = if (neverSent) {
+            emptySet()
+        } else {
+            when (val fetched = fetchServerState(row.id)) {
+                is Fetch.Failed -> return Known.Failed(fetched.error)
+                Fetch.Absent -> emptySet()
+                is Fetch.Found -> fetched.detail.photos.map { it.id }.toSet()
+            }
+        }
+
+        // Nothing server-side, in either branch: send the metadata. `201` and `200` are
+        // treated identically — the client never has to know which it was.
+        if (held.isEmpty()) {
+            when (val created = createMetadata(row)) {
+                is Step.Failed -> return Known.Failed(created.error)
+                Step.Ok -> Unit
+            }
+        }
+        return Known.PhotoIds(held)
+    }
+
+    /**
+     * The read-back, and the only place local data may be deleted.
+     *
+     * Uploading is not finishing: until the database itself lists every photo id, the row
+     * stays and the contributor is told "Checking…" rather than something reassuring.
+     */
+    private suspend fun confirmOrKeep(
+        row: SightingQueueEntity,
+        localPhotos: List<PhotoQueueEntity>,
+        uploaded: Int,
+    ): RowOutcome {
         val detail = when (val readBack = fetchServerState(row.id)) {
             is Fetch.Failed -> return handleFailure(row, readBack.error, photosUploaded = uploaded)
             // A 404 immediately after a successful create means something is genuinely
@@ -315,11 +344,7 @@ class SyncEngineImpl @Inject constructor(
 
     // ── Failure handling ────────────────────────────────────────────────────
 
-    private suspend fun handleFailure(
-        row: SightingQueueEntity,
-        error: ApiError,
-        photosUploaded: Int = 0,
-    ): RowOutcome {
+    private suspend fun handleFailure(row: SightingQueueEntity, error: ApiError, photosUploaded: Int = 0): RowOutcome {
         val now = System.currentTimeMillis()
 
         return when {

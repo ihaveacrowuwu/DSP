@@ -29,9 +29,7 @@ import javax.inject.Singleton
  * range, not a rare race.
  */
 @Singleton
-class SyncSchedulerImpl @Inject constructor(
-    @param:ApplicationContext private val context: Context,
-) : SyncScheduler {
+class SyncSchedulerImpl @Inject constructor(@param:ApplicationContext private val context: Context) : SyncScheduler {
 
     private val workManager: WorkManager get() = WorkManager.getInstance(context)
 

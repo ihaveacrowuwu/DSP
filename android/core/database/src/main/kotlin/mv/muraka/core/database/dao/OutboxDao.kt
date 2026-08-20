@@ -135,7 +135,13 @@ interface OutboxDao {
     )
     suspend fun requeue(id: String)
 
-    @Query("UPDATE photo_queue SET state = 'queued', attempts = 0, last_error = NULL WHERE sighting_id = :sightingId AND state != 'confirmed'")
+    @Query(
+        """
+        UPDATE photo_queue
+        SET state = 'queued', attempts = 0, last_error = NULL
+        WHERE sighting_id = :sightingId AND state != 'confirmed'
+        """,
+    )
     suspend fun requeuePhotos(sightingId: String)
 
     // ── Deletion ────────────────────────────────────────────────────────────

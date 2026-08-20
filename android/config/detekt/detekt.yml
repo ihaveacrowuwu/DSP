@@ -42,6 +42,13 @@ naming:
     ignoreAnnotated: ['Composable']
   TopLevelPropertyNaming:
     constantPattern: '[A-Z][_A-Za-z0-9]*'
+  MatchingDeclarationName:
+    # The rule assumes class-first Kotlin: one file, one class, named after it. Compose
+    # and the design system are function-first — PatchLattice.kt is named after the
+    # composable everyone looks for, and the LatticeMode enum beside it is part of the
+    # same idea. Renaming those files after their only enum would make them harder to
+    # find, which is the opposite of what the rule is for.
+    active: false
 
 style:
   MagicNumber:
@@ -62,6 +69,9 @@ style:
       # The UUIDv7 layout (48-bit timestamp, version nibble, variant bits) is a
       # bit-manipulation spec; the literals are the specification.
       - '**/common/Uuid7.kt'
+      # CaptureLimits IS the definition of the client-side caps (1-5 photographs, 200 m,
+      # 1600 px). Naming the literals inside their own named constants would be circular.
+      - '**/core/model/Capture.kt'
   MaxLineLength:
     maxLineLength: 120
     excludes: ['**/test/**', '**/androidTest/**']
@@ -102,5 +112,10 @@ potential-bugs:
   LateinitUsage:
     active: true
     excludes: ['**/test/**', '**/androidTest/**']
+    # Field injection into an Application or an Activity has no alternative: neither is
+    # constructed by us, so Hilt cannot use a constructor and the field cannot be val.
+    # Everywhere else in this codebase injection IS constructor injection, which is what
+    # keeps this exception narrow.
+    ignoreAnnotated: ['Inject']
   Deprecation:
     active: true

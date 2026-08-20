@@ -46,8 +46,7 @@ class ServerClock @Inject constructor() {
     }
 
     /** The server's idea of now, as best the client can tell. */
-    fun now(deviceNow: Instant = Instant.now()): Instant =
-        deviceNow.plusMillis(offsetOrZero())
+    fun now(deviceNow: Instant = Instant.now()): Instant = deviceNow.plusMillis(offsetOrZero())
 
     /**
      * A device timestamp, expressed in the server's time and guaranteed not to be in its

@@ -8,6 +8,7 @@ import android.location.Location
 import android.location.LocationManager
 import android.os.CancellationSignal
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
@@ -18,9 +19,9 @@ import mv.muraka.core.domain.LocationProvider
 import mv.muraka.core.model.LocationFix
 import mv.muraka.core.model.LocationSource
 import mv.muraka.core.model.Position
-import kotlin.coroutines.resume
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.resume
 
 /**
  * A position fix, preferring Google's fused provider and falling back to the platform's.
@@ -36,14 +37,12 @@ import javax.inject.Singleton
  * recorded as `manual_pin` so researchers can filter on the difference.
  */
 @Singleton
-class PlatformLocationProvider @Inject constructor(
-    @param:ApplicationContext private val context: Context,
-) : LocationProvider {
+class PlatformLocationProvider @Inject constructor(@param:ApplicationContext private val context: Context) :
+    LocationProvider {
 
-    override fun hasPermission(): Boolean =
-        PERMISSIONS.any {
-            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-        }
+    override fun hasPermission(): Boolean = PERMISSIONS.any {
+        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+    }
 
     @SuppressLint("MissingPermission") // guarded by hasPermission() on the line above
     override suspend fun currentFix(timeoutMs: Long): LocationFix? {
@@ -73,7 +72,19 @@ class PlatformLocationProvider @Inject constructor(
         }
     }.getOrNull()
 
-    /** The platform provider, for devices with no Play Services. */
+    /**
+     * The platform provider, for devices with no Play Services.
+     *
+     * Goes through `LocationManagerCompat` rather than calling
+     * `LocationManager.getCurrentLocation` directly: that method is API 30 and this app
+     * supports API 26, so the direct call would compile, pass review, and crash on a
+     * five-year-old phone. `ContextCompat.getMainExecutor` is here for the same reason —
+     * the platform version of it arrived in API 28.
+     *
+     * The signal is the PLATFORM `android.os.CancellationSignal` (API 16), not
+     * `androidx.core.os.CancellationSignal`: `LocationManagerCompat` has an overload for
+     * each and the androidx one is deprecated.
+     */
     @SuppressLint("MissingPermission")
     private suspend fun platformFix(): Location? = runCatching {
         val manager = context.getSystemService(LocationManager::class.java) ?: return null
@@ -86,9 +97,12 @@ class PlatformLocationProvider @Inject constructor(
         suspendCancellableCoroutine { continuation ->
             val signal = CancellationSignal()
             continuation.invokeOnCancellation { signal.cancel() }
-            manager.getCurrentLocation(provider, signal, context.mainExecutor) { location ->
-                continuation.resume(location)
-            }
+            LocationManagerCompat.getCurrentLocation(
+                manager,
+                provider,
+                signal,
+                ContextCompat.getMainExecutor(context),
+            ) { location -> continuation.resume(location) }
         }
     }.getOrNull()
 
