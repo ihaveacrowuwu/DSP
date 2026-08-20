@@ -53,10 +53,21 @@ settings:
     GCC_TREAT_WARNINGS_AS_ERRORS: true
     SWIFT_TREAT_WARNINGS_AS_ERRORS: false
     CODE_SIGN_STYLE: Automatic
-    # Scoped to the simulator SDK deliberately. Unscoped, this also forbids signing for
-    # a device, so `Any iOS Device` fails outright and the app cannot be put on a phone.
-    "CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]": false
-    "CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]": false
+    # Ad-hoc signing for the simulator, NOT unsigned.
+    #
+    # Unsigned was the obvious setting — it lets anyone build and run with no developer
+    # account, which is what a marker needs. It also means the app carries no
+    # `application-identifier`, so it is granted no keychain access group, and every
+    # `SecItemAdd` fails with errSecMissingEntitlement (-34018). Muraka keeps its session
+    # tokens in the Keychain, so that presented as "signing in silently returns you to the
+    # sign-in screen".
+    #
+    # `CODE_SIGN_IDENTITY = "-"` signs to run locally. It still needs no developer account
+    # and no team, and it does grant a keychain access group. Scoped to the simulator SDK
+    # deliberately: unscoped it would also override signing for a device build.
+    "CODE_SIGN_IDENTITY[sdk=iphonesimulator*]": "-"
+    "CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]": true
+    "CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]": true
   configs:
     debug:
       SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
