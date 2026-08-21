@@ -1,0 +1,23 @@
+{
+  "measured_at": "2026-08-21",
+  "what": "CPU inference latency of the exported ONNX graph, EfficientNet-B0 at 224px",
+  "why": "NFR2 requires CPU inference at or under 500 ms per image. The service classifies a whole 5x5 patch lattice for one photograph in a single call, so the per-image figure is that call.",
+  "caveat": "The weights come from a synthetic pipeline-verification run, so this says nothing about accuracy. Latency depends on the architecture, the input size and the runtime \u2014 not on what the weights learned \u2014 so it IS valid evidence for the architecture choice.",
+  "machine": "Apple M1 Pro, onnxruntime 1.20.1, CPUExecutionProvider",
+  "onnx_metadata": {
+    "model_version": "effnetb0-pipelinecheck",
+    "class_labels": "healthy,bleached",
+    "image_size": "224",
+    "normalise_mean": "0.485,0.456,0.406",
+    "normalise_std": "0.229,0.224,0.225"
+  },
+  "onnx_parity_max_abs_diff": 6.92903995513916e-07,
+  "latency": {
+    "patches": 25.0,
+    "batch_ms_p50": 380.95,
+    "batch_ms_p95": 391.31,
+    "per_patch_ms_p50": 15.238
+  },
+  "threshold_ms": 500,
+  "passed": true
+}

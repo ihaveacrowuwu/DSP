@@ -95,9 +95,46 @@ Not yet written — that work happens on the MacBook, where PyTorch has Metal
 acceleration. `training/configs/baseline.yaml` records the intended recipe so the
 first run has a starting point rather than a blank page.
 
+### What exists now
+
+The pipeline is **built and verified end to end**, on synthetic data, so everything
+except the corpus is de-risked:
+
+```
+training/
+  configs/          run configuration; baseline.yaml is the recipe
+  muraka_train/     config, data, model, metrics, train loop, ONNX export
+  scripts/          train.py, evaluate.py
+  tests/            29 tests: contract, metrics, reproducibility, ONNX parity
+  runs/             per-run checkpoint, metrics.csv, summary.json (gitignored)
+```
+
+```bash
+make test-train                      # 29 tests, no dataset needed
+cd ml/training && python3 scripts/train.py --config configs/baseline.yaml     --synthetic --epochs 4 --export-onnx     # verify the whole pipeline
+```
+
+Three things that verification already settled:
+
+- **CPU latency is fine.** EfficientNet-B0 at 224 px, exported to ONNX, classifies a
+  whole 5×5 lattice — one photograph — in **381 ms** on the M1 Pro, against NFR2's 500 ms.
+  So the fallback in step 6 below is not needed and the accuracy-first backbone stays.
+  Figures in [`docs/evidence/performance/`](../docs/evidence/performance/).
+- **The graph the service will serve matches the model that gets evaluated**, to 6.9e-07.
+- **Runs are reproducible** — same seed, same metrics; different seed, different metrics.
+  Both directions are asserted, because a pipeline that ignores the seed passes the first
+  test and fails the requirement.
+
+`muraka_train/config.py` refuses to start a run whose class order or normalisation
+disagrees with `ml/service/app`. That is not tidiness: a swapped class order inverts every
+prediction *confidently*, and mismatched normalisation degrades accuracy invisibly.
+Neither crashes, so neither would be noticed.
+
+**What is missing is the data**, and nothing else.
+
 ### The plan, in order
 
-1. **Verify the dataset.** Download
+1. **Verify the dataset.** ← *the only remaining blocker.* Download
    `NMFS-OSI/NOAA-PIFSC-ESD-CORAL-Bleaching-Dataset` from HuggingFace (no API key
    needed) and confirm its licence terms permit this use. This is the project's
    last real unknown, so it comes first.
@@ -109,8 +146,9 @@ first run has a starting point rather than a blank page.
    bleaching event costs more than a false alarm, so recall is weighted. Plus a
    confusion matrix and an error gallery.
 5. **Export ONNX**, then run the parity test against the PyTorch model.
-6. **Check CPU latency** for a 25-patch batch. If it is slow, drop to
-   MobileNetV3-Large before touching accuracy.
+6. ~~**Check CPU latency** for a 25-patch batch. If it is slow, drop to
+   MobileNetV3-Large before touching accuracy.~~ **Done** — 381 ms per photograph, so
+   EfficientNet-B0 stays.
 
 ### Constraints
 
@@ -126,6 +164,12 @@ first run has a starting point rather than a blank page.
 ```
 training/
   configs/          run configuration; one file per experiment
-  scripts/          data prep, train, evaluate, export
+  muraka_train/     the library: config, data, model, metrics, train, export
+  scripts/          train.py, evaluate.py — thin CLIs over the library
+  tests/            contract, metrics, reproducibility, ONNX parity
   runs/             metrics and checkpoints per run (gitignored)
 ```
+
+The library sits beside `scripts/` rather than inside it because the tests import it, and
+a test suite that imports from a scripts directory ends up manipulating `sys.path` in
+every file.

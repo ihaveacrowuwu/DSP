@@ -9,8 +9,8 @@ is not evidence, it is decoration — the value is in the rows that say **none**
 those are the project's honest limitations section and the build's to-do list at the
 same time.
 
-Of thirty-three requirements, **eighteen** have full automated evidence, eleven are
-partly covered and **four have none at all**. Those
+Of thirty-three requirements, **twenty** have full automated evidence, ten are partly
+covered and **three have none at all**. Those
 figures are tallied from the table below by `scripts/testing_matrix.py --check`, not
 written by hand — an early draft of this paragraph claimed sixteen when the true figure
 was three, which is exactly the kind of number a report should never carry unchecked.
@@ -42,16 +42,17 @@ one shaped like a Go, Python or Swift test method — as a build failure.
 | Go integration | 26 | `make test-go` | PostgreSQL+PostGIS; skips without it |
 | ML service (pytest) | 15 | `make test-ml` | creates a venv on first run |
 | Dashboard (Vitest) | 84 | `make test-web` | `npm install` |
+| ML training | 29 | `make test-train` | `ml/training/requirements.txt` |
 | Android unit (JVM) | 47 | `cd android && ./gradlew testDebugUnitTest` | nothing |
 | Android instrumented | 20 | `cd android && ./gradlew connectedDebugAndroidTest` | an emulator |
 | iOS (XCTest + XCUITest) | 9 | `make test-ios` | a simulator; skips without the stack |
-| **Total automated** | **241** | `make test && make mobile` | |
+| **Total automated** | **270** | `make test && make mobile` | |
 | End-to-end smoke | 33 checks | `make smoke` | the running stack |
 | Performance | 4 checks | `make perf` | the stack, seeded to 10,000 |
 | Config checks | 5 + matrix | `make lint` | nothing |
 | Smoke over TLS | 33 checks | `make smoke-tls` | Docker |
 
-All 241 passed and all 33 smoke checks passed on 2026-08-21.
+All 270 passed and all 33 smoke checks passed on 2026-08-21.
 
 The counts in this table are **runtime results from the runners** — what
 `Tests 84 passed` and `ok muraka/backend/...` actually reported.
@@ -80,7 +81,7 @@ virtualenv alone once counted as 11,917 Python tests.
 | FR2 | Create a sighting: 1–5 photos, position, time, depth, note | Must | smoke 5; mobile capture screens built and screenshotted (`docs/evidence/mobile/`) | ◐ |
 | FR3 | Queue offline, sync automatically | Must | `capturingWithNoNetworkQueuesTheSightingAndKeepsThePhotograph`, `drainingWithNoNetworkLeavesTheRowQueuedAndDoesNotBurnItsAttempts`, `theQueueSurvivesTheProcessDying`, `theQueueDrainsOnceTheNetworkReturns`, `aConnectionLostMidUploadResumesWithoutResendingWhatArrived`; plus the outbox and retry-curve tests | ✅ |
 | FR4 | Submission is idempotent; retries never duplicate | Must | `TestReplayingASubmissionCreatesExactlyOneRow` (eight attempts, the outbox give-up threshold), `TestDepthAndNoteSurviveAReplay`; smoke 6 | ✅ |
-| FR5 | Classify each photo; record label, confidence, model version | Must | smoke 9, 10, 13; `test_classify_returns_one_patch_per_cell`, `test_label_follows_severity_threshold`, `test_severity_matches_bleached_patch_fraction`, `test_confidences_are_probabilities`, `test_to_dict_shape_matches_go_client_contract` | ◐ |
+| FR5 | Classify each photo; record label, confidence, model version | Must | smoke 9, 10, 13; `test_classify_returns_one_patch_per_cell`, `test_label_follows_severity_threshold`, `test_severity_matches_bleached_patch_fraction`, `test_to_dict_shape_matches_go_client_contract`; plus `test_the_exported_onnx_agrees_with_the_pytorch_model`. **No trained model yet** | ◐ |
 | FR6 | Verification queue: confirm, correct, reject, audit-logged | Must | `TestRejectingASightingIsRecordedWithItsReasonAndAuthor`, `TestARejectionWithoutAReasonIsRefused`, `TestAnInvalidRejectReasonSaysSoRatherThanClaimingItIsMissing`; smoke 11–14 | ✅ |
 | FR7 | Map with clustering, heatmap, filters | Must | 14 `mapStyle` tests incl. `is valid against the MapLibre style specification`, `never lets a national-zoom cluster cover a whole atoll`; smoke 15 | ◐ |
 | FR8 | Full provenance per sighting | Must | smoke 13, 15 (CSV carries provenance columns) | ◐ |
@@ -129,7 +130,7 @@ is the argument for having written them:
 | ID | Requirement | MoSCoW | Evidence | |
 |---|---|---|---|---|
 | NFR1 | ML label visible in the dashboard ≤ 30 s after sync | Must | `make perf` — **0.89 s** on 2026-08-21 (`docs/evidence/performance/`) | ✅ |
-| NFR2 | CPU inference ≤ 500 ms per image | Must | `make perf` — **22 ms**, but against the service's **fake mode**; says nothing about a trained model | ◐ |
+| NFR2 | CPU inference ≤ 500 ms per image | Must | **381 ms** per photograph (a 25-patch lattice) for EfficientNet-B0 on ONNX/CPU — `docs/evidence/performance/nfr2-onnx-cpu-latency.json`. Accuracy still needs a trained model | ✅ |
 | NFR3 | Map interactive at 10,000 sightings; viewport ≤ 2 s | Must | `make perf` — **56 ms** worst of 5 at 10,304 sightings; the check fails if the corpus is smaller | ✅ |
 | NFR4 | argon2id, TLS in the demo config, JWT ≤ 15 min | Must | argon2id: `TestHashPasswordIsSaltedPerCall`, `TestHashPasswordProducesVerifiableArgon2idHash`; expiry: `TestParseAccessTokenRejectsExpiredToken`; refresh: `TestRefreshTokenStoresOnlyItsHash`, `TestRefreshTokensAreUnique`; TLS: `make lint` static checks + `make smoke-tls` (33 checks over TLS 1.3) | ✅ |
 | NFR5 | Validate, re-encode and strip EXIF from uploads | Must | smoke 8 refuses a non-image | ◐ |
@@ -143,13 +144,14 @@ is the argument for having written them:
 | NFR13 | ML-only labels visually distinct from expert-verified | Must | `says "expert" when a human decided`, `says "model" when only the classifier has`, `is distinguishable with every colour class stripped`, `marks the two with different classes, so shape and border can differ`; both apps encode it in shape and word too (`docs/evidence/mobile/`) | ✅ |
 | NFR14 | Material 3 / Liquid Glass; light and dark on both | Must | `testTheAppearanceToggleDarkensEveryScreen`, `testTheAppearanceChoiceIsRemembered`, `testTheLastRowIsReachableUnderTheFloatingTabBar`, `testThePatchGridCanBeTurnedOffAndStaysOff`; Android night resources verified with `aapt2 dump` (D33) | ✅ |
 | NFR15 | Account deletion anonymises rather than deletes, and says so | Should | `TestDeletingAnAccountKeepsTheScienceAndDropsThePerson` | ✅ |
-| NFR16 | Training runs reproducible: config-driven, seeded, metrics per run | Should | — | ○ |
+| NFR16 | Training runs reproducible: config-driven, seeded, metrics per run | Should | `test_the_same_seed_gives_the_same_metrics`, `test_a_different_seed_gives_different_metrics`, `test_the_synthetic_split_is_seeded_and_stable`; every run writes `metrics.csv` and `summary.json` | ✅ |
 
 ### What the non-functional gaps actually are
 
-- **NFR2** — the only one of the four performance numbers still short of evidence, and
-  the gap is not the harness but the model: 22 ms measures a deterministic stub. It
-  cannot be closed until the training track produces something to measure.
+- **NFR2** — closed for the architecture: 381 ms per photograph for EfficientNet-B0 on
+  ONNX/CPU, inside the 500 ms budget with headroom, which also settles the "drop to
+  MobileNetV3 if it is slow" fallback in `ml/README.md`. The service's own 22 ms figure is
+  still the stub.
 - **NFR4** — now complete, but with a caveat the project must state rather than bury:
   the demo certificate is **self-signed**, because NFR9 rules out a certificate
   authority. A browser warns on first visit. That is the honest cost of the key-free
@@ -170,9 +172,8 @@ is the argument for having written them:
   launcher ANR'd first, which points at the emulator, but it is not settled.
 - **NFR8** — a human-subjects study. Not automatable and not started; the project needs
   to either run it or narrow the claim.
-- **NFR12/NFR16** — no evidence. NFR16 is blocked on the ML training track not existing
-  yet. NFR12 (request IDs propagated across Go and Python) needs log assertions rather
-  than a harness.
+- **NFR12** — no evidence. Request IDs propagated across Go and Python needs log
+  assertions rather than a harness.
 
 ## Where the tests live
 

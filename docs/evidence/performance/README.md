@@ -18,11 +18,33 @@ seeded, ML service in fake mode.
 | Requirement | Threshold | Measured | |
 |---|---|---|---|
 | NFR1 — label readable after sync | ≤ 30 s | **0.89 s** | ✅ |
-| NFR2 — CPU inference per image | ≤ 500 ms | **22 ms** | ✅ ⚠️ |
+| NFR2 — CPU inference per image | ≤ 500 ms | **22 ms** (stub) / **381 ms** (real EfficientNet-B0) | ✅ |
 | NFR3 — map viewport at 10,000 sightings | ≤ 2 s | **56 ms** worst of 5 | ✅ |
 | NFR11 — 50 concurrent submissions | no error, no loss | **0 errors, 0 lost**, 919/s | ✅ |
 
-⚠️ **NFR2's figure is the fake model.** The ML service ships a deterministic stub until
+### NFR2, measured against the real architecture — [`nfr2-onnx-cpu-latency.json`](nfr2-onnx-cpu-latency.json)
+
+The 22 ms above is the service's stub. The **architecture** is now measured too:
+EfficientNet-B0 at 224 px, exported to ONNX and run on `CPUExecutionProvider`, for one
+5×5 patch lattice — which is one photograph, in one call.
+
+| | |
+|---|---|
+| Per photograph (25 patches), p50 | **381 ms** |
+| p95 | 391 ms |
+| Per patch | 15.2 ms |
+| NFR2 threshold | 500 ms |
+
+**Inside the budget, with about 24% headroom.** That settles a decision the plan left
+open: `ml/README.md` said "if it is slow, drop to MobileNetV3-Large before touching
+accuracy", and it is not slow, so the accuracy-first backbone stays.
+
+The weights came from a synthetic pipeline-verification run, so this says nothing about
+accuracy. Latency depends on the architecture, the input size and the runtime, not on
+what the weights learned — so it is valid evidence for the *choice of backbone* and not
+for the model's quality. ONNX/PyTorch parity on the same graph was 6.9e-07.
+
+⚠️ **The 22 ms figure below is the fake model.** The ML service ships a deterministic stub until
 the training track produces a real one, so 22 ms measures the plumbing and says nothing
 about the model that will replace it. Quoting it as evidence for NFR2 without that
 sentence beside it would be misleading.

@@ -83,3 +83,6 @@ xcuserdata/
 # Self-signed demo certificates. The private key must never be committed;
 # regenerate with deploy/tls/generate.sh.
 deploy/tls/certs/
+
+# Training run outputs: checkpoints, metrics, error galleries.
+/ml/training/runs/

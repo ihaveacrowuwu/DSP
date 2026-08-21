@@ -21,7 +21,7 @@ VENV_PY := $(VENV)/bin/python
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up up-tls down down-tls logs ps restart seed reset-data smoke smoke-tls test test-go test-ml test-web \
+.PHONY: help up up-tls down down-tls logs ps restart seed reset-data smoke smoke-tls test test-go test-ml test-web test-train \
         build fmt vet typecheck dev dev-api dev-ml dev-web psql perf \
         test-android test-ios android-build android-install android-lint \
         ios-generate ios-build mobile mobile-lint lint
@@ -81,7 +81,7 @@ reset-data: ## Delete all sightings, then reseed
 
 ## ---------------------------------------------------------------- tests
 
-test: test-go test-ml test-web ## Run all unit tests
+test: test-go test-ml test-web ## Run all unit tests (add test-train for the ML track)
 
 test-go: ## Go unit tests
 	cd backend && $(GO) test ./...
@@ -95,6 +95,16 @@ $(VENV_PY): ml/service/requirements-dev.txt
 	$(VENV_PY) -m pip install --quiet --upgrade pip
 	$(VENV_PY) -m pip install --quiet -r ml/service/requirements-dev.txt
 	@touch $(VENV_PY)
+
+test-train: ml/training/.venv/bin/python ## ML training-track tests (no dataset needed)
+	cd ml/training && .venv/bin/python -m pytest tests/ -q
+
+ml/training/.venv/bin/python: ml/training/requirements.txt
+	@echo "Creating ml/training/.venv (torch is a large download the first time)"
+	$(PY) -m venv ml/training/.venv
+	ml/training/.venv/bin/python -m pip install --quiet --upgrade pip
+	ml/training/.venv/bin/python -m pip install --quiet -r ml/training/requirements.txt
+	@touch ml/training/.venv/bin/python
 
 test-web: ## Typecheck the dashboard and run its unit tests
 	cd web && npm run typecheck && npm test

@@ -1,0 +1,24 @@
+# Muraka training track — pinned, because NFR16 is "runs shall be reproducible" and a
+# floating dependency makes that untrue without anyone editing a config.
+#
+#   python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+#
+# macOS note: a python.org interpreter often ships without a CA bundle, and
+# torchvision's ImageNet weights then fail with CERTIFICATE_VERIFY_FAILED. Either run
+# "Install Certificates.command" from the Python installer, or export
+# SSL_CERT_FILE=$(python3 -c "import certifi;print(certifi.where())").
+
+torch==2.8.0
+torchvision==0.23.0
+numpy==2.4.1
+pillow==12.1.0
+PyYAML==6.0.3
+
+# Export and the parity check. onnxruntime is pinned to the SAME version the service
+# runs (ml/service/requirements.txt), so parity is verified against the runtime that
+# will actually serve the model rather than a newer one.
+onnx==1.17.0
+onnxruntime==1.20.1
+
+# Tests only.
+pytest==8.3.4
