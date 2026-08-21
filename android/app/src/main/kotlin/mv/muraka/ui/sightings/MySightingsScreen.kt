@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material.icons.outlined.Waves
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,6 +46,7 @@ fun MySightingsScreen(
 ) {
     val sightings by viewModel.sightings.collectAsStateWithLifecycle()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val totalCount by viewModel.totalCount.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = modifier,
@@ -55,13 +57,42 @@ fun MySightingsScreen(
             onRefresh = viewModel::refresh,
             modifier = Modifier.padding(padding).fillMaxSize(),
         ) {
+            // Two different empty states, because they mean different things. Telling a
+            // contributor with ninety sightings that they have none, because a chip is
+            // selected off-screen, is the kind of small lie that makes an app feel broken.
             if (sightings.isEmpty() && !state.refreshing) {
-                EmptyState(
-                    title = "No sightings yet",
-                    body = "Photograph a reef and Muraka will queue it. It uploads by itself " +
-                        "when you have a connection — you can capture all day with no signal.",
-                    icon = Icons.Outlined.Waves,
-                )
+                Column(modifier = Modifier.padding(16.dp)) {
+                    SightingFilterBar(
+                        filter = state.filter,
+                        expanded = state.filtersExpanded,
+                        onQueryChange = viewModel::onQueryChange,
+                        onToggleExpanded = viewModel::toggleFilters,
+                        onConditionChange = viewModel::onConditionChange,
+                        onStatusToggle = viewModel::onStatusToggle,
+                        onLocationSourceChange = viewModel::onLocationSourceChange,
+                        onDateRangeChange = viewModel::onDateRangeChange,
+                        onToggleSort = viewModel::toggleSort,
+                        onClear = viewModel::clearFilter,
+                    )
+
+                    if (state.filter.isActive) {
+                        EmptyState(
+                            title = "Nothing matches",
+                            body = "None of your $totalCount sighting${if (totalCount == 1) "" else "s"} " +
+                                "matches this search. Clear the filter to see them all again.",
+                            icon = Icons.Outlined.SearchOff,
+                            actionLabel = "Clear the filter",
+                            onAction = viewModel::clearFilter,
+                        )
+                    } else {
+                        EmptyState(
+                            title = "No sightings yet",
+                            body = "Photograph a reef and Muraka will queue it. It uploads by itself " +
+                                "when you have a connection — you can capture all day with no signal.",
+                            icon = Icons.Outlined.Waves,
+                        )
+                    }
+                }
                 return@PullToRefreshBox
             }
 
@@ -71,6 +102,31 @@ fun MySightingsScreen(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                item {
+                    SightingFilterBar(
+                        filter = state.filter,
+                        expanded = state.filtersExpanded,
+                        onQueryChange = viewModel::onQueryChange,
+                        onToggleExpanded = viewModel::toggleFilters,
+                        onConditionChange = viewModel::onConditionChange,
+                        onStatusToggle = viewModel::onStatusToggle,
+                        onLocationSourceChange = viewModel::onLocationSourceChange,
+                        onDateRangeChange = viewModel::onDateRangeChange,
+                        onToggleSort = viewModel::toggleSort,
+                        onClear = viewModel::clearFilter,
+                    )
+                }
+
+                if (state.filter.isActive) {
+                    item {
+                        Text(
+                            text = "${sightings.size} of $totalCount",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
                 state.refreshError?.let { banner ->
                     item {
                         // A banner, not a dialogue: the cached list underneath is still
