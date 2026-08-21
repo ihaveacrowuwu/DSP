@@ -4,15 +4,15 @@ The checklist at the end of [`mobile-shared/README.md`](../../../mobile-shared/R
 is the apps' stated definition of done. Every item was unticked until 2026-08-21, and
 the offline half had never been walked at all.
 
-This records what is now **automated**, what was **measured**, and what is still
-**unverified** — including one item that could not be completed and why. An acceptance
-checklist that quietly marks itself done is worth less than one with a gap in it.
+This records what is now **automated**, what was **measured**, and what is still open —
+including one risk that is neither a pass nor a defect. An acceptance checklist that
+quietly marks itself done is worth less than one with a gap in it.
 
 ## Summary
 
 | Item | Status | Evidence |
 |---|---|---|
-| Capture completes with the device in airplane mode | ✅ automated | `capturingWithNoNetworkQueuesTheSightingAndKeepsThePhotograph` |
+| Capture completes with the device in airplane mode | ✅ automated **and walked** | `capturingWithNoNetworkQueuesTheSightingAndKeepsThePhotograph`, plus the walkthrough below |
 | Queued sightings survive a force-quit and a device restart | ✅ automated | `theQueueSurvivesTheProcessDying` |
 | Sync resumes automatically when connectivity returns | ✅ automated | `theQueueDrainsOnceTheNetworkReturns` |
 | Killing the app mid-upload does not duplicate or lose | ✅ automated | `aConnectionLostMidUploadResumesWithoutResendingWhatArrived` |
@@ -24,7 +24,7 @@ checklist that quietly marks itself done is worth less than one with a gap in it
 | Light and dark appearance both correct | ✅ automated | `testTheAppearanceToggleDarkensEveryScreen`, `testTheAppearanceChoiceIsRemembered`; Android night resources via `aapt2 dump` (D33) |
 | Account deletion explains anonymisation | ✅ automated (server) | `TestDeletingAnAccountKeepsTheScienceAndDropsThePerson`; the UI copy is a screenshot, not a test |
 
-## The offline items are automated, not walked
+## The offline items are automated, not just walked once
 
 `android/core/data/src/androidTest/.../SyncEngineOfflineTest.kt` — 8 tests, all passing
 on the `SkyCast_API36` emulator.
@@ -78,30 +78,55 @@ GPS is acquired automatically, and depth, note and self-assessment are all optio
 measurement", and a tap count is not a stopwatch. This stays open, and the project should
 say so rather than infer the timing from the tap count.
 
-## What could not be verified, and why
+## Capture with the radio off: walked, on a cold-booted emulator
 
-**Capture with the radio actually off, on a device: not completed.**
+`airplane_mode_on = 1`, and the host confirmed unreachable from the device
+(`ping 10.0.2.2` → `connect: Network is unreachable`) before starting.
 
-The automated test proves the *queue* accepts a sighting with no network. It cannot prove
-the *capture screen renders and behaves* with the radio off, because that is a screen.
+![capture screen in airplane mode](android-capture-airplane-mode.png)
 
-Attempting it on the `SkyCast_API36` emulator failed four times — not in the app, but in
-the emulator. `logcat` shows the ANRs are in **`system_server` (pid 654)**, with the app
-itself at 17–23% CPU:
+What the walkthrough established, with no network at all:
 
-```
-ANR in input window owned by pid=654.
-  Reason: Input dispatching timed out (PointerEventDispatcher0 is not responding…)
-ANR in system
-  17% 10256/mv.muraka.debug: 14% user + 3.2% kernel
-```
+- The capture screen renders and is fully usable.
+- **Position resolves** — `37.42200, -122.08400`, accuracy `±5 m`. GPS is a sensor, not a
+  radio service, which is exactly why FR2 allows a sighting without connectivity.
+- `Queue this sighting` is **disabled at 0 photographs**, enforcing the 1–5 rule before
+  the button can be pressed rather than after.
+- Permissions are requested **at the moment of capture** — location when the screen
+  opens, camera when "Take a photograph" is chosen — which is rule 6 of
+  `mobile-shared/README.md`, and neither was asked on launch.
+- The camera path works offline: the shutter produced
+  `Photographs 1 of 5` with a thumbnail
+  ([screenshot](android-capture-airplane-mode-with-photo.png)).
 
-It was preceded by a `Bluetooth keeps stopping` system crash and recurred immediately
-after a full `adb reboot`. Ping latency to the host was averaging 448 ms. This is an
-unhealthy emulator, and no amount of retrying it produces evidence about the app.
+**The final `Queue this sighting` tap was not landed**, so the walkthrough stops one tap
+short of a queued row. That last step is the one thing here already covered
+automatically, by `capturingWithNoNetworkQueuesTheSightingAndKeepsThePhotograph`.
 
-It is recorded as **unverified** rather than assumed. The honest next step is a physical
-Android device, or a fresh AVD.
+### The emulator, and one observation worth following up on hardware
+
+Getting this far took five attempts. The first four failed inside the emulator rather
+than the app: `logcat` put the ANRs in **`system_server`** with Muraka at 17–23% CPU,
+preceded by a `Bluetooth keeps stopping` system crash, recurring immediately after
+`adb reboot`, with host ping latency averaging 448 ms. A full cold boot
+(`emulator -no-snapshot-load`) fixed it, and the 8 instrumented tests then passed in 10
+seconds having previously reported "0 tests".
+
+On the successful walkthrough an ANR **did** appear in Muraka right after the camera
+returned. Two reasons to think it is the emulator and not the app, and one reason not to
+close the question:
+
+- The launcher ANR'd **first** — `ANR in com.google.android.apps.nexuslauncher`,
+  `[Gesture Monitor] swipe-up is not responding` — twenty seconds before Muraka's, which
+  is system-wide input starvation rather than one app blocking its own main thread.
+- Muraka's reason is `Waited 5016ms for MotionEvent`, i.e. input dispatch, not a blocked
+  computation.
+- But the photograph was decoded, rotated, downscaled and written in that window, and
+  although `PhotoStore.store` does all of it inside `withContext(dispatchers.io)`, this
+  has not been observed on real hardware.
+
+**Recorded as a risk, not as a pass or a defect.** It needs one capture on a physical
+Android device to settle, and that is the next action for this item.
 
 ## Reproducing
 

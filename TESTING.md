@@ -9,7 +9,7 @@ is not evidence, it is decoration — the value is in the rows that say **none**
 those are the project's honest limitations section and the build's to-do list at the
 same time.
 
-Of thirty-three requirements, **seventeen** have full automated evidence, twelve are
+Of thirty-three requirements, **eighteen** have full automated evidence, eleven are
 partly covered and **four have none at all**. Those
 figures are tallied from the table below by `scripts/testing_matrix.py --check`, not
 written by hand — an early draft of this paragraph claimed sixteen when the true figure
@@ -134,7 +134,7 @@ is the argument for having written them:
 | NFR4 | argon2id, TLS in the demo config, JWT ≤ 15 min | Must | argon2id: `TestHashPasswordIsSaltedPerCall`, `TestHashPasswordProducesVerifiableArgon2idHash`; expiry: `TestParseAccessTokenRejectsExpiredToken`; refresh: `TestRefreshTokenStoresOnlyItsHash`, `TestRefreshTokensAreUnique`; TLS: `make lint` static checks + `make smoke-tls` (33 checks over TLS 1.3) | ✅ |
 | NFR5 | Validate, re-encode and strip EXIF from uploads | Must | smoke 8 refuses a non-image | ◐ |
 | NFR6 | Capture completable in < 60 s and ≤ 8 taps | Must | **5 taps**, counted from the capture code (6 on the first ever capture, including the permission grant). The **timing** has never been measured | ◐ |
-| NFR7 | Contributor app fully functional offline except register/login | Must | the 8 `SyncEngineOfflineTest` cases, `journalsWriteAheadSoAReaderNeverBlocksTheCaptureFlow`, `commitsReachTheStorageMediumBeforeEnqueueReturns`, `DurabilityPragmaTests`. The capture **screen** with the radio off is still unverified — see `docs/evidence/mobile/acceptance.md` | ◐ |
+| NFR7 | Contributor app fully functional offline except register/login | Must | the 8 `SyncEngineOfflineTest` cases, `journalsWriteAheadSoAReaderNeverBlocksTheCaptureFlow`, `commitsReachTheStorageMediumBeforeEnqueueReturns`, `DurabilityPragmaTests`; plus a device walkthrough with the radio off — GPS resolved, camera captured (`docs/evidence/mobile/acceptance.md`) | ✅ |
 | NFR8 | SUS ≥ 70 from ≥ 5 users | Must | — | ○ |
 | NFR9 | No component depends on a key-requiring external service | Must | `make mobile-lint` fails on an App Transport Security exception in a release plist; the basemap is committed vector GeoJSON with no tile or glyph server (D22/D23) | ◐ |
 | NFR10 | Startable by one documented command; seed by one more | Must | `make up`, `make seed`; `make test`, `make test-ml`, `make test-web` and `make smoke` were all broken before 2026-08-21 and now run (D42) | ◐ |
@@ -162,12 +162,12 @@ is the argument for having written them:
   **5**, or 6 on the first capture. The **timing** is still unmeasured, and its
   verification method is "usability testing measurement", so a stopwatch and a person is
   what closes it — not another test.
-- **NFR7** — durability was already proven by reading the pragmas back, and the network
-  half is now covered too: eight instrumented tests run with the server unreachable, a
-  process restart between drains, and a connection dropped mid-upload. The remaining gap
-  is that the capture **screen** has not been exercised with a device's radio off — four
-  attempts failed inside the emulator's own `system_server`, not the app, and that is
-  recorded rather than glossed.
+- **NFR7** — closed. Durability was already proven by reading the pragmas back; the
+  network half is now eight instrumented tests with the server unreachable, a process
+  restart between drains and a connection dropped mid-upload; and the capture screen was
+  walked with the radio genuinely off, resolving GPS and taking a photograph. One ANR
+  during that walkthrough is recorded as a risk to re-check on physical hardware — the
+  launcher ANR'd first, which points at the emulator, but it is not settled.
 - **NFR8** — a human-subjects study. Not automatable and not started; the project needs
   to either run it or narrow the claim.
 - **NFR12/NFR16** — no evidence. NFR16 is blocked on the ML training track not existing

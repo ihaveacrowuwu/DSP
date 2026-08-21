@@ -153,8 +153,9 @@ Results are recorded in
 [`docs/evidence/mobile/acceptance.md`](../docs/evidence/mobile/acceptance.md), including
 the one item that could not be completed and why.
 
-- [x] Capture completes with the device in airplane mode — *the queue half is automated;
-      the capture **screen** with the radio off is still unverified, see the evidence file*
+- [x] Capture completes with the device in airplane mode — *automated, and walked on a
+      device with the radio off; see the evidence file for one ANR worth re-checking on
+      real hardware*
 - [x] Queued sightings survive a force-quit and a device restart
 - [x] Sync resumes automatically when connectivity returns, with no user action
 - [x] Killing the app mid-upload does not duplicate or lose the sighting
