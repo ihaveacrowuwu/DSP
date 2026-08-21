@@ -326,6 +326,46 @@ final class SignInFlowUITests: XCTestCase {
         )
     }
 
+    /// Activating search removes both navigation-bar items — UIKit substitutes its own Close
+    /// button and owns that row — so the filter menu is unreachable while typing. The scope
+    /// bar is the affordance that survives, and this checks it genuinely filters rather than
+    /// merely appearing.
+    func testTheScopeBarFiltersWhileSearchIsActive() throws {
+        try skipUnlessStackIsUp()
+        signIn()
+
+        let cells = app.tables.cells
+        XCTAssertTrue(cells.element(boundBy: 0).waitForExistence(timeout: 15), "seed the stack first")
+        let unfiltered = cells.count
+
+        app.searchFields.firstMatch.tap()
+        XCTAssertFalse(
+            app.buttons["newSighting"].exists,
+            "UIKit is expected to take the navigation row during search — if this passes, "
+                + "the scope bar may no longer be needed"
+        )
+
+        let bleached = app.buttons["Bleached"]
+        XCTAssertTrue(bleached.waitForExistence(timeout: 5), "the scope bar should be visible while searching")
+        bleached.tap()
+        sleep(1)
+        attach(name: "09-scope-bar")
+        let scoped = cells.count
+        XCTAssertLessThan(scoped, unfiltered, "the scope bar should narrow the list")
+
+        // One piece of state with two controls: leaving search must not discard the choice,
+        // and the menu must come back showing it.
+        app.buttons["Close"].tap()
+        sleep(1)
+        XCTAssertEqual(cells.count, scoped, "the condition chosen in the scope bar should survive closing search")
+        XCTAssertTrue(app.buttons["filters"].exists)
+        XCTAssertEqual(
+            app.buttons["filters"].label,
+            "Filters, 1 active",
+            "the menu button should report the condition the scope bar set"
+        )
+    }
+
     func testNoScreenClaimsASightingIsSynced() throws {
         try skipUnlessStackIsUp()
         signIn()

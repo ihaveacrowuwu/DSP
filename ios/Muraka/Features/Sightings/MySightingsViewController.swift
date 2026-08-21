@@ -63,7 +63,6 @@ final class MySightingsViewController: UIViewController {
         tableView.refreshControl = refreshControl
         view.addSubview(tableView)
 
-        // Glass, because this is chrome floating over content — exactly what it is for.
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -104,6 +103,21 @@ final class MySightingsViewController: UIViewController {
         // hundreds of sightings should not have to discover that search exists.
         navigationItem.preferredSearchBarPlacement = .stacked
         navigationItem.hidesSearchBarWhenScrolling = false
+
+        // Condition also as a scope bar, because activating search takes the whole navigation
+        // row: UIKit removes *both* bar-button items and substitutes its own Close button, so
+        // while the field is active the filter menu is unreachable. A scope bar is UIKit's own
+        // answer to "narrow this search" and is the one filter affordance that survives, so
+        // the axis that carries the science stays available while typing.
+        //
+        // It is a second control over one piece of state, not a second piece of state: both it
+        // and the menu write `filter.condition`, and `syncScopeBar()` keeps them agreeing.
+        searchController.searchBar.delegate = self
+        searchController.searchBar.scopeButtonTitles = Self.scopeTitles
+        // `.onSearchActivation`, not the default `.automatic`: the point is to have the control
+        // the moment the navigation row is taken away, not once something has been typed.
+        searchController.scopeBarActivation = .onSearchActivation
+        syncScopeBar()
 
         // `+` in the top right, which is where Contacts and Calendar have put "add" for
         // years. Apple's newest apps (Mail, Notes on iOS 26) use a floating bottom-right
@@ -148,6 +162,21 @@ final class MySightingsViewController: UIViewController {
         )
     }
 
+    /// The scope bar's selection, derived from the filter rather than stored beside it.
+    private static let scopeTitles = ["Any", "Healthy", "Bleached"]
+
+    private func syncScopeBar() {
+        let index: Int = switch filter.condition {
+        case .none: 0
+        case .healthy: 1
+        case .bleached: 2
+        }
+        let bar = searchController.searchBar
+        // Guarded: assigning the index unconditionally re-enters the delegate on every
+        // `applyFilter()`, and the filter is what `applyFilter()` was called about.
+        if bar.selectedScopeButtonIndex != index { bar.selectedScopeButtonIndex = index }
+    }
+
     private func presentDateRangePicker() {
         let picker = DateRangePickerViewController(from: filter.from, to: filter.to) { [weak self] from, to in
             self?.filter.from = from
@@ -161,6 +190,7 @@ final class MySightingsViewController: UIViewController {
         tableView.reloadData()
         // The menu shows the current selection, so it has to be rebuilt when that changes.
         refreshFilterButton()
+        syncScopeBar()
         updateFilterSummary()
         updateEmptyState()
     }
@@ -285,6 +315,16 @@ extension MySightingsViewController: UITableViewDataSource, UITableViewDelegate 
             sightingID: sightings[indexPath.row].id
         )
         navigationController?.pushViewController(detail, animated: true)
+    }
+}
+
+extension MySightingsViewController: UISearchBarDelegate {
+    func searchBar(_: UISearchBar, selectedScopeButtonIndexDidChange index: Int) {
+        filter.condition = switch index {
+        case 1: .healthy
+        case 2: .bleached
+        default: nil
+        }
     }
 }
 

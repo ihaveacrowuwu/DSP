@@ -17,6 +17,7 @@ re-running `make test-ios` regenerates them. The Android set was captured with
 | Detail, grid off | `android-detail-grid-off.png` | `ios-detail-grid-off.png` |
 | Filtered history | `android-filtered.png` | `ios-filtered.png` |
 | Filter control | (in `android-filtered.png`) | `ios-filter-menu.png` |
+| Filtering while searching | (chips stay visible) | `ios-scope-bar.png` |
 
 | Appearance toggle | `android-appearance-toggle.png` | `ios-appearance-toggle.png` |
 
@@ -54,6 +55,12 @@ independently report **"6 of 50"** — same seeded account, same criteria, two i
 written from the same reasoning. The controls are deliberately different: Material filter chips
 on Android, a native `UIMenu` on iOS. What matches is the filter and its wording, not the
 widget.
+
+**`ios-scope-bar.png` is there because iOS takes the navigation row away.** Activating search
+removes both bar-button items and substitutes UIKit's own Close button, so the filter menu is
+unreachable while typing — the scope bar is what keeps condition available. Android needs no
+equivalent: its filter chips sit in the content, so searching never hides them. Both report the
+same **"6 of 50"**. See D40 in `docs/08`.
 
 **Where the primary action sits is deliberately different.** `android-sightings.png` has a
 bottom-right FAB; `ios-my-sightings.png` has a `+` in the navigation bar. Both are what their
