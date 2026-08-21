@@ -5,12 +5,22 @@
 COMPOSE := docker compose -f deploy/docker-compose.yml
 GO      := go
 
+# `python3`, never `python`. On this machine `python` is a shell *alias*, so recipes
+# using it failed with "No such file or directory" — make runs /bin/sh, which does not
+# read the interactive shell's aliases. `make smoke` was broken that way.
+PY      := python3
+# The ML tests run in a virtualenv created on demand. The path was `.venv/Scripts/python`,
+# which is the **Windows** layout — part of this repository was written on a Windows
+# machine — so `make test-ml`, and therefore `make test`, failed on macOS and Linux.
+VENV    := ml/service/.venv
+VENV_PY := $(VENV)/bin/python
+
 .DEFAULT_GOAL := help
 
 .PHONY: help up down logs ps restart seed reset-data smoke test test-go test-ml test-web \
         build fmt vet typecheck dev dev-api dev-ml dev-web psql \
         test-android test-ios android-build android-install android-lint \
-        ios-generate ios-build mobile mobile-lint
+        ios-generate ios-build mobile mobile-lint lint
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -55,14 +65,21 @@ test: test-go test-ml test-web ## Run all unit tests
 test-go: ## Go unit tests
 	cd backend && $(GO) test ./...
 
-test-ml: ## ML service tests (fake mode; needs no model)
-	cd ml/service && ./.venv/Scripts/python -m pytest tests/ -q
+test-ml: $(VENV_PY) ## ML service tests (fake mode; needs no model)
+	cd ml/service && .venv/bin/python -m pytest tests/ -q
+
+$(VENV_PY): ml/service/requirements-dev.txt
+	@echo "Creating $(VENV) from pinned requirements"
+	$(PY) -m venv $(VENV)
+	$(VENV_PY) -m pip install --quiet --upgrade pip
+	$(VENV_PY) -m pip install --quiet -r ml/service/requirements-dev.txt
+	@touch $(VENV_PY)
 
 test-web: ## Typecheck the dashboard and run its unit tests
 	cd web && npm run typecheck && npm test
 
 smoke: ## End-to-end pipeline test against the running stack
-	python scripts/smoke_test.py
+	$(PY) scripts/smoke_test.py
 
 ## ---------------------------------------------------------------- build
 
@@ -84,8 +101,8 @@ dev-api: ## Run the API on the host against the containerised database
 	cd backend && DATABASE_URL='postgres://muraka:muraka@localhost:5433/muraka?sslmode=disable' \
 	  ML_SERVICE_URL='http://localhost:8010' $(GO) run ./cmd/api
 
-dev-ml: ## Run the ML service on the host with reload
-	cd ml/service && ./.venv/Scripts/python -m uvicorn app.main:app --reload --port 8000
+dev-ml: $(VENV_PY) ## Run the ML service on the host with reload
+	cd ml/service && .venv/bin/python -m uvicorn app.main:app --reload --port 8000
 
 dev-web: ## Dashboard with hot reload on :5180 (replaces the static web container)
 	@echo "Freeing :5180 — the static web container serves the last build there."
@@ -134,11 +151,17 @@ test-ios: ios-generate ## iOS unit tests on the simulator
 
 mobile: test-android test-ios ## Unit tests for both apps
 
+lint: mobile-lint ## Every lint and contract check, including the traceability matrix
+	@echo
+	@# The testing chapter of the project is assembled from TESTING.md, so a test it cites
+	@# having been renamed or deleted is a documentation bug that must fail the build.
+	$(PY) scripts/testing_matrix.py --check
+
 mobile-lint: ## Linters and cross-platform checks for both apps
 	cd android && ./gradlew ktlintCheck detekt
 	cd ios && swiftlint --quiet
 	@echo
-	python3 scripts/check_status_vocabulary.py
+	$(PY) scripts/check_status_vocabulary.py
 	@echo
 	@# NFR4: the App Transport Security exception is a debug-only affordance for the local
 	@# stack, and a release build that carried one could talk to a dev server in clear text.

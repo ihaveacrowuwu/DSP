@@ -123,11 +123,19 @@ committed as 67 KB of vector GeoJSON (`web/public/basemap/maldives.json`), so th
 path has no tile server, no glyph server and no network. See D22/D23 in `docs/08` and
 the header of `web/src/lib/mapStyle.ts`.
 
-Known gaps: no DB-backed integration tests on the **Go** side (all 40 Go tests are
-pure unit tests), dashboard tests cover only the map style, the basemap and the
-photo-resolution rule (`web/src/lib/*.test.ts`, 18 tests) and nothing else, no TLS in
-the demo config, no load test, no `TESTING.md` traceability document, and no trained
-model.
+[`TESTING.md`](TESTING.md) is the requirement-to-test traceability matrix, and it is
+the honest picture: of 33 requirements, **3** have full automated evidence, 19 are
+partly covered and **10 have none**. Read it before planning work — it is also the
+to-do list, and its counts are tallied by `scripts/testing_matrix.py` rather than
+maintained by hand. 143 automated tests across five suites, all passing, plus 33
+end-to-end smoke checks.
+
+Known gaps, in the order they hurt the project: no TLS anywhere (NFR4 is a Must), no
+load test (NFR11), no DB-backed integration tests on the **Go** side (all 40 Go tests
+are pure unit tests, so FR10/FR14/FR15 have no evidence at all), dashboard tests cover
+only the map style, the basemap and the photo-resolution rule (`web/src/lib/*.test.ts`,
+20 tests) and never render a component, the capture flow is unmeasured against NFR6,
+and there is no trained model.
 
 On mobile, the gap is the acceptance checklist at the end of
 `mobile-shared/README.md`: the offline scenarios that need a device to be put into
