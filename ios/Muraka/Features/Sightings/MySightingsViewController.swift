@@ -11,7 +11,17 @@ final class MySightingsViewController: UIViewController {
     private let refreshControl = UIRefreshControl()
     private let captureButton = UIButton(configuration: GlassSurface.makeButtonConfiguration(.primary))
 
+    /// Everything the device knows about, unfiltered.
+    private var allSightings: [ContributorSighting] = []
+    /// What the table shows: `allSightings` with `filter` applied.
     private var sightings: [ContributorSighting] = []
+
+    /// Applied locally, so searching keeps working with no connection (NFR7).
+    private var filter = SightingFilter() {
+        didSet { applyFilter() }
+    }
+
+    private let searchController = UISearchController(searchResultsController: nil)
     private var observationTask: Task<Void, Never>?
     private var emptyView: UIView?
 
@@ -33,6 +43,7 @@ final class MySightingsViewController: UIViewController {
         view.backgroundColor = .systemBackground
 
         buildHierarchy()
+        installSearchAndFilter()
         observeSightings()
         Task { await refresh() }
     }
@@ -80,15 +91,90 @@ final class MySightingsViewController: UIViewController {
             guard let self, let userID = await container.tokens.currentUserID() else { return }
             do {
                 for try await rows in container.sightingRepository.mySightingsStream(userID: userID) {
-                    sightings = rows
-                    tableView.reloadData()
-                    updateEmptyState()
+                    allSightings = rows
+                    applyFilter()
                 }
             } catch {
                 // The stream ending is not a user-facing failure: the last rows stay on
                 // screen, and pull-to-refresh still works.
             }
         }
+    }
+
+    // ── Search and filtering ────────────────────────────────────────────────
+
+    /// The native search field in the navigation item, plus a filter menu beside it.
+    ///
+    /// `UISearchController` is what gives the search field its glass treatment, its scroll
+    /// behaviour and its VoiceOver handling for free — none of which a custom text field in a
+    /// header view would have.
+    private func installSearchAndFilter() {
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Search sightings"
+        searchController.searchBar.accessibilityLabel = "Search your sightings"
+        navigationItem.searchController = searchController
+        // Visible from the start rather than revealed by pulling down: a contributor with
+        // hundreds of sightings should not have to discover that search exists.
+        navigationItem.preferredSearchBarPlacement = .stacked
+        navigationItem.hidesSearchBarWhenScrolling = false
+
+        refreshFilterButton()
+    }
+
+    private func refreshFilterButton() {
+        navigationItem.rightBarButtonItem = SightingFilterMenu.makeBarButton(
+            filter: filter,
+            actions: SightingFilterMenu.Actions(
+                setCondition: { [weak self] in self?.filter.condition = $0 },
+                toggleStatus: { [weak self] status in
+                    guard let self else { return }
+                    filter = filter.toggling(status)
+                },
+                setLocationSource: { [weak self] in self?.filter.locationSource = $0 },
+                toggleSort: { [weak self] in self?.filter.sort = self?.filter.sort.toggled ?? .newestFirst },
+                pickDateRange: { [weak self] in self?.presentDateRangePicker() },
+                clear: { [weak self] in
+                    guard let self else { return }
+                    filter = filter.cleared
+                    searchController.searchBar.text = ""
+                }
+            )
+        )
+    }
+
+    private func presentDateRangePicker() {
+        let picker = DateRangePickerViewController(from: filter.from, to: filter.to) { [weak self] from, to in
+            self?.filter.from = from
+            self?.filter.to = to
+        }
+        present(UINavigationController(rootViewController: picker), animated: true)
+    }
+
+    private func applyFilter() {
+        sightings = filter.apply(to: allSightings)
+        tableView.reloadData()
+        // The menu shows the current selection, so it has to be rebuilt when that changes.
+        refreshFilterButton()
+        updateFilterSummary()
+        updateEmptyState()
+    }
+
+    /// "6 of 50", so a filtered list never looks like the whole history.
+    private func updateFilterSummary() {
+        guard filter.isActive, !sightings.isEmpty else {
+            if tableView.tableHeaderView is UILabel { tableView.tableHeaderView = nil }
+            return
+        }
+
+        let label = UILabel()
+        label.text = "\(sightings.count) of \(allSightings.count)"
+        label.font = .preferredFont(forTextStyle: .footnote)
+        label.adjustsFontForContentSizeCategory = true
+        label.textColor = .secondaryLabel
+        label.textAlignment = .center
+        label.frame = CGRect(x: 0, y: 0, width: tableView.bounds.width, height: 32)
+        tableView.tableHeaderView = label
     }
 
     @objc private func pullToRefresh() {
@@ -132,12 +218,31 @@ final class MySightingsViewController: UIViewController {
         emptyView = nil
         guard sightings.isEmpty else { return }
 
-        let empty = MessageStateView(
-            title: "No sightings yet",
-            body: "Photograph a reef and Muraka will queue it. It uploads by itself when you "
-                + "have a connection — you can capture all day with no signal.",
-            systemImage: "water.waves"
-        )
+        // Two different empty states, because they mean different things. Telling a
+        // contributor with ninety sightings that they have none, because a filter is set
+        // behind a menu, is the kind of small lie that makes an app feel broken.
+        let empty: MessageStateView = if filter.isActive {
+            MessageStateView(
+                title: "Nothing matches",
+                body: "None of your \(allSightings.count) "
+                    + "sighting\(allSightings.count == 1 ? "" : "s") matches this search. "
+                    + "Clear the filter to see them all again.",
+                systemImage: "magnifyingglass",
+                actionTitle: "Clear the filter",
+                action: { [weak self] in
+                    guard let self else { return }
+                    filter = filter.cleared
+                    searchController.searchBar.text = ""
+                }
+            )
+        } else {
+            MessageStateView(
+                title: "No sightings yet",
+                body: "Photograph a reef and Muraka will queue it. It uploads by itself when you "
+                    + "have a connection — you can capture all day with no signal.",
+                systemImage: "water.waves"
+            )
+        }
         empty.translatesAutoresizingMaskIntoConstraints = false
         view.insertSubview(empty, aboveSubview: tableView)
         NSLayoutConstraint.activate([
@@ -175,5 +280,16 @@ extension MySightingsViewController: UITableViewDataSource, UITableViewDelegate 
             sightingID: sightings[indexPath.row].id
         )
         navigationController?.pushViewController(detail, animated: true)
+    }
+}
+
+extension MySightingsViewController: UISearchResultsUpdating {
+    /// No debounce, on purpose.
+    ///
+    /// Filtering a few hundred rows already in memory is instant, so a debounce would add lag
+    /// to something that has none. This would need one if the query went to the server —
+    /// which is exactly why it does not.
+    func updateSearchResults(for searchController: UISearchController) {
+        filter.query = searchController.searchBar.text ?? ""
     }
 }

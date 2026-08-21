@@ -74,6 +74,91 @@ final class SignInFlowUITests: XCTestCase {
         attach(name: "05-sighting-detail")
     }
 
+    /// Search and filtering, which run entirely on local data so they work offline (NFR7).
+    func testSearchingAndFilteringNarrowsTheHistory() throws {
+        try skipUnlessStackIsUp()
+        signIn()
+
+        let cells = app.tables.cells
+        XCTAssertTrue(cells.element(boundBy: 0).waitForExistence(timeout: 15), "seed the stack first")
+        let unfiltered = cells.count
+        XCTAssertGreaterThan(unfiltered, 1, "the seeded history should have several rows")
+
+        // ── Search ───────────────────────────────────────────────────────────
+        let search = app.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 5), "the search field should be in the navigation bar")
+        search.tap()
+        // A status word, which every row's pill contains, so the match is predictable.
+        search.typeText("Verified")
+        attach(name: "06-search")
+
+        // Narrowed, and not to nothing — some seeded sightings are verified.
+        let searched = cells.count
+        XCTAssertLessThan(searched, unfiltered, "searching should narrow the list")
+        XCTAssertGreaterThan(searched, 0, "the seed includes verified sightings")
+
+        // Clearing restores everything, which is the property a contributor actually relies
+        // on — a filter you cannot get out of is worse than no filter.
+        if app.buttons["Clear text"].exists {
+            app.buttons["Clear text"].tap()
+        } else {
+            search.buttons.firstMatch.tap()
+        }
+        // Leaving search mode, because an active search controller takes the navigation bar
+        // over and the filter button is genuinely not in the hierarchy while it does.
+        //
+        // iOS 26 labels that button "Close"; earlier versions labelled it "Cancel". Both are
+        // checked rather than assumed — the element tree said "Close", which is the only
+        // reason this works.
+        for label in ["Close", "Cancel"] where app.buttons[label].exists {
+            app.buttons[label].tap()
+            break
+        }
+        XCTAssertEqual(cells.count, unfiltered, "clearing the search should restore every row")
+
+        // ── The filter menu ──────────────────────────────────────────────────
+        // Not scoped to `navigationBars`: with a stacked search bar the button is not
+        // necessarily a descendant of it.
+        let filterButton = app.buttons["filters"]
+        if !filterButton.waitForExistence(timeout: 5) {
+            // Attach the tree rather than just failing: "button not found" on its own sends
+            // you guessing at query syntax, which is where the last two attempts went.
+            let tree = XCTAttachment(string: app.debugDescription)
+            tree.name = "element-tree"
+            tree.lifetime = .keepAlways
+            add(tree)
+            XCTFail("the filter button should be reachable")
+        }
+        filterButton.tap()
+        attach(name: "07-filter-menu")
+
+        app.buttons["Bleached"].tap()
+
+        // The button now reports how many criteria are on, which is what stops a filtered
+        // list from looking like the whole history.
+        // Same element, addressed by identifier; the label is what changed.
+        let activeFilter = app.buttons["filters"]
+        XCTAssertTrue(activeFilter.waitForExistence(timeout: 5))
+        XCTAssertEqual(
+            activeFilter.label,
+            "Filters, 1 active",
+            "the button should say how many criteria are on"
+        )
+        attach(name: "08-filtered")
+
+        XCTAssertLessThan(cells.count, unfiltered, "filtering by condition should narrow the list")
+
+        // ── Clearing from the menu ───────────────────────────────────────────
+        activeFilter.tap()
+        app.buttons["Clear all filters"].tap()
+        XCTAssertEqual(
+            app.buttons["filters"].label,
+            "Filters",
+            "clearing should return the button to its inactive state"
+        )
+        XCTAssertEqual(cells.count, unfiltered)
+    }
+
     /// The contributor may never be shown a success the server has not confirmed (D21).
     func testNoScreenClaimsASightingIsSynced() throws {
         try skipUnlessStackIsUp()

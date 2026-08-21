@@ -123,25 +123,50 @@ struct SightingFilterTests {
         lon: Double = 73.5093,
         status: SightingDisplayStatus = .awaitingReview
     ) -> ContributorSighting {
-        server(.healthy, siteName, note, capturedAt ?? august, lat, lon, status)
+        server(Fixture(
+            condition: .healthy,
+            siteName: siteName,
+            note: note,
+            capturedAt: capturedAt ?? august,
+            lat: lat,
+            lon: lon,
+            status: status
+        ))
     }
 
     private func bleached(
         siteName: String? = "Manta Point",
         capturedAt: Date? = nil
     ) -> ContributorSighting {
-        server(.bleached, siteName, nil, capturedAt ?? august, 4.1755, 73.5093, .awaitingReview)
+        server(Fixture(
+            condition: .bleached,
+            siteName: siteName,
+            note: nil,
+            capturedAt: capturedAt ?? august,
+            lat: 4.1755,
+            lon: 73.5093,
+            status: .awaitingReview
+        ))
     }
 
-    private func server(
-        _ condition: Condition,
-        _ siteName: String?,
-        _ note: String?,
-        _ capturedAt: Date,
-        _ lat: Double,
-        _ lon: Double,
-        _ status: SightingDisplayStatus
-    ) -> ContributorSighting {
+    /// Everything a fixture varies, as one value.
+    ///
+    /// Seven positional parameters is a soup where a transposed pair goes unnoticed — and in
+    /// a test, a fixture that quietly builds the wrong thing is worse than a failing one.
+    private struct Fixture {
+        var condition: Condition
+        var siteName: String?
+        var note: String?
+        var capturedAt: Date
+        var lat: Double
+        var lon: Double
+        var status: SightingDisplayStatus
+    }
+
+    private func server(_ fixture: Fixture) -> ContributorSighting {
+        let (condition, siteName, note) = (fixture.condition, fixture.siteName, fixture.note)
+        let (capturedAt, lat, lon, status) = (fixture.capturedAt, fixture.lat, fixture.lon, fixture.status)
+
         let position = Position(lat: lat, lon: lon)
         var record = Sighting(
             id: "s",
