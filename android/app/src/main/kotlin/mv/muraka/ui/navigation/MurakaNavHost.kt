@@ -30,8 +30,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import mv.muraka.ui.capture.CaptureScreen
+import mv.muraka.ui.config.ConfigScreen
 import mv.muraka.ui.detail.SightingDetailScreen
-import mv.muraka.ui.profile.ProfileScreen
 import mv.muraka.ui.sightings.MySightingsScreen
 import mv.muraka.ui.sync.SyncStatusScreen
 
@@ -94,7 +94,13 @@ fun MurakaNavHost(
             }
         },
         floatingActionButton = {
-            AnimatedVisibility(visible = showChrome) {
+            // Not on Config. Capture-from-anywhere is useful in the field, but a settings
+            // screen is not somewhere anybody captures from, and the button was sitting on
+            // top of the sign-out explanation.
+            val onWorkScreen = showChrome &&
+                currentRoute?.hierarchy?.none { it.route == Destination.Config.route } == true
+
+            AnimatedVisibility(visible = onWorkScreen) {
                 ExtendedFloatingActionButton(
                     onClick = { navController.navigate(Destination.Capture.route) },
                     icon = { Icon(Icons.Filled.AddAPhoto, contentDescription = null) },
@@ -121,8 +127,8 @@ fun MurakaNavHost(
                 SyncStatusScreen(viewModel = hiltViewModel())
             }
 
-            composable(Destination.Profile.route) {
-                ProfileScreen(viewModel = hiltViewModel())
+            composable(Destination.Config.route) {
+                ConfigScreen(viewModel = hiltViewModel())
             }
 
             composable(Destination.Capture.route) {

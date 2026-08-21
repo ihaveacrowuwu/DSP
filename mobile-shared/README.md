@@ -38,8 +38,8 @@ dashboard, not on the phone.
 | New sighting | Capture and queue | Must complete in under 60 s and 8 taps (NFR6) |
 | Sync status | Show what is pending | A count in the app bar plus a detail list |
 | My sightings | History with status per item | Grouped by sync and review state |
-| Sighting detail | Photo, model assessment, expert verdict | Show the patch overlay |
-| Profile | Totals from `GET /v1/me` | Contribution counts, sign out, delete account |
+| Sighting detail | Photo, model assessment, expert verdict | Patch overlay, with a toggle |
+| Config | The account and the app's settings | Totals from `GET /v1/me`, appearance, sign out, delete account |
 
 ## Non-negotiables
 
@@ -136,6 +136,10 @@ the image:
   reef and nobody can check the judgement against it
 - the grid covers the **centre square** of the image, matching how the server
   tiled it — letterbox the photo the same way or the cells will not line up
+- the overlay must be **toggleable** on the detail screen, and the choice remembered.
+  An annotation that cannot be removed is an obstruction: turning it off is how a
+  contributor checks the model's reading against the reef rather than against the
+  model's own drawing of it, which is the whole argument for drawing it
 
 The dashboard's implementation is in `web/src/components/PatchLattice.vue` if you
 want a reference for the geometry.

@@ -63,6 +63,7 @@ enum ThemePreference: String, CaseIterable, Sendable {
 final class AppearanceStore {
     private let defaults: UserDefaults
     private let key = "muraka.theme"
+    private let gridKey = "muraka.showPatchGrid"
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -71,6 +72,19 @@ final class AppearanceStore {
     var preference: ThemePreference {
         get { ThemePreference(wire: defaults.string(forKey: key)) }
         set { defaults.set(newValue.rawValue, forKey: key) }
+    }
+
+    /// Whether the patch lattice is drawn over photographs.
+    ///
+    /// Defaults to **on**: it is the point of the detail screen, and a contributor who has
+    /// never seen it cannot know to turn it on. Remembered rather than reset per screen,
+    /// because somebody comparing several sightings against the raw photographs should not
+    /// have to turn it off once per sighting.
+    var showPatchGrid: Bool {
+        // `object(forKey:)` rather than `bool(forKey:)`, which returns false for a missing
+        // key and would make the default off.
+        get { defaults.object(forKey: gridKey) as? Bool ?? true }
+        set { defaults.set(newValue, forKey: gridKey) }
     }
 }
 

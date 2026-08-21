@@ -144,6 +144,11 @@ interface AppearanceRepository {
     val themePreference: kotlinx.coroutines.flow.Flow<mv.muraka.core.model.ThemePreference>
 
     suspend fun setThemePreference(preference: mv.muraka.core.model.ThemePreference)
+
+    /** Whether the patch lattice is drawn over photographs. Defaults to on. */
+    val showPatchGrid: kotlinx.coroutines.flow.Flow<Boolean>
+
+    suspend fun setShowPatchGrid(visible: Boolean)
 }
 
 /** Position, however the platform can supply it. */

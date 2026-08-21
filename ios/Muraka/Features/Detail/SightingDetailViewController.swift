@@ -1,6 +1,11 @@
 import UIKit
 
-/// One sighting: the photographs, the model's reading of each, and any expert verdict.
+/// One sighting.
+///
+/// Built from titled cards rather than one long column: a photograph, what the model made of
+/// it, where and when it was taken, and what an expert said. Grouping is the difference
+/// between a screen a contributor can read at a glance and a list of facts they have to sort
+/// out for themselves.
 ///
 /// Refreshes on open, which is the read-back that turns "Checking…" into whatever the server
 /// actually says.
@@ -10,6 +15,10 @@ final class SightingDetailViewController: UIViewController {
 
     private let scrollView = UIScrollView()
     private let stack = UIStackView()
+
+    /// Kept so the toggle can show and hide the overlay without rebuilding the screen.
+    private var latticeViews: [PatchLatticeView] = []
+    private var gridCaption: UILabel?
 
     init(container: AppContainer, sightingID: String) {
         self.container = container
@@ -23,19 +32,19 @@ final class SightingDetailViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Sighting"
-        view.backgroundColor = .systemBackground
+        // Grouped, because the screen is a stack of cards and the grouped background is what
+        // makes a card read as raised rather than as an arbitrary grey rectangle.
+        view.backgroundColor = .systemGroupedBackground
 
         scrollView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(scrollView)
-        // iOS 26's tab bar floats over content rather than sitting below it, so a scroll
-        // view pinned to the bottom of the window ends underneath it. The safe-area inset
-        // already accounts for the bar; this makes the scrollable content respect it.
         scrollView.contentInsetAdjustmentBehavior = .always
-        scrollView.contentInset.bottom = 24
+        // The tab bar floats over content on iOS 26, so the last card needs room to clear it.
+        scrollView.contentInset.bottom = Spacing.listBottom
+        view.addSubview(scrollView)
 
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.axis = .vertical
-        stack.spacing = 16
+        stack.spacing = Spacing.md
         scrollView.addSubview(stack)
 
         let guide = view.safeAreaLayoutGuide
@@ -45,10 +54,16 @@ final class SightingDetailViewController: UIViewController {
             scrollView.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            stack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 16),
-            stack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -32),
-            stack.leadingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.trailingAnchor, constant: -16),
+            stack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: Spacing.md),
+            stack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -Spacing.xxl),
+            stack.leadingAnchor.constraint(
+                equalTo: scrollView.frameLayoutGuide.leadingAnchor,
+                constant: Spacing.lg
+            ),
+            stack.trailingAnchor.constraint(
+                equalTo: scrollView.frameLayoutGuide.trailingAnchor,
+                constant: -Spacing.lg
+            ),
         ])
 
         Task { await load() }
@@ -70,67 +85,97 @@ final class SightingDetailViewController: UIViewController {
         else { return }
 
         stack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        latticeViews.removeAll()
+        gridCaption = nil
 
-        // Status, and how old the app's knowledge of it is.
-        let statusRow = UIStackView()
-        statusRow.axis = .horizontal
-        statusRow.spacing = 8
-        statusRow.alignment = .center
-        statusRow.addArrangedSubview(StatusPillView(status: detail.summary.displayStatus))
-        if let readAt = detail.summary.serverReadAt {
-            let checked = UILabel()
-            checked.text = "checked \(RelativeTime.describe(readAt))"
-            checked.font = .preferredFont(forTextStyle: .caption1)
-            checked.adjustsFontForContentSizeCategory = true
-            checked.textColor = .secondaryLabel
-            statusRow.addArrangedSubview(checked)
-        }
-        statusRow.addArrangedSubview(UIView())
-        stack.addArrangedSubview(statusRow)
+        stack.addArrangedSubview(makeStatusHeader(detail.summary))
 
         // Photographs still on the device, so a queued sighting is not a blank screen while
-        // it waits for a connection.
+        // it waits for a connection. No lattice: the model has not seen these yet.
         for path in detail.pendingPhotoPaths {
-            let frame = photoFrame()
+            let card = SectionCardView(title: "Waiting to upload")
+            let frame = makePhotoFrame()
             if let image = UIImage(contentsOfFile: path.path) {
                 let imageView = UIImageView(image: image)
                 imageView.contentMode = .scaleAspectFit
                 imageView.accessibilityLabel = "A photograph waiting to upload"
                 fill(frame, with: imageView)
             }
-            stack.addArrangedSubview(frame)
+            card.addRow(frame)
+            stack.addArrangedSubview(card)
         }
 
-        for photo in detail.photos {
-            stack.addArrangedSubview(makePhotoSection(
+        for (index, photo) in detail.photos.enumerated() {
+            stack.addArrangedSubview(makePhotographCard(
                 photo: photo,
-                verified: detail.summary.server?.verified == true
+                index: index,
+                total: detail.photos.count
             ))
+            if let prediction = photo.prediction {
+                stack.addArrangedSubview(makeAssessmentCard(
+                    prediction: prediction,
+                    verified: detail.summary.server?.verified == true
+                ))
+            }
         }
 
-        stack.addArrangedSubview(makeWhereAndWhen(detail.summary))
+        stack.addArrangedSubview(makeWhereAndWhenCard(detail.summary))
 
         if !detail.verifications.isEmpty {
-            let heading = UILabel()
-            heading.text = "Expert review"
-            heading.font = .preferredFont(forTextStyle: .headline)
-            heading.adjustsFontForContentSizeCategory = true
-            stack.addArrangedSubview(heading)
-            detail.verifications.forEach { stack.addArrangedSubview(makeVerification($0)) }
+            let card = SectionCardView(title: "Expert review")
+            detail.verifications.forEach { card.addRow(makeVerificationRow($0)) }
+            stack.addArrangedSubview(card)
         }
     }
 
-    /// A photograph with the model's reading of it.
-    ///
-    /// The lattice sits **over** the photograph and the numbers **below** it, for the reason
-    /// the dashboard settled on (D24): the reef has to stay visible while the judgement is
-    /// being checked against it.
-    private func makePhotoSection(photo: Photo, verified: Bool) -> UIView {
-        let column = UIStackView()
-        column.axis = .vertical
-        column.spacing = 12
+    /// Status and how fresh it is — the two things read first, so they sit above the cards.
+    private func makeStatusHeader(_ summary: ContributorSighting) -> UIView {
+        let row = UIStackView(arrangedSubviews: [StatusPillView(status: summary.displayStatus)])
+        row.axis = .horizontal
+        row.spacing = Spacing.sm
+        row.alignment = .center
 
-        let frame = photoFrame()
+        if let readAt = summary.serverReadAt {
+            let checked = UILabel()
+            // The age of the KNOWLEDGE, not of the sighting.
+            checked.text = "checked \(RelativeTime.describe(readAt))"
+            checked.font = .preferredFont(forTextStyle: .footnote)
+            checked.adjustsFontForContentSizeCategory = true
+            checked.textColor = .secondaryLabel
+            row.addArrangedSubview(checked)
+        }
+        row.addArrangedSubview(UIView())
+        return row
+    }
+
+    /// A photograph, with the lattice over it and a toggle for the lattice.
+    ///
+    /// The toggle exists because the lattice is an annotation, and an annotation you cannot
+    /// remove is an obstruction. Turning it off is how a contributor checks the model's
+    /// reading against the reef rather than against the model's own drawing of it — which is
+    /// the whole argument for drawing the grid in the first place.
+    private func makePhotographCard(photo: Photo, index: Int, total: Int) -> UIView {
+        let hasPrediction = photo.prediction != nil
+        let showGrid = container.appearanceStore.showPatchGrid
+
+        var toggle: UIButton?
+        if hasPrediction {
+            let button = UIButton()
+            button.accessibilityIdentifier = "toggleGrid"
+            button.addTarget(self, action: #selector(toggleGrid), for: .touchUpInside)
+            applyGridToggleAppearance(to: button, showing: showGrid)
+            toggle = button
+        }
+
+        // Always titled, even for a single photograph: the card carries the grid toggle in
+        // its title row, and a header holding nothing but a right-aligned button reads as a
+        // gap rather than as a control belonging to something.
+        let card = SectionCardView(
+            title: total > 1 ? "Photograph \(index + 1) of \(total)" : "Photograph",
+            trailing: toggle
+        )
+
+        let frame = makePhotoFrame()
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
         imageView.accessibilityLabel = "Reef photograph"
@@ -146,126 +191,136 @@ final class SightingDetailViewController: UIViewController {
         if let prediction = photo.prediction {
             let lattice = PatchLatticeView(mode: .overlay)
             lattice.configure(patches: prediction.patches, grid: prediction.patchGrid)
+            lattice.isHidden = !showGrid
             fill(frame, with: lattice)
+            latticeViews.append(lattice)
         }
-        column.addArrangedSubview(frame)
+        card.addRow(frame)
 
-        guard let prediction = photo.prediction else {
-            // Absent is not an error. Say what is happening rather than showing nothing.
-            let pending = UILabel()
-            pending.text = "Not yet assessed by the model."
-            pending.font = .preferredFont(forTextStyle: .body)
-            pending.adjustsFontForContentSizeCategory = true
-            pending.textColor = .secondaryLabel
-            column.addArrangedSubview(pending)
-            return column
+        if hasPrediction {
+            let caption = SectionCardView.caption(gridCaptionText(showing: showGrid))
+            gridCaption = caption
+            card.addRow(caption)
         }
 
-        // Severity leads, not the label: "62% bleached" tells a contributor something
-        // "bleached" does not, and it is the number researchers actually work with.
-        let headline = UIStackView()
-        headline.axis = .horizontal
-        headline.spacing = 8
-        headline.alignment = .center
-        headline.addArrangedSubview(SeveritySwatchView(severity: prediction.severity))
+        return card
+    }
+
+    private func gridCaptionText(showing: Bool) -> String {
+        showing
+            ? "The grid is the model's own reading, cell by cell. Turn it off to see the reef."
+            : "Showing the photograph as taken."
+    }
+
+    /// The toggle's two states, made obvious.
+    ///
+    /// The **fill** carries the state, not the symbol. An outline-versus-filled variant of the
+    /// same glyph is what this had first, and at 24pt on a glass button the two were
+    /// indistinguishable — a toggle whose state you cannot read is a button that appears to do
+    /// nothing. Accent-filled when the grid is on, plain glass when it is off.
+    private func applyGridToggleAppearance(to button: UIButton, showing: Bool) {
+        button.configuration = GlassSurface.makeButtonConfiguration(showing ? .primary : .secondary)
+        button.configuration?.image = UIImage(systemName: "square.grid.3x3")
+        button.configuration?.contentInsets = NSDirectionalEdgeInsets(
+            top: 10, leading: 10, bottom: 10, trailing: 10
+        )
+        button.accessibilityLabel = showing ? "Hide the model's grid" : "Show the model's grid"
+    }
+
+    /// Flips the overlay without rebuilding the screen, so the scroll position survives.
+    @objc private func toggleGrid(_ sender: UIButton) {
+        let showing = !container.appearanceStore.showPatchGrid
+        container.appearanceStore.showPatchGrid = showing
+
+        applyGridToggleAppearance(to: sender, showing: showing)
+        gridCaption?.text = gridCaptionText(showing: showing)
+
+        UIView.animate(withDuration: 0.2) { [weak self] in
+            self?.latticeViews.forEach { $0.isHidden = !showing }
+            self?.latticeViews.forEach { $0.alpha = showing ? 1 : 0 }
+        }
+    }
+
+    /// What the model made of the photograph.
+    ///
+    /// Severity leads: "6% bleached" tells a contributor something "bleached" does not, and it
+    /// is the number researchers work with. The provenance chip sits beside it rather than
+    /// below, because the two are one claim and separating them is how a model label gets read
+    /// as fact.
+    private func makeAssessmentCard(prediction: Prediction, verified: Bool) -> UIView {
+        let card = SectionCardView(title: "Assessment")
 
         let extent = UILabel()
         extent.text = "\(Int((prediction.severity * 100).rounded()))% bleached"
         extent.font = ReadoutView.monospaced(.title3, weight: .semibold)
         extent.adjustsFontForContentSizeCategory = true
-        headline.addArrangedSubview(extent)
-        headline.addArrangedSubview(ProvenanceChipView(verified: verified))
-        headline.addArrangedSubview(UIView())
-        column.addArrangedSubview(headline)
 
-        let numbers = UIStackView()
-        numbers.axis = .horizontal
-        numbers.spacing = 20
-        numbers.alignment = .top
-        numbers.addArrangedSubview(ReadoutView(
-            caption: "Confidence",
-            value: "\(Int((prediction.confidence * 100).rounded()))%",
-            style: .footnote
-        ))
-        numbers.addArrangedSubview(ReadoutView(
-            caption: "Grid",
-            value: "\(prediction.patchGrid)×\(prediction.patchGrid)",
-            style: .footnote
-        ))
+        let headline = UIStackView(arrangedSubviews: [
+            SeveritySwatchView(severity: prediction.severity),
+            extent,
+            ProvenanceChipView(verified: verified),
+            UIView(),
+        ])
+        headline.axis = .horizontal
+        headline.spacing = Spacing.sm
+        headline.alignment = .center
+        card.addRow(headline)
+
+        var readouts: [UIView] = [
+            ReadoutView(
+                caption: "Confidence",
+                value: "\(Int((prediction.confidence * 100).rounded()))%"
+            ),
+            ReadoutView(caption: "Grid", value: "\(prediction.patchGrid)×\(prediction.patchGrid)"),
+        ]
         if let inference = prediction.inferenceMs {
-            numbers.addArrangedSubview(ReadoutView(
-                caption: "Inference",
-                value: "\(inference) ms",
-                style: .footnote
-            ))
+            readouts.append(ReadoutView(caption: "Inference", value: "\(inference) ms"))
         }
-        numbers.addArrangedSubview(UIView())
-        column.addArrangedSubview(numbers)
+        card.addRow(SectionCardView.readoutRow(readouts))
 
         // Provenance: `fake-0.0.0` means no trained model is loaded yet, and a reader of the
         // report needs to be able to tell which screenshots predate the real one.
-        column.addArrangedSubview(ReadoutView(
-            caption: "Model",
-            value: prediction.modelVersion,
-            style: .footnote
-        ))
+        card.addRow(ReadoutView(caption: "Model", value: prediction.modelVersion, style: .footnote))
 
-        return column
+        return card
     }
 
-    private func makeWhereAndWhen(_ sighting: ContributorSighting) -> UIView {
-        let column = UIStackView()
-        column.axis = .vertical
-        column.spacing = 8
+    private func makeWhereAndWhenCard(_ summary: ContributorSighting) -> UIView {
+        let card = SectionCardView(title: "Where and when")
 
-        let heading = UILabel()
-        heading.text = "Where and when"
-        heading.font = .preferredFont(forTextStyle: .headline)
-        heading.adjustsFontForContentSizeCategory = true
-        column.addArrangedSubview(heading)
-
-        let row = UIStackView()
-        row.axis = .horizontal
-        row.spacing = 20
-        row.addArrangedSubview(ReadoutView(
-            caption: sighting.locationSource == .gps ? "GPS" : "Dropped pin",
-            value: String(format: "%.5f, %.5f", sighting.position.lat, sighting.position.lon)
-        ))
-        if let depth = sighting.server?.depthM {
-            row.addArrangedSubview(ReadoutView(caption: "Depth", value: "\(Int(depth)) m"))
+        var readouts: [UIView] = [
+            ReadoutView(
+                caption: summary.locationSource == .gps ? "GPS" : "Dropped pin",
+                value: String(format: "%.5f, %.5f", summary.position.lat, summary.position.lon)
+            ),
+        ]
+        if let depth = summary.server?.depthM {
+            readouts.append(ReadoutView(caption: "Depth", value: "\(Int(depth.rounded())) m"))
         }
-        row.addArrangedSubview(UIView())
-        column.addArrangedSubview(row)
+        card.addRow(SectionCardView.readoutRow(readouts))
 
-        let captured = UILabel()
-        captured.text = "Captured \(RelativeTime.describe(sighting.capturedAt))"
-        captured.font = .preferredFont(forTextStyle: .footnote)
-        captured.adjustsFontForContentSizeCategory = true
-        captured.textColor = .secondaryLabel
-        column.addArrangedSubview(captured)
+        card.addRow(SectionCardView.caption("Captured \(RelativeTime.describe(summary.capturedAt))"))
 
-        if let note = sighting.server?.note {
-            let noteLabel = UILabel()
-            noteLabel.text = note
-            noteLabel.font = .preferredFont(forTextStyle: .body)
-            noteLabel.adjustsFontForContentSizeCategory = true
-            noteLabel.numberOfLines = 0
-            column.addArrangedSubview(noteLabel)
+        if let site = summary.server?.siteName {
+            card.addRow(ReadoutView(caption: "Site", value: site))
         }
 
-        return column
+        if let note = summary.server?.note {
+            let label = UILabel()
+            label.text = note
+            label.font = .preferredFont(forTextStyle: .body)
+            label.adjustsFontForContentSizeCategory = true
+            label.numberOfLines = 0
+            card.addRow(label)
+        }
+
+        return card
     }
 
-    private func makeVerification(_ verification: Verification) -> UIView {
+    private func makeVerificationRow(_ verification: Verification) -> UIView {
         let column = UIStackView()
         column.axis = .vertical
-        column.spacing = 8
-
-        let row = UIStackView()
-        row.axis = .horizontal
-        row.spacing = 8
-        row.alignment = .center
-        row.addArrangedSubview(ProvenanceChipView(verified: true))
+        column.spacing = Spacing.xs
 
         let decision = UILabel()
         decision.text = switch verification.decision {
@@ -275,21 +330,23 @@ final class SightingDetailViewController: UIViewController {
         }
         decision.font = .preferredFont(forTextStyle: .body)
         decision.adjustsFontForContentSizeCategory = true
-        row.addArrangedSubview(decision)
-        row.addArrangedSubview(UIView())
+        decision.numberOfLines = 0
+
+        let row = UIStackView(arrangedSubviews: [
+            ProvenanceChipView(verified: true), decision, UIView(),
+        ])
+        row.axis = .horizontal
+        row.spacing = Spacing.sm
+        row.alignment = .center
         column.addArrangedSubview(row)
 
         // Rejected sightings vanish from research views but remain the contributor's own
         // record (FR11), so the reason is shown rather than hidden.
         if let reason = verification.rejectReason {
-            let label = UILabel()
-            label.text = "Reason: \(reason.readable)"
-            label.font = .preferredFont(forTextStyle: .footnote)
-            label.adjustsFontForContentSizeCategory = true
-            label.textColor = ReefPalette.rust
-            column.addArrangedSubview(label)
+            column.addArrangedSubview(
+                SectionCardView.caption("Reason: \(reason.readable)", colour: ReefPalette.rust)
+            )
         }
-
         if let comment = verification.comment {
             let label = UILabel()
             label.text = comment
@@ -298,6 +355,9 @@ final class SightingDetailViewController: UIViewController {
             label.numberOfLines = 0
             column.addArrangedSubview(label)
         }
+        column.addArrangedSubview(
+            SectionCardView.caption(RelativeTime.describe(verification.createdAt))
+        )
 
         return column
     }
@@ -308,10 +368,10 @@ final class SightingDetailViewController: UIViewController {
     /// 224 px dataset crops too small to judge, and made two photographs of the same reef look
     /// like different sizes of thing. A square also matches the centre square the server
     /// tiles, so the lattice lands where the model actually looked.
-    private func photoFrame() -> UIView {
+    private func makePhotoFrame() -> UIView {
         let frame = UIView()
-        frame.backgroundColor = .secondarySystemBackground
-        frame.layer.cornerRadius = 12
+        frame.backgroundColor = .tertiarySystemGroupedBackground
+        frame.layer.cornerRadius = Spacing.md
         frame.layer.cornerCurve = .continuous
         frame.clipsToBounds = true
         frame.translatesAutoresizingMaskIntoConstraints = false

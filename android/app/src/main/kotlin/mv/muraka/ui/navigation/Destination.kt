@@ -2,7 +2,7 @@ package mv.muraka.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudUpload
-import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Waves
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -45,10 +45,17 @@ sealed interface Destination {
         override val icon = Icons.Outlined.CloudUpload
     }
 
-    data object Profile : Tab {
-        override val route = "profile"
-        override val label = "Profile"
-        override val icon = Icons.Outlined.Person
+    /**
+     * The account and the app's settings.
+     *
+     * Named "Config" at the user's request. Note that both platforms conventionally call this
+     * "Settings" — Apple's HIG and Material both use that word — so if a design review ever
+     * flags it, this is the one label to change and it changes here.
+     */
+    data object Config : Tab {
+        override val route = "config"
+        override val label = "Config"
+        override val icon = Icons.Outlined.Tune
     }
 
     data object Capture : Destination {
@@ -62,6 +69,6 @@ sealed interface Destination {
     }
 
     companion object {
-        val tabs: List<Tab> = listOf(MySightings, Sync, Profile)
+        val tabs: List<Tab> = listOf(MySightings, Sync, Config)
     }
 }

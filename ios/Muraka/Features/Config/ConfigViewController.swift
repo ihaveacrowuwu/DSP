@@ -1,21 +1,27 @@
 import UIKit
 
-/// The account, and the contributor's totals.
+/// The account and the app's settings.
 ///
-/// The totals come from `GET /v1/me` and are never computed from local rows. A client-side
-/// tally drifts the moment anything is rejected, verified or anonymised, and the number the
-/// contributor sees would then disagree with the dashboard — D21 again.
-final class ProfileViewController: UIViewController {
+/// Four titled cards in a deliberate order: who you are, what you have contributed, how the
+/// app looks, and — kept last and kept apart — the two actions that end something. Grouping
+/// matters more here than anywhere else in the app, because "sign out" and "delete my
+/// account" sitting in an undifferentiated column of controls is how somebody taps the wrong
+/// one.
+///
+/// Named "Config" at the user's request. Both platforms conventionally call this "Settings" —
+/// Apple's HIG and Material both use that word — so if a design review flags it, the title
+/// here and the tab item in `MainTabBarController` are the two places to change.
+final class ConfigViewController: UIViewController {
     private let container: AppContainer
     private let onSignedOut: () -> Void
 
     private let scrollView = UIScrollView()
     private let stack = UIStackView()
+
     private let nameLabel = UILabel()
     private let emailLabel = UILabel()
     private let totalsRow = UIStackView()
     private let messageLabel = UILabel()
-
     private let appearanceControl = UISegmentedControl(
         items: ThemePreference.allCases.map(\.label)
     )
@@ -32,53 +38,106 @@ final class ProfileViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Profile"
+        title = "Config"
         navigationController?.navigationBar.prefersLargeTitles = true
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .systemGroupedBackground
         buildHierarchy()
         Task { await load() }
     }
 
     private func buildHierarchy() {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(scrollView)
-        // iOS 26's tab bar floats over content rather than sitting below it, so a scroll
-        // view pinned to the bottom of the window ends underneath it. The safe-area inset
-        // already accounts for the bar; this makes the scrollable content respect it.
         scrollView.contentInsetAdjustmentBehavior = .always
-        scrollView.contentInset.bottom = 24
+        scrollView.contentInset.bottom = Spacing.listBottom
+        view.addSubview(scrollView)
 
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.axis = .vertical
-        stack.spacing = 16
-        stack.alignment = .fill
+        stack.spacing = Spacing.md
         scrollView.addSubview(stack)
 
-        nameLabel.font = .preferredFont(forTextStyle: .title1)
+        stack.addArrangedSubview(makeAccountCard())
+        stack.addArrangedSubview(makeContributionsCard())
+        stack.addArrangedSubview(makeAppearanceCard())
+        stack.addArrangedSubview(makeSessionCard())
+
+        let guide = view.safeAreaLayoutGuide
+        NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: guide.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            stack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: Spacing.md),
+            stack.bottomAnchor.constraint(
+                equalTo: scrollView.contentLayoutGuide.bottomAnchor,
+                constant: -Spacing.xxl
+            ),
+            stack.leadingAnchor.constraint(
+                equalTo: scrollView.frameLayoutGuide.leadingAnchor,
+                constant: Spacing.lg
+            ),
+            stack.trailingAnchor.constraint(
+                equalTo: scrollView.frameLayoutGuide.trailingAnchor,
+                constant: -Spacing.lg
+            ),
+        ])
+    }
+
+    // ── Cards ───────────────────────────────────────────────────────────────
+
+    private func makeAccountCard() -> UIView {
+        let card = SectionCardView(title: "Account")
+
+        nameLabel.font = .preferredFont(forTextStyle: .title2)
         nameLabel.adjustsFontForContentSizeCategory = true
+        nameLabel.numberOfLines = 0
+        card.addRow(nameLabel)
 
         emailLabel.font = .preferredFont(forTextStyle: .body)
         emailLabel.adjustsFontForContentSizeCategory = true
         emailLabel.textColor = .secondaryLabel
+        emailLabel.numberOfLines = 0
+        card.addRow(emailLabel)
 
-        // ── Appearance ───────────────────────────────────────────────────────
-        //
-        // A `UISegmentedControl`, which is the UIKit control for a small set of mutually
-        // exclusive options where all of them should be visible at once. A picker or a
-        // push-to-a-subscreen would hide two of the three behind a tap, and this is a
-        // setting people flip on a boat with wet hands.
-        //
-        // It sits above the totals rather than at the bottom of the screen, because a
-        // control nobody can find is not a control.
-        let appearanceHeading = UILabel()
-        appearanceHeading.text = "Appearance"
-        appearanceHeading.font = .preferredFont(forTextStyle: .headline)
-        appearanceHeading.adjustsFontForContentSizeCategory = true
+        return card
+    }
 
-        // Words, not symbols. `UISegmentedControl` shows one or the other per segment, and
-        // a symbol cannot distinguish "System" from "Light" — which is exactly the pair a
-        // contributor needs to tell apart. (An earlier version called `setImage` here as
-        // well; `setAction` replaces the segment, so the image was silently discarded.)
+    private func makeContributionsCard() -> UIView {
+        let card = SectionCardView(title: "Your contributions")
+
+        totalsRow.axis = .horizontal
+        totalsRow.distribution = .fillEqually
+        totalsRow.spacing = Spacing.md
+        totalsRow.alignment = .top
+        card.addRow(totalsRow)
+
+        card.addRow(SectionCardView.caption("Counted by the server, not by this device."))
+
+        messageLabel.font = .preferredFont(forTextStyle: .footnote)
+        messageLabel.adjustsFontForContentSizeCategory = true
+        messageLabel.textColor = ReefPalette.amber
+        messageLabel.numberOfLines = 0
+        messageLabel.isHidden = true
+        card.addRow(messageLabel)
+
+        let refresh = UIButton(configuration: GlassSurface.makeButtonConfiguration(.secondary))
+        refresh.setTitle("Refresh totals", for: .normal)
+        refresh.addTarget(self, action: #selector(refreshTotals), for: .touchUpInside)
+        card.addRow(refresh)
+
+        return card
+    }
+
+    /// The appearance toggle.
+    ///
+    /// A `UISegmentedControl`, which is the UIKit control for a small set of mutually
+    /// exclusive options where all of them should be visible at once. Words rather than
+    /// symbols: a symbol cannot distinguish "System" from "Light", and UIKit shows one or the
+    /// other per segment.
+    private func makeAppearanceCard() -> UIView {
+        let card = SectionCardView(title: "Appearance")
+
         for (index, preference) in ThemePreference.allCases.enumerated() {
             appearanceControl.setAction(
                 UIAction(title: preference.label) { [weak self] _ in
@@ -90,76 +149,46 @@ final class ProfileViewController: UIViewController {
         appearanceControl.accessibilityLabel = "Appearance"
         appearanceControl.selectedSegmentIndex =
             ThemePreference.allCases.firstIndex(of: container.appearanceStore.preference) ?? 0
+        card.addRow(appearanceControl)
 
         appearanceExplanation.font = .preferredFont(forTextStyle: .caption1)
         appearanceExplanation.adjustsFontForContentSizeCategory = true
         appearanceExplanation.textColor = .secondaryLabel
         appearanceExplanation.numberOfLines = 0
         appearanceExplanation.text = container.appearanceStore.preference.explanation
+        card.addRow(appearanceExplanation)
 
-        let totalsHeading = UILabel()
-        totalsHeading.text = "Your contributions"
-        totalsHeading.font = .preferredFont(forTextStyle: .headline)
-        totalsHeading.adjustsFontForContentSizeCategory = true
+        return card
+    }
 
-        totalsRow.axis = .horizontal
-        totalsRow.distribution = .fillEqually
-        totalsRow.spacing = 12
+    /// Signing out, and deleting the account.
+    ///
+    /// Deliberately the last card, and deliberately the only one holding actions that end
+    /// something. The two are separated by their own explanation rather than sitting side by
+    /// side, because they are not the same size of decision.
+    private func makeSessionCard() -> UIView {
+        let card = SectionCardView(title: "Session")
 
-        let totalsNote = UILabel()
-        totalsNote.text = "Counted by the server, not by this device."
-        totalsNote.font = .preferredFont(forTextStyle: .caption1)
-        totalsNote.adjustsFontForContentSizeCategory = true
-        totalsNote.textColor = .secondaryLabel
-        totalsNote.numberOfLines = 0
+        let signOut = UIButton(configuration: GlassSurface.makeButtonConfiguration(.secondary))
+        signOut.setTitle("Sign out", for: .normal)
+        signOut.addTarget(self, action: #selector(signOutTapped), for: .touchUpInside)
+        card.addRow(signOut)
 
-        messageLabel.font = .preferredFont(forTextStyle: .footnote)
-        messageLabel.adjustsFontForContentSizeCategory = true
-        messageLabel.textColor = ReefPalette.amber
-        messageLabel.numberOfLines = 0
-        messageLabel.isHidden = true
+        card.addRow(SectionCardView.caption(
+            // Reassurance that matters on a shared boat phone.
+            "Signing out keeps anything still waiting to upload. It will be sent when you "
+                + "sign back in."
+        ))
 
-        let refresh = UIButton(configuration: GlassSurface.makeButtonConfiguration(.secondary))
-        refresh.setTitle("Refresh totals", for: .normal)
-        refresh.addTarget(self, action: #selector(refreshTotals), for: .touchUpInside)
-
-        let signOutButton = UIButton(configuration: GlassSurface.makeButtonConfiguration(.secondary))
-        signOutButton.setTitle("Sign out", for: .normal)
-        signOutButton.addTarget(self, action: #selector(signOutTapped), for: .touchUpInside)
-
-        let signOutNote = UILabel()
-        // Reassurance that matters on a shared boat phone: signing out does not throw away
-        // work that has not been delivered.
-        signOutNote.text = "Signing out keeps anything still waiting to upload. It will be "
-            + "sent when you sign back in."
-        signOutNote.font = .preferredFont(forTextStyle: .caption1)
-        signOutNote.adjustsFontForContentSizeCategory = true
-        signOutNote.textColor = .secondaryLabel
-        signOutNote.numberOfLines = 0
-
-        // Destructive, so tinted with the signal colour rather than the accent.
         let delete = UIButton(configuration: GlassSurface.makeDestructiveButtonConfiguration())
         delete.setTitle("Delete my account", for: .normal)
         delete.addTarget(self, action: #selector(confirmDelete), for: .touchUpInside)
+        card.addRow(delete)
 
-        [nameLabel, emailLabel,
-         appearanceHeading, appearanceControl, appearanceExplanation,
-         totalsHeading, totalsRow, totalsNote, messageLabel,
-         refresh, signOutButton, signOutNote, delete].forEach(stack.addArrangedSubview)
-
-        let guide = view.safeAreaLayoutGuide
-        NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: guide.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-
-            stack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 16),
-            stack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -32),
-            stack.leadingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.trailingAnchor, constant: -16),
-        ])
+        return card
     }
+
+    // ── Behaviour ───────────────────────────────────────────────────────────
 
     private func load() async {
         // Cached first, so the screen has content immediately even with no connection.
@@ -192,7 +221,7 @@ final class ProfileViewController: UIViewController {
 
         totalsRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
         // Every one of these comes from GET /v1/me. Counting local rows would drift the
-        // moment anything is verified or rejected.
+        // moment anything is verified or rejected (D21).
         totalsRow.addArrangedSubview(ReadoutView(caption: "Total", value: "\(profile.stats.total)"))
         totalsRow.addArrangedSubview(ReadoutView(caption: "Verified", value: "\(profile.stats.verified)"))
         totalsRow.addArrangedSubview(ReadoutView(caption: "Pending", value: "\(profile.stats.pending)"))

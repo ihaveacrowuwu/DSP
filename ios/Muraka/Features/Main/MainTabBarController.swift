@@ -41,20 +41,20 @@ final class MainTabBarController: UITabBarController {
             selectedImage: UIImage(systemName: "icloud.and.arrow.up.fill")
         )
 
-        let profile = ProfileViewController(container: container, onSignedOut: onSignedOut)
-        profile.tabBarItem = UITabBarItem(
-            title: "Profile",
-            image: UIImage(systemName: "person"),
-            selectedImage: UIImage(systemName: "person.fill")
+        let config = ConfigViewController(container: container, onSignedOut: onSignedOut)
+        config.tabBarItem = UITabBarItem(
+            title: "Config",
+            image: UIImage(systemName: "slider.horizontal.3"),
+            selectedImage: UIImage(systemName: "slider.horizontal.3")
         )
 
         // Explicit identifiers so UI tests address the tabs by name rather than by index or
         // by their visible title, which is localisable and which iOS may abbreviate.
         sightings.tabBarItem.accessibilityIdentifier = "tab.sightings"
         sync.tabBarItem.accessibilityIdentifier = "tab.sync"
-        profile.tabBarItem.accessibilityIdentifier = "tab.profile"
+        config.tabBarItem.accessibilityIdentifier = "tab.config"
 
-        viewControllers = [sightings, sync, profile].map(UINavigationController.init(rootViewController:))
+        viewControllers = [sightings, sync, config].map(UINavigationController.init(rootViewController:))
         observePendingCount()
     }
 

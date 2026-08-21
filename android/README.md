@@ -34,9 +34,9 @@ such exception and points at HTTPS (NFR4).
 | Sign in / register | The **only** screen that needs connectivity (NFR7) |
 | New sighting | One to five photographs, a position, depth, note — five taps to queue |
 | My sightings | The contributor's own history, with the server's status on each |
-| Sighting detail | The photograph, the patch lattice over it, and any expert verdict |
+| Sighting detail | The photograph, the patch lattice over it (toggleable), and any expert verdict |
 | Sync | Everything still owed to the server, and a way out when one is stuck |
-| Profile | Totals from `GET /v1/me`, sign out, delete account |
+| Config | Totals from `GET /v1/me`, appearance, sign out, delete account |
 
 ## How it is put together
 

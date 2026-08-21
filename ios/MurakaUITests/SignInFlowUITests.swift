@@ -57,9 +57,9 @@ final class SignInFlowUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Sync"].waitForExistence(timeout: 5))
         attach(name: "03-sync")
 
-        app.tabBars.buttons["tab.profile"].tap()
-        XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 5))
-        attach(name: "04-profile")
+        app.tabBars.buttons["tab.config"].tap()
+        XCTAssertTrue(app.navigationBars["Config"].waitForExistence(timeout: 5))
+        attach(name: "04-config")
 
         // Back to the list and into a sighting, which renders the lattice and the
         // provenance chip — the two things NFR13 turns on.
@@ -175,8 +175,8 @@ final class SignInFlowUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["My sightings"].waitForExistence(timeout: 20))
 
         // Set it from the Profile screen, which is where a contributor would.
-        app.tabBars.buttons["tab.profile"].tap()
-        XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 5))
+        app.tabBars.buttons["tab.config"].tap()
+        XCTAssertTrue(app.navigationBars["Config"].waitForExistence(timeout: 5))
 
         let appearance = app.segmentedControls["Appearance"]
         XCTAssertTrue(appearance.waitForExistence(timeout: 5), "the appearance control should be visible")
@@ -188,7 +188,7 @@ final class SignInFlowUITests: XCTestCase {
             app.staticTexts["Always dark, whatever your device is set to."].waitForExistence(timeout: 5),
             "the control should say what it has done"
         )
-        attach(name: "13-dark-profile")
+        attach(name: "13-dark-config")
 
         app.tabBars.buttons["tab.sync"].tap()
         XCTAssertTrue(app.navigationBars["Sync"].waitForExistence(timeout: 5))
@@ -211,7 +211,7 @@ final class SignInFlowUITests: XCTestCase {
         // A setting you cannot undo is worse than no setting, so the return trip is part of
         // the test rather than assumed.
         app.navigationBars.buttons.element(boundBy: 0).tap()
-        app.tabBars.buttons["tab.profile"].tap()
+        app.tabBars.buttons["tab.config"].tap()
         app.segmentedControls["Appearance"].buttons["System"].tap()
         XCTAssertTrue(
             app.staticTexts["Following your device setting."].waitForExistence(timeout: 5),
@@ -224,8 +224,8 @@ final class SignInFlowUITests: XCTestCase {
         try skipUnlessStackIsUp()
         signIn()
 
-        app.tabBars.buttons["tab.profile"].tap()
-        XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 10))
+        app.tabBars.buttons["tab.config"].tap()
+        XCTAssertTrue(app.navigationBars["Config"].waitForExistence(timeout: 10))
         app.segmentedControls["Appearance"].buttons["Dark"].tap()
         XCTAssertTrue(app.staticTexts["Always dark, whatever your device is set to."].waitForExistence(timeout: 5))
 
@@ -235,7 +235,7 @@ final class SignInFlowUITests: XCTestCase {
         app.launchArguments.removeAll { $0 == "-MurakaResetSession" }
         app.launch()
 
-        app.tabBars.buttons["tab.profile"].tap()
+        app.tabBars.buttons["tab.config"].tap()
         XCTAssertTrue(
             app.staticTexts["Always dark, whatever your device is set to."].waitForExistence(timeout: 15),
             "the appearance choice should survive a relaunch"
@@ -243,6 +243,52 @@ final class SignInFlowUITests: XCTestCase {
 
         // Put it back, so this test does not leave the next one in dark mode.
         app.segmentedControls["Appearance"].buttons["System"].tap()
+    }
+
+    /// The patch-grid overlay can be turned off, and the choice is remembered.
+    ///
+    /// The lattice is an annotation, and an annotation you cannot remove is an obstruction —
+    /// turning it off is how a contributor checks the model's reading against the reef rather
+    /// than against the model's own drawing of it.
+    func testThePatchGridCanBeTurnedOffAndStaysOff() throws {
+        try skipUnlessStackIsUp()
+        signIn()
+
+        let firstCell = app.tables.cells.element(boundBy: 0)
+        XCTAssertTrue(firstCell.waitForExistence(timeout: 15), "seed the stack first")
+        firstCell.tap()
+        XCTAssertTrue(app.navigationBars["Sighting"].waitForExistence(timeout: 10))
+
+        let toggle = app.buttons["toggleGrid"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 10), "the grid toggle should be on the photograph card")
+
+        // The label is the assertion: it says what the button will do next, so it tells us
+        // the current state without reading pixels.
+        XCTAssertEqual(toggle.label, "Hide the model's grid", "the grid should start visible")
+        attach(name: "20-grid-on")
+
+        toggle.tap()
+        XCTAssertEqual(toggle.label, "Show the model's grid", "tapping should hide the grid")
+        XCTAssertTrue(
+            app.staticTexts["Showing the photograph as taken."].waitForExistence(timeout: 5),
+            "the caption should say the grid is off"
+        )
+        attach(name: "21-grid-off")
+
+        // Remembered across sightings, so somebody comparing several photographs does not
+        // turn it off once per sighting.
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.tables.cells.element(boundBy: 1).waitForExistence(timeout: 10))
+        app.tables.cells.element(boundBy: 1).tap()
+        XCTAssertTrue(app.navigationBars["Sighting"].waitForExistence(timeout: 10))
+        XCTAssertEqual(
+            app.buttons["toggleGrid"].label,
+            "Show the model's grid",
+            "the choice should carry to the next sighting"
+        )
+
+        // Put it back, so this test does not leave the grid off for the next one.
+        app.buttons["toggleGrid"].tap()
     }
 
     /// The contributor may never be shown a success the server has not confirmed (D21).

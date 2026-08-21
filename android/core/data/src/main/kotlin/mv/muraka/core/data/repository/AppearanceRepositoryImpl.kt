@@ -14,4 +14,8 @@ class AppearanceRepositoryImpl @Inject constructor(private val store: Appearance
     override val themePreference: Flow<ThemePreference> = store.preference
 
     override suspend fun setThemePreference(preference: ThemePreference) = store.set(preference)
+
+    override val showPatchGrid: Flow<Boolean> = store.showPatchGrid
+
+    override suspend fun setShowPatchGrid(visible: Boolean) = store.setShowPatchGrid(visible)
 }

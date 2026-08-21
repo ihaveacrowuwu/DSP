@@ -1,4 +1,4 @@
-package mv.muraka.ui.profile
+package mv.muraka.ui.config
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,17 +16,17 @@ import mv.muraka.core.model.Profile
 import mv.muraka.core.model.ThemePreference
 import javax.inject.Inject
 
-data class ProfileUiState(val refreshing: Boolean = false, val message: String? = null, val deleting: Boolean = false)
+data class ConfigUiState(val refreshing: Boolean = false, val message: String? = null, val deleting: Boolean = false)
 
 /**
- * The account, and the contributor's totals.
+ * The account, the contributor's totals, and the app's settings.
  *
  * The totals come from `GET /v1/me` and are never computed from local rows. A client-side
  * tally drifts the moment anything is rejected, verified or anonymised, and the number
  * the contributor sees would then disagree with the dashboard — D21 again.
  */
 @HiltViewModel
-class ProfileViewModel @Inject constructor(
+class ConfigViewModel @Inject constructor(
     private val appearanceRepository: AppearanceRepository,
     private val authRepository: AuthRepository,
 ) : ViewModel() {
@@ -42,8 +42,8 @@ class ProfileViewModel @Inject constructor(
     val profile: StateFlow<Profile?> = authRepository.observeProfile()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
-    private val _uiState = MutableStateFlow(ProfileUiState())
-    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(ConfigUiState())
+    val uiState: StateFlow<ConfigUiState> = _uiState.asStateFlow()
 
     init {
         refresh()

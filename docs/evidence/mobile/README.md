@@ -12,8 +12,9 @@ re-running `make test-ios` regenerates them. The Android set was captured with
 | Sign in | `android-signin.png` | `ios-sign-in.png` |
 | My sightings | `android-sightings.png` | `ios-my-sightings.png` |
 | Sync queue | `android-sync.png` | `ios-sync.png` |
-| Profile | `android-profile.png` | `ios-profile.png` |
-| Sighting detail | `android-detail.png` | `ios-sighting-detail.png` |
+| Config | `android-config.png` | `ios-config.png` |
+| Sighting detail | `android-detail.png` | `ios-detail.png` |
+| Detail, grid off | `android-detail-grid-off.png` | `ios-detail-grid-off.png` |
 | Filtered history | `android-filtered.png` | `ios-filtered.png` |
 | Filter control | (in `android-filtered.png`) | `ios-filter-menu.png` |
 
@@ -53,6 +54,19 @@ independently report **"6 of 50"** — same seeded account, same criteria, two i
 written from the same reasoning. The controls are deliberately different: Material filter chips
 on Android, a native `UIMenu` on iOS. What matches is the filter and its wording, not the
 widget.
+
+**The grid toggle.** Compare `*-detail.png` with `*-detail-grid-off.png`. The lattice is an
+annotation, and an annotation that cannot be removed is an obstruction — turning it off is how
+a contributor checks the model's reading against the reef rather than against the model's own
+drawing of it. The control lives in the photograph card's title row and carries its state in
+its fill: accent-filled when the grid is on, plain when it is off. (An outline-versus-filled
+pair of the same glyph was the first attempt and the two states were indistinguishable at
+24pt.) The choice is remembered across sightings.
+
+**Layout.** Both screens are built from titled cards on a shared spacing scale rather than one
+long column — `ReefSpacing` on Android, `Spacing` on iOS, same six steps. On Config that
+grouping is doing safety work as well as tidiness: "Sign out" and "Delete my account" sit in
+their own last card rather than in an undifferentiated column of controls.
 
 **The appearance toggle.** `System` is the default and follows the device, which is what
 NFR14 is really about. `Light` and `Dark` override it, and the choice survives a relaunch and
