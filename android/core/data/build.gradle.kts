@@ -3,7 +3,12 @@ plugins {
     alias(libs.plugins.muraka.hilt)
 }
 
-android { namespace = "mv.muraka.core.data" }
+android {
+    namespace = "mv.muraka.core.data"
+    defaultConfig {
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+}
 
 // The only module that depends on BOTH the domain interfaces and every concrete data
 // source. That is precisely its job: it implements the former using the latter, and
@@ -26,4 +31,18 @@ dependencies {
 
     testImplementation(libs.bundles.unit.test)
     testImplementation(projects.core.testing)
+
+    // Instrumented, not JVM. The sync engine's collaborators are a Room database, a
+    // Keystore-backed DataStore and the filesystem — all three are Android, and two of
+    // them (PhotoStore, SessionTokenStore) are final classes with no interface, so
+    // faking them would mean either a mocking library or opening production types for
+    // the test's convenience. Running against the real ones is both less code and
+    // better evidence: these tests answer "does the offline queue behave", and the
+    // queue IS the database.
+    androidTestImplementation(libs.androidx.room.testing)
+    androidTestImplementation(libs.androidx.test.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.kotlinx.serialization.json)
 }

@@ -149,14 +149,21 @@ want a reference for the geometry.
 Work through this before calling either app done; several items map directly to
 requirements the project has to evidence.
 
-- [ ] Capture completes with the device in airplane mode
-- [ ] Queued sightings survive a force-quit and a device restart
-- [ ] Sync resumes automatically when connectivity returns, with no user action
-- [ ] Killing the app mid-upload does not duplicate or lose the sighting
-- [ ] Submitting the same sighting twice creates exactly one record server-side
-- [ ] A 401 mid-session refreshes silently and the request succeeds
-- [ ] Expired refresh token returns the user to sign-in without losing the queue
-- [ ] Model labels and expert verdicts are distinguishable without colour
-- [ ] Capture flow measured at under 60 seconds and 8 taps
-- [ ] Light and dark appearance both correct
-- [ ] Account deletion explains that sightings are anonymised, not erased
+Results are recorded in
+[`docs/evidence/mobile/acceptance.md`](../docs/evidence/mobile/acceptance.md), including
+the one item that could not be completed and why.
+
+- [x] Capture completes with the device in airplane mode — *the queue half is automated;
+      the capture **screen** with the radio off is still unverified, see the evidence file*
+- [x] Queued sightings survive a force-quit and a device restart
+- [x] Sync resumes automatically when connectivity returns, with no user action
+- [x] Killing the app mid-upload does not duplicate or lose the sighting
+- [x] Submitting the same sighting twice creates exactly one record server-side
+- [ ] A 401 mid-session refreshes silently and the request succeeds — *covered on iOS and
+      by `make smoke`; no Android-side test*
+- [x] Expired refresh token returns the user to sign-in without losing the queue
+- [x] Model labels and expert verdicts are distinguishable without colour
+- [ ] Capture flow measured at under 60 seconds and 8 taps — *5 taps, counted from the
+      code; the **timing** has never been measured*
+- [x] Light and dark appearance both correct
+- [x] Account deletion explains that sightings are anonymised, not erased

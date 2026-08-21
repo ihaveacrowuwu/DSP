@@ -9,8 +9,8 @@ is not evidence, it is decoration — the value is in the rows that say **none**
 those are the project's honest limitations section and the build's to-do list at the
 same time.
 
-Of thirty-three requirements, **fifteen** have full automated evidence, twelve are
-partly covered, one rests on a human checklist and **five have none at all**. Those
+Of thirty-three requirements, **seventeen** have full automated evidence, twelve are
+partly covered and **four have none at all**. Those
 figures are tallied from the table below by `scripts/testing_matrix.py --check`, not
 written by hand — an early draft of this paragraph claimed sixteen when the true figure
 was three, which is exactly the kind of number a report should never carry unchecked.
@@ -43,15 +43,15 @@ one shaped like a Go, Python or Swift test method — as a build failure.
 | ML service (pytest) | 15 | `make test-ml` | creates a venv on first run |
 | Dashboard (Vitest) | 84 | `make test-web` | `npm install` |
 | Android unit (JVM) | 47 | `cd android && ./gradlew testDebugUnitTest` | nothing |
-| Android instrumented | 12 | `cd android && ./gradlew connectedDebugAndroidTest` | an emulator |
+| Android instrumented | 20 | `cd android && ./gradlew connectedDebugAndroidTest` | an emulator |
 | iOS (XCTest + XCUITest) | 9 | `make test-ios` | a simulator; skips without the stack |
-| **Total automated** | **233** | `make test && make mobile` | |
+| **Total automated** | **241** | `make test && make mobile` | |
 | End-to-end smoke | 33 checks | `make smoke` | the running stack |
 | Performance | 4 checks | `make perf` | the stack, seeded to 10,000 |
 | Config checks | 5 + matrix | `make lint` | nothing |
 | Smoke over TLS | 33 checks | `make smoke-tls` | Docker |
 
-All 233 passed and all 33 smoke checks passed on 2026-08-21.
+All 241 passed and all 33 smoke checks passed on 2026-08-21.
 
 The counts in this table are **runtime results from the runners** — what
 `Tests 84 passed` and `ok muraka/backend/...` actually reported.
@@ -78,7 +78,7 @@ virtualenv alone once counted as 11,917 Python tests.
 |---|---|---|---|---|
 | FR1 | Register, authenticate, enforce roles | Must | `TestContributorsCannotReachResearcherOrAdminRoutes`, `TestResearchersCannotReachAdminRoutes`, `TestEachRoleReachesItsOwnRoutes`, `TestUnauthenticatedRequestsAreRefused`, `TestAGarbageOrForeignTokenIsRefused`, `TestAContributorCannotVerifyEvenTheirOwnSighting`, `TestAContributorCannotReadAnotherContributorsSighting`, `TestReplayingAnotherContributorsIDIsRefused` — plus the argon2id and JWT unit tests | ✅ |
 | FR2 | Create a sighting: 1–5 photos, position, time, depth, note | Must | smoke 5; mobile capture screens built and screenshotted (`docs/evidence/mobile/`) | ◐ |
-| FR3 | Queue offline, sync automatically | Must | `enqueuesASightingWithItsPhotographsAtomically`, `backoffKeepsARowOutOfTheQueueUntilItsTimeComes`, `theAttemptCounterOnlyEverIncreases`, `requeueingClearsTheFailureSoAContributorsRetryActuallyRetries`, `eight attempts is the give-up threshold`, `jitter stays within twenty percent, in both directions` | ◐ |
+| FR3 | Queue offline, sync automatically | Must | `capturingWithNoNetworkQueuesTheSightingAndKeepsThePhotograph`, `drainingWithNoNetworkLeavesTheRowQueuedAndDoesNotBurnItsAttempts`, `theQueueSurvivesTheProcessDying`, `theQueueDrainsOnceTheNetworkReturns`, `aConnectionLostMidUploadResumesWithoutResendingWhatArrived`; plus the outbox and retry-curve tests | ✅ |
 | FR4 | Submission is idempotent; retries never duplicate | Must | `TestReplayingASubmissionCreatesExactlyOneRow` (eight attempts, the outbox give-up threshold), `TestDepthAndNoteSurviveAReplay`; smoke 6 | ✅ |
 | FR5 | Classify each photo; record label, confidence, model version | Must | smoke 9, 10, 13; `test_classify_returns_one_patch_per_cell`, `test_label_follows_severity_threshold`, `test_severity_matches_bleached_patch_fraction`, `test_confidences_are_probabilities`, `test_to_dict_shape_matches_go_client_contract` | ◐ |
 | FR6 | Verification queue: confirm, correct, reject, audit-logged | Must | `TestRejectingASightingIsRecordedWithItsReasonAndAuthor`, `TestARejectionWithoutAReasonIsRefused`, `TestAnInvalidRejectReasonSaysSoRatherThanClaimingItIsMissing`; smoke 11–14 | ✅ |
@@ -96,9 +96,10 @@ virtualenv alone once counted as 11,917 Python tests.
 
 ### What the functional gaps actually are
 
-- **FR2/FR3** — the queue's *behaviour* is well covered against real SQLite. The
-  **capture flow itself** is not automated on either platform, and the offline half of
-  the checklist in `mobile-shared/README.md` has never been walked (see NFR7).
+- **FR2** — the queue and the sync engine are now well covered, including the offline
+  situations (`docs/evidence/mobile/acceptance.md`). What is still not automated is the
+  **capture flow itself** on either platform: nothing drives the camera, the position
+  fallback or the 1–5 photo limit through the UI.
 - **FR7/FR8/FR12** — the map style, the basemap, the condition chip and the patch
   lattice are now covered, but the **views** are not: nothing mounts `QueueView`,
   `ReefMapView` or `SightingDetailView`, so a filter control or a provenance panel could
@@ -132,8 +133,8 @@ is the argument for having written them:
 | NFR3 | Map interactive at 10,000 sightings; viewport ≤ 2 s | Must | `make perf` — **56 ms** worst of 5 at 10,304 sightings; the check fails if the corpus is smaller | ✅ |
 | NFR4 | argon2id, TLS in the demo config, JWT ≤ 15 min | Must | argon2id: `TestHashPasswordIsSaltedPerCall`, `TestHashPasswordProducesVerifiableArgon2idHash`; expiry: `TestParseAccessTokenRejectsExpiredToken`; refresh: `TestRefreshTokenStoresOnlyItsHash`, `TestRefreshTokensAreUnique`; TLS: `make lint` static checks + `make smoke-tls` (33 checks over TLS 1.3) | ✅ |
 | NFR5 | Validate, re-encode and strip EXIF from uploads | Must | smoke 8 refuses a non-image | ◐ |
-| NFR6 | Capture completable in < 60 s and ≤ 8 taps | Must | — | ○ |
-| NFR7 | Contributor app fully functional offline except register/login | Must | `journalsWriteAheadSoAReaderNeverBlocksTheCaptureFlow`, `commitsReachTheStorageMediumBeforeEnqueueReturns`, `DurabilityPragmaTests` | ◐ |
+| NFR6 | Capture completable in < 60 s and ≤ 8 taps | Must | **5 taps**, counted from the capture code (6 on the first ever capture, including the permission grant). The **timing** has never been measured | ◐ |
+| NFR7 | Contributor app fully functional offline except register/login | Must | the 8 `SyncEngineOfflineTest` cases, `journalsWriteAheadSoAReaderNeverBlocksTheCaptureFlow`, `commitsReachTheStorageMediumBeforeEnqueueReturns`, `DurabilityPragmaTests`. The capture **screen** with the radio off is still unverified — see `docs/evidence/mobile/acceptance.md` | ◐ |
 | NFR8 | SUS ≥ 70 from ≥ 5 users | Must | — | ○ |
 | NFR9 | No component depends on a key-requiring external service | Must | `make mobile-lint` fails on an App Transport Security exception in a release plist; the basemap is committed vector GeoJSON with no tile or glyph server (D22/D23) | ◐ |
 | NFR10 | Startable by one documented command; seed by one more | Must | `make up`, `make seed`; `make test`, `make test-ml`, `make test-web` and `make smoke` were all broken before 2026-08-21 and now run (D42) | ◐ |
@@ -157,11 +158,16 @@ is the argument for having written them:
   hostile file (a valid image header with a huge decompressed size), or that EXIF is
   stripped *after* capture time and GPS are extracted — which is a privacy claim the
   report makes.
-- **NFR6** — the capture flow is five taps by construction and the code makes that
-  checkable, but nobody has held a stopwatch. Unmeasured is unmeasured.
-- **NFR7** — durability is proven properly, on both platforms, by reading the pragmas
-  back rather than trusting that setting them worked. The **network** half is not: no
-  scenario runs with the API unreachable.
+- **NFR6** — half done. The tap count is now counted from the code rather than claimed:
+  **5**, or 6 on the first capture. The **timing** is still unmeasured, and its
+  verification method is "usability testing measurement", so a stopwatch and a person is
+  what closes it — not another test.
+- **NFR7** — durability was already proven by reading the pragmas back, and the network
+  half is now covered too: eight instrumented tests run with the server unreachable, a
+  process restart between drains, and a connection dropped mid-upload. The remaining gap
+  is that the capture **screen** has not been exercised with a device's radio off — four
+  attempts failed inside the emulator's own `system_server`, not the app, and that is
+  recorded rather than glossed.
 - **NFR8** — a human-subjects study. Not automatable and not started; the project needs
   to either run it or narrow the claim.
 - **NFR12/NFR16** — no evidence. NFR16 is blocked on the ML training track not existing

@@ -132,18 +132,20 @@ path has no tile server, no glyph server and no network. See D22/D23 in `docs/08
 the header of `web/src/lib/mapStyle.ts`.
 
 [`TESTING.md`](TESTING.md) is the requirement-to-test traceability matrix, and it is
-the honest picture: of 33 requirements, **16** have full automated evidence, 12 are
-partly covered and **5 have none**. Read it before planning work — it is also the
+the honest picture: of 33 requirements, **17** have full automated evidence, 12 are
+partly covered and **4 have none**. Read it before planning work — it is also the
 to-do list, and its counts are tallied by `scripts/testing_matrix.py` rather than
-maintained by hand. 233 automated tests across five suites, all passing, plus 33
+maintained by hand. 241 automated tests across five suites, all passing, plus 33
 end-to-end smoke checks and 4 measured performance checks.
 
 Known gaps, in the order they hurt the project: **no trained model** (the ML training
 track is the one unstarted track, and it blocks NFR2's real figure, NFR16 and FR17), no
 dashboard **view** tests (the components are covered but nothing mounts `QueueView`,
-`ReefMapView` or `SightingDetailView`), the capture flow is unmeasured against NFR6, the
-offline half of the mobile acceptance checklist is unwalked, no request-ID propagation
-test (NFR12), and no SUS study (NFR8).
+`ReefMapView` or `SightingDetailView`), the NFR6 **timing** is unmeasured (the tap count is
+now 5, counted from the code), no request-ID propagation test (NFR12), and no SUS study
+(NFR8). The mobile acceptance checklist is now mostly automated —
+[`docs/evidence/mobile/acceptance.md`](docs/evidence/mobile/acceptance.md) records what
+is covered and the one item the emulator would not let me verify.
 
 On mobile, the gap is the acceptance checklist at the end of
 `mobile-shared/README.md`: the offline scenarios that need a device to be put into
