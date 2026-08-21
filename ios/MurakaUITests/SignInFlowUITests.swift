@@ -292,6 +292,40 @@ final class SignInFlowUITests: XCTestCase {
     }
 
     /// The contributor may never be shown a success the server has not confirmed (D21).
+    /// The floating tab bar on iOS 26 sits *over* the scroll view, so the last row is only
+    /// reachable if the content inset clears it. This is a regression guard with a specific
+    /// history: the capture control used to be a floating button and the inset was sized for
+    /// it, so shrinking the inset when that control moved into the navigation bar could
+    /// silently strand the final sighting underneath the tab bar.
+    func testTheLastRowIsReachableUnderTheFloatingTabBar() throws {
+        try skipUnlessStackIsUp()
+        signIn()
+
+        let cells = app.tables.cells
+        XCTAssertTrue(cells.element(boundBy: 0).waitForExistence(timeout: 15), "seed the stack first")
+
+        // Swipe rather than `scrollToElement`: the point is what a thumb can actually reach,
+        // and XCUIElement.tap() on an off-screen row would scroll it into view for free and
+        // prove nothing.
+        for _ in 0 ..< 12 { app.tables.firstMatch.swipeUp() }
+
+        let last = cells.element(boundBy: cells.count - 1)
+        attach(name: "07-list-bottom")
+        XCTAssertTrue(last.exists, "the list should still have rows after scrolling")
+        XCTAssertTrue(
+            last.isHittable,
+            "the last row is under the floating tab bar — the bottom content inset is too small"
+        )
+
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.exists)
+        XCTAssertLessThanOrEqual(
+            last.frame.maxY.rounded(),
+            tabBar.frame.minY.rounded(),
+            "the last row overlaps the tab bar even when fully scrolled"
+        )
+    }
+
     func testNoScreenClaimsASightingIsSynced() throws {
         try skipUnlessStackIsUp()
         signIn()

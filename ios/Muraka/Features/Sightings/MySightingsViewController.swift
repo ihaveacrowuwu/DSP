@@ -9,7 +9,6 @@ final class MySightingsViewController: UIViewController {
     private let container: AppContainer
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private let refreshControl = UIRefreshControl()
-    private let captureButton = UIButton(configuration: GlassSurface.makeButtonConfiguration(.primary))
 
     /// Everything the device knows about, unfiltered.
     private var allSightings: [ContributorSighting] = []
@@ -55,34 +54,21 @@ final class MySightingsViewController: UIViewController {
         tableView.register(SightingCell.self, forCellReuseIdentifier: SightingCell.reuseIdentifier)
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 88
-        // Room for the floating capture button, which would otherwise cover the last row —
-        // and on a short history, every row.
-        tableView.contentInset.bottom = 96
+        // The floating tab bar is inside the safe area, which the automatic inset already
+        // accounts for; this is breathing room below the last row rather than clearance.
+        // It was 96 to clear a floating capture button that has since moved into the
+        // navigation bar.
+        tableView.contentInset.bottom = Spacing.lg
         refreshControl.addTarget(self, action: #selector(pullToRefresh), for: .valueChanged)
         tableView.refreshControl = refreshControl
         view.addSubview(tableView)
 
         // Glass, because this is chrome floating over content — exactly what it is for.
-        captureButton.configuration?.title = "New sighting"
-        captureButton.configuration?.image = UIImage(systemName: "camera.fill")
-        captureButton.configuration?.imagePadding = 8
-        captureButton.translatesAutoresizingMaskIntoConstraints = false
-        captureButton.addTarget(self, action: #selector(startCapture), for: .touchUpInside)
-        captureButton.accessibilityLabel = "Record a new sighting"
-        view.addSubview(captureButton)
-
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-
-            captureButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            captureButton.bottomAnchor.constraint(
-                equalTo: view.safeAreaLayoutGuide.bottomAnchor,
-                constant: -16
-            ),
-            captureButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 50),
         ])
     }
 
@@ -119,11 +105,30 @@ final class MySightingsViewController: UIViewController {
         navigationItem.preferredSearchBarPlacement = .stacked
         navigationItem.hidesSearchBarWhenScrolling = false
 
+        // `+` in the top right, which is where Contacts and Calendar have put "add" for
+        // years. Apple's newest apps (Mail, Notes on iOS 26) use a floating bottom-right
+        // button instead — but neither has a tab bar, so bottom-right is free for them. Ours
+        // does, and a floating pill there competed with the tab bar and covered the last row.
+        let capture = UIBarButtonItem(
+            systemItem: .add,
+            primaryAction: UIAction { [weak self] _ in self?.startCapture() }
+        )
+        capture.accessibilityLabel = "Record a new sighting"
+        capture.accessibilityIdentifier = "newSighting"
+        navigationItem.rightBarButtonItem = capture
+
         refreshFilterButton()
     }
 
+    /// The filter lives in the **left** slot.
+    ///
+    /// Not the conventional place — Files, Photos and Reminders all put view and sort options
+    /// top right, and the left slot is normally Back, Cancel or Edit. But this is a tab root,
+    /// so there is no Back to collide with, and the right slot now holds `+`; two icons there
+    /// alongside a search field is crowded enough to be worse than the unconventional
+    /// placement.
     private func refreshFilterButton() {
-        navigationItem.rightBarButtonItem = SightingFilterMenu.makeBarButton(
+        navigationItem.leftBarButtonItem = SightingFilterMenu.makeBarButton(
             filter: filter,
             actions: SightingFilterMenu.Actions(
                 setCondition: { [weak self] in self?.filter.condition = $0 },

@@ -86,6 +86,16 @@ final class AppearanceStore {
         get { defaults.object(forKey: gridKey) as? Bool ?? true }
         set { defaults.set(newValue, forKey: gridKey) }
     }
+
+    /// Returns both preferences to their defaults, for the UI tests' known-state launch
+    /// argument. Debug-only: nothing in a shipping build has any business erasing a choice
+    /// the contributor made.
+    #if DEBUG
+        func resetForUITests() {
+            defaults.removeObject(forKey: key)
+            defaults.removeObject(forKey: gridKey)
+        }
+    #endif
 }
 
 extension Notification.Name {

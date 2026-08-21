@@ -37,6 +37,12 @@ glass chrome, 24px rail radius and `linear()` springs have **no authority** on
 either app — they are recorded under `webOnly` in the token file for comparison
 only.
 
+**The clearest worked example is where the primary action sits.** Android puts "new
+sighting" in a bottom-right FAB; iOS puts it as a `+` in the navigation bar's
+trailing slot. Same action, same screen, deliberately different chrome, because that
+is what each platform's users already reach for. If a change makes the two apps look
+*more* alike in a place like this, it is probably wrong. See D38 in `docs/08`.
+
 ## Android — Material 3
 
 Follow [m3.material.io](https://m3.material.io): its components, shape scale,

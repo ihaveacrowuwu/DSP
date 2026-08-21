@@ -91,7 +91,8 @@ Or from the repository root: `make ios-build`, `make test-ios`, `make mobile-lin
 | `DurabilityPragmaTests` | WAL and `synchronous = FULL`, read back from a real file |
 | `APIClientIntegrationTests` | the client against the **running** API, not a stub |
 | `AppConfigurationTests` | the build configuration the app depends on |
-| `SignInFlowUITests` | sign in, every tab, a sighting — and that no screen claims delivery |
+| `SignInFlowUITests` | sign in, every tab, a sighting, search and filtering, the appearance toggle, the patch-grid toggle — and that no screen claims delivery |
+| `SignInFlowUITests` (layout) | that the last row clears the floating tab bar, which the safe area alone does not guarantee |
 
 The integration and UI suites skip rather than fail when the stack is not running, because a
 red suite on a machine with no Docker tells nobody anything.

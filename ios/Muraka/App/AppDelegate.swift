@@ -30,11 +30,20 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     /// app reinstall — which is correct behaviour and exactly what makes a test that assumes
     /// a signed-out app fail on its second run.
     ///
-    /// Only the session goes. The outbox is untouched, because a flag that also wiped queued
-    /// sightings would be a footgun aimed at the one thing this app must not lose.
+    /// The session and the appearance preferences go. The outbox is untouched, because a flag
+    /// that also wiped queued sightings would be a footgun aimed at the one thing this app
+    /// must not lose.
+    ///
+    /// Appearance is included because leaving it out made a test poison its own next run: the
+    /// test that proves the patch grid stays hidden across a relaunch left it hidden, so the
+    /// same test then failed its "starts visible" precondition the second time it ran. That is
+    /// display state rather than user data, so resetting it costs nothing — and the test that
+    /// checks the choice *survives* a relaunch drops this argument before relaunching, so it
+    /// still exercises the real persistence.
     private func resetSessionForUITestsIfRequested() {
         #if DEBUG
             guard ProcessInfo.processInfo.arguments.contains("-MurakaResetSession") else { return }
+            AppearanceStore().resetForUITests()
             let tokens = container.tokens
             // Synchronously, before any scene connects, or the first screen is chosen from a
             // session this is about to delete.
