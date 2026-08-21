@@ -132,9 +132,47 @@ Neither crashes, so neither would be noticed.
 
 **What is missing is the data**, and nothing else.
 
+### Picking this up next session — the exact next steps
+
+Everything below the dataset is done. **Q6 (the licence) is the gate, and it is a human
+decision, not more research** — the terms are recorded in `docs/08-scope-risks-decisions.md`
+under Q6: no explicit licence tag, the standard NOAA as-is disclaimer, a requested
+citation, and the dataset's own facts (224 px, `CORAL`/`CORAL_BL`, 7,292 training images)
+matching `configs/baseline.yaml` exactly. **Nothing has been downloaded.**
+
+Once that call is made:
+
+```bash
+# 1. Get the corpus (768 MB) into ml/datasets/noaa as train/ val/ test/ subdirectories,
+#    each containing CORAL/ and CORAL_BL/. The recipe's folder_map expects those names.
+
+# 2. Sanity-check the recipe against the real data before spending an hour on a run:
+cd ml/training
+python3 scripts/train.py --config configs/baseline.yaml     --data-root ../datasets/noaa --epochs 1 --output-dir runs/smoke
+
+# 3. The real baseline. Roughly an hour on the M1 Pro.
+python3 scripts/train.py --config configs/baseline.yaml     --data-root ../datasets/noaa --export-onnx --model-version effnetb0-0.1.0
+
+# 4. Open the test split ONCE, at the end:
+python3 scripts/evaluate.py --config configs/baseline.yaml     --data-root ../datasets/noaa --checkpoint runs/baseline-effnetb0/best.pt --split test
+
+# 5. Serve it: copy the .onnx to ml/models/active.onnx, set FAKE_MODE=0 in
+#    deploy/docker-compose.yml, then `make up && make smoke`.
+```
+
+On macOS, if the ImageNet weights fail with `CERTIFICATE_VERIFY_FAILED`:
+`export SSL_CERT_FILE=$(python3 -c "import certifi;print(certifi.where())")`.
+
+Two things to compare against when the numbers arrive: prior published work on this
+dataset reports roughly **0.90 accuracy and 0.90 macro-F1** at patch level with a
+comparable backbone, and CPU latency is already known to be **381 ms** per photograph, so
+a slowdown after training would mean something changed in the graph rather than in the
+weights.
+
 ### The plan, in order
 
-1. **Verify the dataset.** ← *the only remaining blocker.* Download
+1. **Verify the dataset.** ← *the only remaining blocker, and it is a decision rather than
+   a task.* Download
    `NMFS-OSI/NOAA-PIFSC-ESD-CORAL-Bleaching-Dataset` from HuggingFace (no API key
    needed) and confirm its licence terms permit this use. This is the project's
    last real unknown, so it comes first.
