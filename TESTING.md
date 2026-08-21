@@ -9,12 +9,11 @@ is not evidence, it is decoration — the value is in the rows that say **none**
 those are the project's honest limitations section and the build's to-do list at the
 same time.
 
-Of thirty-three requirements, **three** have full automated evidence, nineteen are
-partly covered, one rests on a human checklist and **ten have none at all**. Those
+Of thirty-three requirements, **eleven** have full automated evidence, fifteen are
+partly covered, one rests on a human checklist and **six have none at all**. Those
 figures are tallied from the table below by `scripts/testing_matrix.py --check`, not
-written by hand — the first draft of this paragraph claimed sixteen, which was wrong by
-a factor of five and is exactly the kind of number a report should never carry
-unchecked.
+written by hand — an early draft of this paragraph claimed sixteen when the true figure
+was three, which is exactly the kind of number a report should never carry unchecked.
 
 **Results below are from a real run on 2026-08-21**, not from memory. Reproduce with
 the commands in [Running everything](#running-everything).
@@ -40,15 +39,16 @@ one shaped like a Go, Python or Swift test method — as a build failure.
 | Suite | Tests | Command | Needs |
 |---|---:|---|---|
 | Go unit | 40 | `make test-go` | nothing |
+| Go integration | 26 | `make test-go` | PostgreSQL+PostGIS; skips without it |
 | ML service (pytest) | 15 | `make test-ml` | creates a venv on first run |
 | Dashboard (Vitest) | 20 | `make test-web` | `npm install` |
 | Android unit (JVM) | 47 | `cd android && ./gradlew testDebugUnitTest` | nothing |
 | Android instrumented | 12 | `cd android && ./gradlew connectedDebugAndroidTest` | an emulator |
 | iOS (XCTest + XCUITest) | 9 | `make test-ios` | a simulator; skips without the stack |
-| **Total automated** | **143** | `make test && make mobile` | |
+| **Total automated** | **169** | `make test && make mobile` | |
 | End-to-end smoke | 33 checks | `make smoke` | the running stack |
 
-All 143 passed and all 33 smoke checks passed on 2026-08-21.
+All 169 passed and all 33 smoke checks passed on 2026-08-21.
 
 The counts are not hand-maintained — `scripts/testing_matrix.py --list` prints them,
 and it excludes `build/`, `DerivedData/` and `node_modules/`, which contain copies of
@@ -67,43 +67,50 @@ test sources that would otherwise inflate every number.
 
 | ID | Requirement | MoSCoW | Evidence | |
 |---|---|---|---|---|
-| FR1 | Register, authenticate, enforce roles | Must | `TestHashPasswordProducesVerifiableArgon2idHash`, `TestVerifyPasswordRejectsWrongPassword`, `TestVerifyPasswordRejectsMalformedHashes`, `TestAccessTokenRoundTripCarriesSubjectAndRole`, `TestParseAccessTokenRejectsForeignSignature`, `TestParseAccessTokenRejectsGarbage`, `TestParseAccessTokenRejectsWrongIssuer`, `TestRoleCapabilities`; smoke 1–4 | ◐ |
+| FR1 | Register, authenticate, enforce roles | Must | `TestContributorsCannotReachResearcherOrAdminRoutes`, `TestResearchersCannotReachAdminRoutes`, `TestEachRoleReachesItsOwnRoutes`, `TestUnauthenticatedRequestsAreRefused`, `TestAGarbageOrForeignTokenIsRefused`, `TestAContributorCannotVerifyEvenTheirOwnSighting`, `TestAContributorCannotReadAnotherContributorsSighting`, `TestReplayingAnotherContributorsIDIsRefused` — plus the argon2id and JWT unit tests | ✅ |
 | FR2 | Create a sighting: 1–5 photos, position, time, depth, note | Must | smoke 5; mobile capture screens built and screenshotted (`docs/evidence/mobile/`) | ◐ |
 | FR3 | Queue offline, sync automatically | Must | `enqueuesASightingWithItsPhotographsAtomically`, `backoffKeepsARowOutOfTheQueueUntilItsTimeComes`, `theAttemptCounterOnlyEverIncreases`, `requeueingClearsTheFailureSoAContributorsRetryActuallyRetries`, `eight attempts is the give-up threshold`, `jitter stays within twenty percent, in both directions` | ◐ |
-| FR4 | Submission is idempotent; retries never duplicate | Must | smoke 6 (replays an identical submission); `ids are unique across a burst`, `generated ids round-trip through the string form the API expects` | ◐ |
+| FR4 | Submission is idempotent; retries never duplicate | Must | `TestReplayingASubmissionCreatesExactlyOneRow` (eight attempts, the outbox give-up threshold), `TestDepthAndNoteSurviveAReplay`; smoke 6 | ✅ |
 | FR5 | Classify each photo; record label, confidence, model version | Must | smoke 9, 10, 13; `test_classify_returns_one_patch_per_cell`, `test_label_follows_severity_threshold`, `test_severity_matches_bleached_patch_fraction`, `test_confidences_are_probabilities`, `test_to_dict_shape_matches_go_client_contract` | ◐ |
-| FR6 | Verification queue: confirm, correct, reject, audit-logged | Must | smoke 11–14 | ◐ |
+| FR6 | Verification queue: confirm, correct, reject, audit-logged | Must | `TestRejectingASightingIsRecordedWithItsReasonAndAuthor`, `TestARejectionWithoutAReasonIsRefused`, `TestAnInvalidRejectReasonSaysSoRatherThanClaimingItIsMissing`; smoke 11–14 | ✅ |
 | FR7 | Map with clustering, heatmap, filters | Must | 14 `mapStyle` tests incl. `is valid against the MapLibre style specification`, `never lets a national-zoom cluster cover a whole atoll`; smoke 15 | ◐ |
 | FR8 | Full provenance per sighting | Must | smoke 13, 15 (CSV carries provenance columns) | ◐ |
 | FR9 | Contributor sees own sightings with status | Must | `testSignInShowsTheContributorsOwnSightings`, `testSearchingAndFilteringNarrowsTheHistory`, `testTheScopeBarFiltersWhileSearchIsActive`, `testNoScreenClaimsASightingIsSynced`; `every server status maps to a status the client did not invent`, `a queued row reads as waiting, whatever the server last said` | ✅ |
-| FR10 | Admin: roles, bans, site data, model versions | Must | smoke 11 promotes a contributor to researcher | ○ |
-| FR11 | Rejected sightings excluded from maps, trends, exports | Must | `TestFilterExcludesRejectedByDefault`, `TestFilterCanIncludeRejectedExplicitly`, `TestFilterVerifiedOnlyMatchesExpertDecisions` | ◐ |
+| FR10 | Admin: roles, bans, site data, model versions | Must | `TestPromotingAUserTakesEffectImmediately`, `TestDemotingAUserRemovesTheirAccess`, `TestBanningAUserStopsThemSigningIn`, `TestBanningAUserStopsTheirExistingSession`, `TestAnAdminCannotBanThemselves`, `TestActivatingAModelVersionLeavesExactlyOneActive`, `TestActivatingAnUnknownModelVersionIs404`, `TestAtollsAreUpsertedRatherThanDuplicated` | ✅ |
+| FR11 | Rejected sightings excluded from maps, trends, exports | Must | `TestRejectedSightingsAreExcludedFromMapTrendsAndExport` asserts all three paths; plus the SQL-builder unit tests | ✅ |
 | FR12 | Condition trends over time | Should | smoke 15 (trends returns buckets) | ◐ |
 | FR13 | CSV export of the filtered set, with provenance | Should | smoke 15 | ✅ |
-| FR14 | Queue prioritises low-confidence predictions | Should | — | ○ |
-| FR15 | Auto-assign sightings to reef sites by polygon | Should | — | ○ |
+| FR14 | Queue prioritises low-confidence predictions | Should | `TestTheVerificationQueuePutsLowConfidenceFirst` | ✅ |
+| FR15 | Auto-assign sightings to reef sites by polygon | Should | `TestASightingInsideASitePolygonIsAssignedToIt`, `TestCreatingASiteBackfillsSightingsAlreadyInside` | ✅ |
 | FR16 | Warn before submission if a photo looks unusable | Could | 6 `photos` tests incl. `flags the 224px dataset crops`, `does not flag real photographs`, `judges on the shorter side, because the frame is square` | ◐ |
 | FR17 | Export verified labels as a training set; compare model versions | Could | — | ○ |
 
 ### What the functional gaps actually are
 
-- **FR1** — the unit tests prove the crypto and the token rules; smoke proves one role
-  guard on one endpoint. What is missing is the **matrix**: every role against every
-  protected endpoint, including a contributor attempting a researcher's verification
-  and an admin-only route. A single guard passing is not RBAC being enforced.
 - **FR2/FR3** — the queue's *behaviour* is well covered against real SQLite. The
   **capture flow itself** is not automated on either platform, and the offline half of
   the checklist in `mobile-shared/README.md` has never been walked (see NFR7).
-- **FR4** — proven end-to-end by smoke, but there is no Go-level test, so a regression
-  shows up only when the whole stack is running.
-- **FR6** — confirm and correct are covered; **reject is not**, and nothing asserts the
-  audit log records *who* decided *what*, which is the half FR6 exists for.
 - **FR7/FR8/FR12** — everything is verified at the style-and-API level. No test renders
   a component, so a filter control or a provenance panel could break without failing
   anything.
-- **FR10, FR14, FR15, FR17** — no evidence at all. FR10 and FR14 are the two Musts and
-  Shoulds most exposed here; FR15 needs PostGIS containment tests, which is the only
-  place the project's choice of PostGIS is load-bearing and currently untested.
+- **FR16** — the dashboard's side of the unusable-photograph rule is tested; the
+  mobile warning is not.
+- **FR17** — no evidence. It is a Could, and it is blocked on the training track: there
+  is no second model version to compare against.
+
+Three defects were found by writing these tests rather than by reading the code, which
+is the argument for having written them:
+
+1. **A banned user's existing access token kept working.** `requireAuth` verified the
+   JWT and never consulted the database, so a ban took up to fifteen minutes to bite —
+   on an abuse-response feature. Refresh already refused a non-active account, so the
+   ban was permanent but not immediate. `requireAuth` now reads status and role from the
+   database, which also makes demotions immediate (D45).
+2. **A 422 that told the caller a field was missing when they had sent it.** An invalid
+   `rejectReason` reported "is required when rejecting", because the required-field check
+   overwrote the more accurate "must be blurry, not_coral, …". Found by being misled by
+   it while writing the rejection test.
+3. **`make test` had not run the ML or dashboard suites on this machine** (D42).
 
 ## Non-functional requirements
 
@@ -123,7 +130,7 @@ test sources that would otherwise inflate every number.
 | NFR12 | Request IDs propagated through Go and Python logs | Should | — | ○ |
 | NFR13 | ML-only labels visually distinct from expert-verified | Must | `paints unassessed sightings off the condition scale entirely`, `draws worse condition on top`; both apps encode it in shape and word, not colour (`docs/evidence/mobile/`) | ✋ |
 | NFR14 | Material 3 / Liquid Glass; light and dark on both | Must | `testTheAppearanceToggleDarkensEveryScreen`, `testTheAppearanceChoiceIsRemembered`, `testTheLastRowIsReachableUnderTheFloatingTabBar`, `testThePatchGridCanBeTurnedOffAndStaysOff`; Android night resources verified with `aapt2 dump` (D33) | ✅ |
-| NFR15 | Account deletion anonymises rather than deletes, and says so | Should | — | ○ |
+| NFR15 | Account deletion anonymises rather than deletes, and says so | Should | `TestDeletingAnAccountKeepsTheScienceAndDropsThePerson` | ✅ |
 | NFR16 | Training runs reproducible: config-driven, seeded, metrics per run | Should | — | ○ |
 
 ### What the non-functional gaps actually are
@@ -145,13 +152,16 @@ test sources that would otherwise inflate every number.
   scenario runs with the API unreachable.
 - **NFR8** — a human-subjects study. Not automatable and not started; the project needs
   to either run it or narrow the claim.
-- **NFR11/NFR12/NFR15/NFR16** — no evidence. NFR16 is blocked on the ML training track
-  not existing yet.
+- **NFR11/NFR12/NFR16** — no evidence. NFR16 is blocked on the ML training track not
+  existing yet. NFR11 matters more than it did: `requireAuth` now performs a
+  primary-key lookup per authenticated request, and that trade is asserted nowhere.
 
 ## Where the tests live
 
 ```
 backend/internal/{auth,httpapi,storage,store}/*_test.go   40 Go unit tests
+backend/internal/httpapi/{harness,rbac,admin,data_integrity}_test.go
+                                                          26 Go integration tests
 ml/service/tests/test_inference.py                        15 pytest
 web/src/lib/{mapStyle,photos}.test.ts                     20 Vitest
 android/core/*/src/test/                                  47 JVM unit
@@ -167,6 +177,12 @@ to a real defect rather than for coverage:
   `synchronous` back from a real database file. `synchronous = FULL` set from Room's
   `onOpen` is silently overwritten by Android's own WAL configuration, so the obvious
   version of this test passes against a setting that is not in effect (D28).
+- **The Go integration harness** gives each test its own database, created and dropped
+  around it, and skips rather than fails when PostgreSQL is unreachable. Most of what
+  this project promises is implemented *in SQL* — `ST_Covers` containment, `ON CONFLICT
+  DO NOTHING` idempotency, `ORDER BY confidence ASC NULLS FIRST` queue order — so those
+  claims are untestable without a database, which is why eight requirements sat at "no
+  evidence" while 40 unit tests passed.
 - **`RFC3339Tests`** exists because Go emits nine fractional digits and PostgreSQL six,
   while `ISO8601FormatStyle` accepts exactly three — every timestamp failed to decode,
   and it presented as "signing in does not work".

@@ -143,8 +143,30 @@ func (a *API) requireAuth(next http.Handler) http.Handler {
 			return
 		}
 
+		// The token alone is not enough. A JWT is a snapshot of the moment it was
+		// issued, so without this lookup a ban or an account deletion does not take
+		// effect until the access token expires — up to 15 minutes of continued full
+		// access for the user an administrator has just banned. Refresh already refuses
+		// a non-active account, so the ban was permanent but not immediate; for an
+		// abuse-response feature (FR10) immediate is the point.
+		//
+		// The cost is one primary-key lookup per authenticated request. That is the
+		// deliberate trade against stateless verification, and it is measured rather
+		// than assumed: see the concurrency figures in `docs/evidence/performance/`.
+		user, err := a.store.UserByID(r.Context(), userID)
+		if err != nil {
+			writeError(w, http.StatusUnauthorized, "unauthorized", "account no longer exists")
+			return
+		}
+		if user.Status != "active" {
+			writeError(w, http.StatusForbidden, "account_disabled", "this account is not active")
+			return
+		}
+
 		ctx := context.WithValue(r.Context(), ctxKeyUserID, userID)
-		ctx = context.WithValue(ctx, ctxKeyRole, claims.Role)
+		// The role comes from the database too, not the claim, so a demotion takes
+		// effect at the same moment a ban does.
+		ctx = context.WithValue(ctx, ctxKeyRole, user.Role)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

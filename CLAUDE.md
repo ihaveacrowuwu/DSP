@@ -124,15 +124,16 @@ path has no tile server, no glyph server and no network. See D22/D23 in `docs/08
 the header of `web/src/lib/mapStyle.ts`.
 
 [`TESTING.md`](TESTING.md) is the requirement-to-test traceability matrix, and it is
-the honest picture: of 33 requirements, **3** have full automated evidence, 19 are
-partly covered and **10 have none**. Read it before planning work — it is also the
+the honest picture: of 33 requirements, **11** have full automated evidence, 15 are
+partly covered and **6 have none**. Read it before planning work — it is also the
 to-do list, and its counts are tallied by `scripts/testing_matrix.py` rather than
-maintained by hand. 143 automated tests across five suites, all passing, plus 33
+maintained by hand. 169 automated tests across five suites, all passing, plus 33
 end-to-end smoke checks.
 
 Known gaps, in the order they hurt the project: no TLS anywhere (NFR4 is a Must), no
-load test (NFR11), no DB-backed integration tests on the **Go** side (all 40 Go tests
-are pure unit tests, so FR10/FR14/FR15 have no evidence at all), dashboard tests cover
+load test (NFR11) — which now matters more, because `requireAuth` performs a
+primary-key lookup per authenticated request since D45 and nothing measures it —
+dashboard tests cover
 only the map style, the basemap and the photo-resolution rule (`web/src/lib/*.test.ts`,
 20 tests) and never render a component, the capture flow is unmeasured against NFR6,
 and there is no trained model.

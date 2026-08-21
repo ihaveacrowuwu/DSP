@@ -79,7 +79,11 @@ func (a *API) handleCreateVerification(w http.ResponseWriter, r *http.Request) {
 			fields["label"] = "is required when confirming or correcting"
 		}
 	case domain.DecisionRejected:
-		if reason == nil {
+		// Only claim it is missing when it really is. A value that was supplied but is
+		// not one of the five reasons already reported "must be blurry, not_coral, …",
+		// and overwriting that with "is required" sends a client looking for a field
+		// they already sent — which is exactly how this was found.
+		if reason == nil && fields["rejectReason"] == "" {
 			fields["rejectReason"] = "is required when rejecting"
 		}
 	}
