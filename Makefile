@@ -192,6 +192,10 @@ mobile-lint: ## Linters and cross-platform checks for both apps
 	@echo
 	$(PY) scripts/check_status_vocabulary.py
 	@echo
+	@# The lattice is drawn in Vue, Compose and UIKit from one specification, and no
+	@# linter can see across three languages.
+	$(PY) scripts/check_patch_lattice.py
+	@echo
 	@# NFR4: the App Transport Security exception is a debug-only affordance for the local
 	@# stack, and a release build that carried one could talk to a dev server in clear text.
 	@if plutil -extract NSAppTransportSecurity xml1 -o - ios/Config/Info.plist >/dev/null 2>&1; then \

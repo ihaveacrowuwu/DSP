@@ -41,21 +41,27 @@ one shaped like a Go, Python or Swift test method — as a build failure.
 | Go unit | 40 | `make test-go` | nothing |
 | Go integration | 26 | `make test-go` | PostgreSQL+PostGIS; skips without it |
 | ML service (pytest) | 15 | `make test-ml` | creates a venv on first run |
-| Dashboard (Vitest) | 20 | `make test-web` | `npm install` |
+| Dashboard (Vitest) | 84 | `make test-web` | `npm install` |
 | Android unit (JVM) | 47 | `cd android && ./gradlew testDebugUnitTest` | nothing |
 | Android instrumented | 12 | `cd android && ./gradlew connectedDebugAndroidTest` | an emulator |
 | iOS (XCTest + XCUITest) | 9 | `make test-ios` | a simulator; skips without the stack |
-| **Total automated** | **169** | `make test && make mobile` | |
+| **Total automated** | **233** | `make test && make mobile` | |
 | End-to-end smoke | 33 checks | `make smoke` | the running stack |
 | Performance | 4 checks | `make perf` | the stack, seeded to 10,000 |
 | Config checks | 5 + matrix | `make lint` | nothing |
 | Smoke over TLS | 33 checks | `make smoke-tls` | Docker |
 
-All 169 passed and all 33 smoke checks passed on 2026-08-21.
+All 233 passed and all 33 smoke checks passed on 2026-08-21.
 
-The counts are not hand-maintained — `scripts/testing_matrix.py --list` prints them,
-and it excludes `build/`, `DerivedData/` and `node_modules/`, which contain copies of
-test sources that would otherwise inflate every number.
+The counts in this table are **runtime results from the runners** — what
+`Tests 84 passed` and `ok muraka/backend/...` actually reported.
+`scripts/testing_matrix.py --list` counts *declarations* instead, which is a slightly
+different number wherever a parameterised case expands: one `it.each` with five cases
+is one declaration and five results, and one Go table test with eight subtests is one
+function and eight results. The collector exists to resolve citations, not to total the
+suites, and it excludes `build/`, `DerivedData/`, `node_modules/` and `.venv/`, which
+hold copies of test sources that would otherwise inflate every figure — the ML
+virtualenv alone once counted as 11,917 Python tests.
 
 ## Status vocabulary
 
@@ -93,9 +99,11 @@ test sources that would otherwise inflate every number.
 - **FR2/FR3** — the queue's *behaviour* is well covered against real SQLite. The
   **capture flow itself** is not automated on either platform, and the offline half of
   the checklist in `mobile-shared/README.md` has never been walked (see NFR7).
-- **FR7/FR8/FR12** — everything is verified at the style-and-API level. No test renders
-  a component, so a filter control or a provenance panel could break without failing
-  anything.
+- **FR7/FR8/FR12** — the map style, the basemap, the condition chip and the patch
+  lattice are now covered, but the **views** are not: nothing mounts `QueueView`,
+  `ReefMapView` or `SightingDetailView`, so a filter control or a provenance panel could
+  break without failing anything. The component harness now exists, so this is work
+  rather than groundwork.
 - **FR16** — the dashboard's side of the unusable-photograph rule is tested; the
   mobile warning is not.
 - **FR17** — no evidence. It is a Could, and it is blocked on the training track: there
@@ -131,7 +139,7 @@ is the argument for having written them:
 | NFR10 | Startable by one documented command; seed by one more | Must | `make up`, `make seed`; `make test`, `make test-ml`, `make test-web` and `make smoke` were all broken before 2026-08-21 and now run (D42) | ◐ |
 | NFR11 | 50 concurrent sighting submissions with no error or loss | Should | `make perf` — **0 errors, 0 lost**, 919/s; every client-generated id is read back afterwards | ✅ |
 | NFR12 | Request IDs propagated through Go and Python logs | Should | — | ○ |
-| NFR13 | ML-only labels visually distinct from expert-verified | Must | `paints unassessed sightings off the condition scale entirely`, `draws worse condition on top`; both apps encode it in shape and word, not colour (`docs/evidence/mobile/`) | ✋ |
+| NFR13 | ML-only labels visually distinct from expert-verified | Must | `says "expert" when a human decided`, `says "model" when only the classifier has`, `is distinguishable with every colour class stripped`, `marks the two with different classes, so shape and border can differ`; both apps encode it in shape and word too (`docs/evidence/mobile/`) | ✅ |
 | NFR14 | Material 3 / Liquid Glass; light and dark on both | Must | `testTheAppearanceToggleDarkensEveryScreen`, `testTheAppearanceChoiceIsRemembered`, `testTheLastRowIsReachableUnderTheFloatingTabBar`, `testThePatchGridCanBeTurnedOffAndStaysOff`; Android night resources verified with `aapt2 dump` (D33) | ✅ |
 | NFR15 | Account deletion anonymises rather than deletes, and says so | Should | `TestDeletingAnAccountKeepsTheScienceAndDropsThePerson` | ✅ |
 | NFR16 | Training runs reproducible: config-driven, seeded, metrics per run | Should | — | ○ |
@@ -167,7 +175,8 @@ backend/internal/{auth,httpapi,storage,store}/*_test.go   40 Go unit tests
 backend/internal/httpapi/{harness,rbac,admin,data_integrity}_test.go
                                                           26 Go integration tests
 ml/service/tests/test_inference.py                        15 pytest
-web/src/lib/{mapStyle,photos}.test.ts                     20 Vitest
+web/src/lib/{mapStyle,photos,dates}.test.ts               46 Vitest (logic)
+web/src/components/*.dom.test.ts                          38 Vitest (components)
 android/core/*/src/test/                                  47 JVM unit
 android/core/database/src/androidTest/                    12 instrumented
 ios/MurakaTests/, ios/MurakaUITests/                       9 XCTest/XCUITest

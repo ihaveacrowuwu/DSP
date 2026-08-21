@@ -67,13 +67,21 @@ def collect() -> dict[str, set[str]]:
             py |= set(re.findall(r"^def (test_\w+)", path.read_text(), re.M))
     found["python"] = py
 
-    # Web: Vitest `it('...')` / `test('...')`. The name IS the sentence, so it is
-    # matched verbatim rather than as an identifier.
+    # Web: Vitest. The name IS the sentence, so it is matched verbatim rather than as
+    # an identifier. Both `it('…')` and `it.each([...])('…')` are collected — the first
+    # version missed every `.each` declaration, which is why the collector reported 63
+    # names against a runner reporting 84 tests.
+    #
+    # These are **declarations**, not runtime tests: one `it.each` with five cases is a
+    # single name here and five results in the runner. The suite totals quoted in
+    # TESTING.md come from the runners; this count exists to resolve citations.
     web = set()
     for path in _walk(ROOT / "web", "*.test.ts"):
         text = path.read_text()
-        web |= set(re.findall(r"(?:it|test)\(\s*'([^']+)'", text))
-        web |= set(re.findall(r'(?:it|test)\(\s*"([^"]+)"', text))
+        for quote in ("'", '"'):
+            web |= set(re.findall(
+                r"(?:it|test)(?:\.each\(.*?\))?\(\s*" + quote + r"([^" + quote + r"]+)" + quote,
+                text, re.S))
     found["web"] = web
 
     # Kotlin: JUnit methods. Unit tests name themselves with backtick-quoted
