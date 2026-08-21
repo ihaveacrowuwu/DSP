@@ -9,7 +9,7 @@ final class MySightingsViewController: UIViewController {
     private let container: AppContainer
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private let refreshControl = UIRefreshControl()
-    private var captureButton = UIButton(configuration: .filled())
+    private let captureButton = UIButton(configuration: GlassSurface.makeButtonConfiguration(.primary))
 
     private var sightings: [ContributorSighting] = []
     private var observationTask: Task<Void, Never>?
@@ -52,7 +52,6 @@ final class MySightingsViewController: UIViewController {
         view.addSubview(tableView)
 
         // Glass, because this is chrome floating over content — exactly what it is for.
-        captureButton.configuration = GlassSurface.makeButtonConfiguration(prominent: true)
         captureButton.configuration?.title = "New sighting"
         captureButton.configuration?.image = UIImage(systemName: "camera.fill")
         captureButton.configuration?.imagePadding = 8

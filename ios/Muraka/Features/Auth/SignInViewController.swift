@@ -14,8 +14,14 @@ final class SignInViewController: UIViewController {
     private let emailField = UITextField()
     private let passwordField = UITextField()
     private let messageLabel = UILabel()
-    private let submitButton = UIButton(configuration: .filled())
-    private let toggleButton = UIButton(configuration: .plain())
+
+    /// The glass containers the fields live in. Built in `buildHierarchy`, because they wrap
+    /// fields that must exist first.
+    private var nameFieldContainer: UIView?
+    private var emailFieldContainer: UIView?
+    private var passwordFieldContainer: UIView?
+    private let submitButton = UIButton(configuration: GlassSurface.makeButtonConfiguration(.primary))
+    private let toggleButton = UIButton(configuration: GlassSurface.makeButtonConfiguration(.quiet))
     private let spinner = UIActivityIndicatorView(style: .medium)
 
     private var isRegistering = false
@@ -89,6 +95,13 @@ final class SignInViewController: UIViewController {
         configure(emailField, placeholder: "Email", content: .username, keyboard: .emailAddress)
         configure(passwordField, placeholder: "Password", content: .password, secure: true)
 
+        // Each field is presented inside a glass container, because UIKit has no glass
+        // border style — see GlassSurface.wrapTextField. The containers are what the stack
+        // lays out; `nameField` etc. are still what the code reads and writes.
+        nameFieldContainer = GlassSurface.wrapTextField(nameField)
+        emailFieldContainer = GlassSurface.wrapTextField(emailField)
+        passwordFieldContainer = GlassSurface.wrapTextField(passwordField)
+
         let passwordHint = UILabel()
         // The server's rule, stated before it is broken rather than after.
         passwordHint.text = "At least 10 characters"
@@ -105,8 +118,10 @@ final class SignInViewController: UIViewController {
         submitButton.addTarget(self, action: #selector(submit), for: .touchUpInside)
         toggleButton.addTarget(self, action: #selector(toggleMode), for: .touchUpInside)
 
-        [title, subtitle, nameField, emailField, passwordField, passwordHint,
-         messageLabel, submitButton, toggleButton].forEach(stack.addArrangedSubview)
+        [title, subtitle, nameFieldContainer, emailFieldContainer, passwordFieldContainer,
+         passwordHint, messageLabel, submitButton, toggleButton]
+            .compactMap { $0 }
+            .forEach(stack.addArrangedSubview)
 
         spinner.translatesAutoresizingMaskIntoConstraints = false
         spinner.hidesWhenStopped = true
@@ -153,7 +168,7 @@ final class SignInViewController: UIViewController {
     }
 
     private func applyMode() {
-        nameField.isHidden = !isRegistering
+        nameFieldContainer?.isHidden = !isRegistering
         submitButton.setTitle(isRegistering ? "Create account" : "Sign in", for: .normal)
         toggleButton.setTitle(
             isRegistering ? "I already have an account" : "Create a contributor account",

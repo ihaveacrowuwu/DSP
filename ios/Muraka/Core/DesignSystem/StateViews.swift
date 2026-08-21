@@ -8,7 +8,7 @@ import UIKit
 final class MessageStateView: UIStackView {
     private let titleLabel = UILabel()
     private let bodyLabel = UILabel()
-    private let actionButton = UIButton(configuration: .filled())
+    private let actionButton = UIButton(configuration: GlassSurface.makeButtonConfiguration(.primary))
     private var action: (() -> Void)?
 
     init(

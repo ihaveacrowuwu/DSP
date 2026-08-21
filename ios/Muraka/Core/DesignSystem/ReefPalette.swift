@@ -37,6 +37,13 @@ enum ReefPalette {
     /// The app's tint — the one colour shared with the dashboard's chrome.
     static let accent = UIColor(named: "AccentColor") ?? .systemTeal
 
+    /// What goes **on** the accent.
+    ///
+    /// A prominent glass button tinted with the accent inherits that tint for its label too,
+    /// so without this "Sign in" renders teal-on-teal. `design-tokens.json` has carried an
+    /// `onAccent` value all along for exactly this.
+    static let onAccent = UIColor(named: "OnAccent") ?? .white
+
     /// The severity ramp, 0 to 1, interpolated in sRGB.
     ///
     /// Matches the dashboard legend and the map markers exactly — same numbers, same

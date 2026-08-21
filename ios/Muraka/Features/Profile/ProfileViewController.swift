@@ -78,11 +78,11 @@ final class ProfileViewController: UIViewController {
         messageLabel.numberOfLines = 0
         messageLabel.isHidden = true
 
-        let refresh = UIButton(configuration: .bordered())
+        let refresh = UIButton(configuration: GlassSurface.makeButtonConfiguration(.secondary))
         refresh.setTitle("Refresh totals", for: .normal)
         refresh.addTarget(self, action: #selector(refreshTotals), for: .touchUpInside)
 
-        let signOutButton = UIButton(configuration: .bordered())
+        let signOutButton = UIButton(configuration: GlassSurface.makeButtonConfiguration(.secondary))
         signOutButton.setTitle("Sign out", for: .normal)
         signOutButton.addTarget(self, action: #selector(signOutTapped), for: .touchUpInside)
 
@@ -96,9 +96,8 @@ final class ProfileViewController: UIViewController {
         signOutNote.textColor = .secondaryLabel
         signOutNote.numberOfLines = 0
 
-        var deleteConfiguration = UIButton.Configuration.plain()
-        deleteConfiguration.baseForegroundColor = ReefPalette.rust
-        let delete = UIButton(configuration: deleteConfiguration)
+        // Destructive, so tinted with the signal colour rather than the accent.
+        let delete = UIButton(configuration: GlassSurface.makeDestructiveButtonConfiguration())
         delete.setTitle("Delete my account", for: .normal)
         delete.addTarget(self, action: #selector(confirmDelete), for: .touchUpInside)
 

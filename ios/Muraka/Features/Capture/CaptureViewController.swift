@@ -22,13 +22,13 @@ final class CaptureViewController: UIViewController {
     private let scrollView = UIScrollView()
     private let stack = UIStackView()
     private let photoStrip = UIStackView()
-    private let addPhotoButton = UIButton(configuration: .bordered())
+    private let addPhotoButton = UIButton(configuration: GlassSurface.makeButtonConfiguration(.secondary))
     private let positionLabel = UILabel()
     private let positionDetail = UIStackView()
     private let depthField = UITextField()
     private let noteField = UITextField()
     private let assessmentControl = UISegmentedControl(items: ["Not sure", "Healthy", "Bleached"])
-    private let submitButton = UIButton(configuration: .filled())
+    private let submitButton = UIButton(configuration: GlassSurface.makeButtonConfiguration(.primary))
     private let messageLabel = UILabel()
 
     /// The sighting's own id, minted once so retries and photo rows share it.
@@ -91,6 +91,8 @@ final class CaptureViewController: UIViewController {
 
         configure(depthField, placeholder: "Depth in metres (optional)", keyboard: .decimalPad)
         configure(noteField, placeholder: "Note (optional)")
+        let depthContainer = GlassSurface.wrapTextField(depthField)
+        let noteContainer = GlassSurface.wrapTextField(noteField)
 
         assessmentControl.selectedSegmentIndex = 0
 
@@ -116,11 +118,11 @@ final class CaptureViewController: UIViewController {
         assessmentNote.textColor = .secondaryLabel
         assessmentNote.numberOfLines = 0
 
-        let useGPS = UIButton(configuration: .bordered())
+        let useGPS = UIButton(configuration: GlassSurface.makeButtonConfiguration(.secondary))
         useGPS.setTitle("Use GPS", for: .normal)
         useGPS.addTarget(self, action: #selector(retryPosition), for: .touchUpInside)
 
-        let dropPinButton = UIButton(configuration: .bordered())
+        let dropPinButton = UIButton(configuration: GlassSurface.makeButtonConfiguration(.secondary))
         dropPinButton.setTitle("Drop a pin", for: .normal)
         dropPinButton.addTarget(self, action: #selector(dropPinTapped), for: .touchUpInside)
 
@@ -130,7 +132,7 @@ final class CaptureViewController: UIViewController {
 
         [photoHeading, photoStrip, addPhotoButton,
          positionLabel, positionDetail, positionButtons,
-         depthField, noteField,
+         depthContainer, noteContainer,
          assessmentHeading, assessmentControl, assessmentNote,
          messageLabel, submitButton].forEach(stack.addArrangedSubview)
 
