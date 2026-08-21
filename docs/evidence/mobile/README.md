@@ -14,6 +14,12 @@ re-running `make test-ios` regenerates them. The Android set was captured with
 | Sync queue | `android-sync.png` | `ios-sync.png` |
 | Profile | `android-profile.png` | `ios-profile.png` |
 | Sighting detail | `android-detail.png` | `ios-sighting-detail.png` |
+| Filtered history | `android-filtered.png` | `ios-filtered.png` |
+| Filter control | (in `android-filtered.png`) | `ios-filter-menu.png` |
+
+`dark/` holds the same screens in dark mode (NFR14). The iOS set comes from
+`make dark-shots-ios`, which sets the simulator's appearance, runs
+`testEveryScreenInDarkMode`, and sets it back.
 
 ## What to look at
 
@@ -35,3 +41,15 @@ knowledge is. That is D21 visible in the interface rather than only in the code.
 which is why they are lilac rather than teal. The condition swatches and the lattice are the
 same teal-to-bone in both apps regardless, because those come from a fixed palette that
 dynamic colour cannot reach.
+
+**Search and filtering give the same answer.** Filter both apps to bleached sightings and both
+independently report **"6 of 50"** — same seeded account, same criteria, two implementations
+written from the same reasoning. The controls are deliberately different: Material filter chips
+on Android, a native `UIMenu` on iOS. What matches is the filter and its wording, not the
+widget.
+
+**Dark mode is where the data palette earns its separation.** Compare the two sighting-detail
+screenshots in `dark/` against the light ones. The chrome inverts, as it should. The bleached
+lattice cells change too — from parched sand to bone-white — and that is also correct: it is
+what `design-tokens.json` specifies, because bone-white is invisible on a light surface. What
+does *not* change is the meaning, or which cells are marked, or the dashed "model" chip.

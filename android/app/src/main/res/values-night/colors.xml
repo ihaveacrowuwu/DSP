@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The dark counterpart. Close to the dashboard's `ground` so the three clients open on
+         the same colour, which is the one place the web theme legitimately reaches the apps:
+         a launch background is not data and not a Material surface role. -->
+    <color name="splash_background">#04121A</color>
+</resources>

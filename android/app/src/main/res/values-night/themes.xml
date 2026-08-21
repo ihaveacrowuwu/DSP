@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The dark counterpart of Theme.Muraka.
+         A qualified style REPLACES its unqualified namesake rather than merging with it, so
+         the items below are not inherited from values/themes.xml — they have to be restated,
+         and they have to be kept in step with it. (An earlier version of this file was an
+         empty `<style/>`, which silently dropped the transparent system bars in dark mode.)
+
+         Only `parent` genuinely differs. Everything the app draws after launch is themed by
+         MurakaTheme in Compose, so the framework parent governs nothing but the pre-Compose
+         window. -->
+    <style name="Theme.Muraka" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
+</resources>

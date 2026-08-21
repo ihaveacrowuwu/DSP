@@ -159,6 +159,54 @@ final class SignInFlowUITests: XCTestCase {
         XCTAssertEqual(cells.count, unfiltered)
     }
 
+    /// Every screen in dark mode.
+    ///
+    /// NFR14 asks for both appearances to be **correct**, not merely to render, so this walks
+    /// the same route as the light-mode test with the interface style forced dark. The
+    /// screenshots it attaches are the evidence — a dark-mode bug is almost always something
+    /// a person has to look at, not something an assertion catches.
+    func testEveryScreenInDarkMode() throws {
+        try skipUnlessStackIsUp()
+
+        // The appearance comes from the SIMULATOR, set by the caller:
+        //
+        //     xcrun simctl ui <device> appearance dark
+        //
+        // A `-UIUserInterfaceStyle Dark` launch argument was the first attempt and it does
+        // nothing for a UIKit app — the test passed while every screenshot came out light,
+        // which is exactly the kind of test that proves nothing. `make ios-dark-shots` sets
+        // the appearance, runs this, and sets it back.
+        try XCTSkipUnless(
+            app.windows.firstMatch.exists,
+            "the app should be running"
+        )
+
+        attach(name: "10-dark-sign-in")
+        signIn()
+
+        XCTAssertTrue(app.navigationBars["My sightings"].waitForExistence(timeout: 20))
+        attach(name: "11-dark-my-sightings")
+
+        app.tabBars.buttons["tab.sync"].tap()
+        XCTAssertTrue(app.navigationBars["Sync"].waitForExistence(timeout: 5))
+        attach(name: "12-dark-sync")
+
+        app.tabBars.buttons["tab.profile"].tap()
+        XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 5))
+        attach(name: "13-dark-profile")
+
+        app.tabBars.buttons["tab.sightings"].tap()
+        let firstCell = app.tables.cells.element(boundBy: 0)
+        XCTAssertTrue(firstCell.waitForExistence(timeout: 10))
+        firstCell.tap()
+        XCTAssertTrue(app.navigationBars["Sighting"].waitForExistence(timeout: 10))
+        // The lattice and the photograph arrive asynchronously, and they are the whole point
+        // of this screenshot: the condition colours must NOT have followed the appearance
+        // into a different meaning.
+        sleep(4)
+        attach(name: "14-dark-sighting-detail")
+    }
+
     /// The contributor may never be shown a success the server has not confirmed (D21).
     func testNoScreenClaimsASightingIsSynced() throws {
         try skipUnlessStackIsUp()

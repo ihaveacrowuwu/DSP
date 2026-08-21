@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The splash background only. Every other colour is a Compose token in
-         :core:designsystem — see ReefColors.kt. -->
-    <color name="splash_background">#04121A</color>
+    <!-- The splash and pre-Compose window background, and nothing else. Every other colour
+         is a Compose token in :core:designsystem — see ReefColors.kt and Theme.kt.
+
+         This is the LIGHT value; values-night/colors.xml has the dark one. It was a single
+         dark value for both at first, which meant a light-mode launch flashed near-black
+         before Compose drew its first frame. -->
+    <color name="splash_background">#FBFCFD</color>
 </resources>

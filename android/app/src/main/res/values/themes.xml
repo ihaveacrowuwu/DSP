@@ -8,7 +8,11 @@
         <item name="postSplashScreenTheme">@style/Theme.Muraka</item>
     </style>
 
-    <style name="Theme.Muraka" parent="android:Theme.Material.NoActionBar">
+    <!-- The LIGHT parent. values-night/themes.xml overrides it with the dark one.
+         `android:Theme.Material.DayNight` does not exist — the DayNight variants are an
+         AppCompat thing, and this app has no AppCompat dependency because its interface is
+         Compose. Two qualified resources do the same job with nothing added. -->
+    <style name="Theme.Muraka" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowBackground">@color/splash_background</item>

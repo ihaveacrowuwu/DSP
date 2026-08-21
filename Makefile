@@ -10,7 +10,7 @@ GO      := go
 .PHONY: help up down logs ps restart seed reset-data smoke test test-go test-ml test-web \
         build fmt vet typecheck dev dev-api dev-ml dev-web psql \
         test-android test-ios android-build android-install android-lint \
-        ios-generate ios-build mobile mobile-lint
+        ios-generate ios-build mobile mobile-lint dark-shots-ios
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -117,13 +117,32 @@ test-android: ## Android JVM unit tests
 ios-generate: ## Regenerate Muraka.xcodeproj from ios/project.yml
 	cd ios && xcodegen generate
 
+# The OS is pinned deliberately. `name=iPhone 17` alone is AMBIGUOUS when more than one
+# runtime is installed — this machine has an iPhone 17 on both 26.1 and 26.5, and xcodebuild
+# silently picks one while `xcrun simctl` commands address whichever is booted. That cost an
+# hour of "dark mode does not work" when the screenshots were simply coming from the other
+# device. Override with `make test-ios IOS_SIM='...'` if you need a different one.
+IOS_SIM ?= platform=iOS Simulator,name=iPhone 17,OS=26.5
+
 ios-build: ios-generate ## Build the iOS app for the simulator
 	cd ios && xcodebuild -project Muraka.xcodeproj -scheme Muraka \
-	  -destination 'platform=iOS Simulator,name=iPhone 17' build
+	  -destination '$(IOS_SIM)' build
 
 test-ios: ios-generate ## iOS unit tests on the simulator
 	cd ios && xcodebuild -project Muraka.xcodeproj -scheme Muraka \
-	  -destination 'platform=iOS Simulator,name=iPhone 17' test
+	  -destination '$(IOS_SIM)' test
+
+dark-shots-ios: ios-generate ## Walk every iOS screen in dark mode and keep the screenshots
+	@# The appearance comes from the simulator, not from the app: a
+	@# `-UIUserInterfaceStyle Dark` launch argument does nothing for a UIKit app, and the
+	@# test happily passed while every screenshot came out light.
+	$(eval SIM_ID := $(shell xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k,v in d.items() if '26-5' in k for x in v if x['name']=='iPhone 17'))"))
+	xcrun simctl boot $(SIM_ID) 2>/dev/null || true
+	xcrun simctl ui $(SIM_ID) appearance dark
+	-cd ios && xcodebuild -project Muraka.xcodeproj -scheme Muraka \
+	  -destination 'platform=iOS Simulator,id=$(SIM_ID)' \
+	  -only-testing:MurakaUITests/SignInFlowUITests/testEveryScreenInDarkMode test
+	xcrun simctl ui $(SIM_ID) appearance light
 
 mobile: test-android test-ios ## Unit tests for both apps
 
