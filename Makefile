@@ -18,7 +18,7 @@ VENV_PY := $(VENV)/bin/python
 .DEFAULT_GOAL := help
 
 .PHONY: help up down logs ps restart seed reset-data smoke test test-go test-ml test-web \
-        build fmt vet typecheck dev dev-api dev-ml dev-web psql \
+        build fmt vet typecheck dev dev-api dev-ml dev-web psql perf \
         test-android test-ios android-build android-install android-lint \
         ios-generate ios-build mobile mobile-lint lint
 
@@ -80,6 +80,11 @@ test-web: ## Typecheck the dashboard and run its unit tests
 
 smoke: ## End-to-end pipeline test against the running stack
 	$(PY) scripts/smoke_test.py
+
+perf: ## Measure NFR1, NFR2, NFR3 and NFR11 against the running stack
+	@# NFR3 is about 10,000 sightings; the harness reports the corpus it actually found
+	@# and fails rather than quietly passing against a small one.
+	$(PY) scripts/perf_test.py --json docs/evidence/performance/perf-$$(date +%Y-%m-%d).json
 
 ## ---------------------------------------------------------------- build
 

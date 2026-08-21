@@ -9,8 +9,8 @@ is not evidence, it is decoration — the value is in the rows that say **none**
 those are the project's honest limitations section and the build's to-do list at the
 same time.
 
-Of thirty-three requirements, **eleven** have full automated evidence, fifteen are
-partly covered, one rests on a human checklist and **six have none at all**. Those
+Of thirty-three requirements, **fourteen** have full automated evidence, thirteen are
+partly covered, one rests on a human checklist and **five have none at all**. Those
 figures are tallied from the table below by `scripts/testing_matrix.py --check`, not
 written by hand — an early draft of this paragraph claimed sixteen when the true figure
 was three, which is exactly the kind of number a report should never carry unchecked.
@@ -47,6 +47,7 @@ one shaped like a Go, Python or Swift test method — as a build failure.
 | iOS (XCTest + XCUITest) | 9 | `make test-ios` | a simulator; skips without the stack |
 | **Total automated** | **169** | `make test && make mobile` | |
 | End-to-end smoke | 33 checks | `make smoke` | the running stack |
+| Performance | 4 checks | `make perf` | the stack, seeded to 10,000 |
 
 All 169 passed and all 33 smoke checks passed on 2026-08-21.
 
@@ -116,9 +117,9 @@ is the argument for having written them:
 
 | ID | Requirement | MoSCoW | Evidence | |
 |---|---|---|---|---|
-| NFR1 | ML label visible in the dashboard ≤ 30 s after sync | Must | measured ~1.5 s ad hoc; smoke reports the inference time per run | ◐ |
-| NFR2 | CPU inference ≤ 500 ms per image | Must | smoke run 2026-08-21 reported `inference=320ms` (fake model) | ◐ |
-| NFR3 | Map interactive at 10,000 sightings; viewport ≤ 2 s | Must | measured 22 ms ad hoc | ◐ |
+| NFR1 | ML label visible in the dashboard ≤ 30 s after sync | Must | `make perf` — **0.89 s** on 2026-08-21 (`docs/evidence/performance/`) | ✅ |
+| NFR2 | CPU inference ≤ 500 ms per image | Must | `make perf` — **22 ms**, but against the service's **fake mode**; says nothing about a trained model | ◐ |
+| NFR3 | Map interactive at 10,000 sightings; viewport ≤ 2 s | Must | `make perf` — **56 ms** worst of 5 at 10,304 sightings; the check fails if the corpus is smaller | ✅ |
 | NFR4 | argon2id, TLS in the demo config, JWT ≤ 15 min | Must | argon2id: `TestHashPasswordIsSaltedPerCall`, `TestHashPasswordProducesVerifiableArgon2idHash`; expiry: `TestParseAccessTokenRejectsExpiredToken`; refresh: `TestRefreshTokenStoresOnlyItsHash`, `TestRefreshTokensAreUnique` | ◐ |
 | NFR5 | Validate, re-encode and strip EXIF from uploads | Must | smoke 8 refuses a non-image | ◐ |
 | NFR6 | Capture completable in < 60 s and ≤ 8 taps | Must | — | ○ |
@@ -126,7 +127,7 @@ is the argument for having written them:
 | NFR8 | SUS ≥ 70 from ≥ 5 users | Must | — | ○ |
 | NFR9 | No component depends on a key-requiring external service | Must | `make mobile-lint` fails on an App Transport Security exception in a release plist; the basemap is committed vector GeoJSON with no tile or glyph server (D22/D23) | ◐ |
 | NFR10 | Startable by one documented command; seed by one more | Must | `make up`, `make seed`; `make test`, `make test-ml`, `make test-web` and `make smoke` were all broken before 2026-08-21 and now run (D42) | ◐ |
-| NFR11 | 50 concurrent sighting submissions with no error or loss | Should | — | ○ |
+| NFR11 | 50 concurrent sighting submissions with no error or loss | Should | `make perf` — **0 errors, 0 lost**, 919/s; every client-generated id is read back afterwards | ✅ |
 | NFR12 | Request IDs propagated through Go and Python logs | Should | — | ○ |
 | NFR13 | ML-only labels visually distinct from expert-verified | Must | `paints unassessed sightings off the condition scale entirely`, `draws worse condition on top`; both apps encode it in shape and word, not colour (`docs/evidence/mobile/`) | ✋ |
 | NFR14 | Material 3 / Liquid Glass; light and dark on both | Must | `testTheAppearanceToggleDarkensEveryScreen`, `testTheAppearanceChoiceIsRemembered`, `testTheLastRowIsReachableUnderTheFloatingTabBar`, `testThePatchGridCanBeTurnedOffAndStaysOff`; Android night resources verified with `aapt2 dump` (D33) | ✅ |
@@ -135,10 +136,9 @@ is the argument for having written them:
 
 ### What the non-functional gaps actually are
 
-- **NFR1/NFR2/NFR3** — all three have a number, and none has a **harness**. "Measured
-  ~1.5 s" is a memory, not evidence; the project needs a command that prints the figure
-  and a recorded run. NFR2's 320 ms is also the *fake* model, so it says nothing about
-  the real one.
+- **NFR2** — the only one of the four performance numbers still short of evidence, and
+  the gap is not the harness but the model: 22 ms measures a deterministic stub. It
+  cannot be closed until the training track produces something to measure.
 - **NFR4** — two thirds done. **There is no TLS anywhere**, which is the single
   clearest failure against a Must in this table.
 - **NFR5** — refusing a non-image is the easy half. Nothing tests the size cap, a
@@ -152,9 +152,9 @@ is the argument for having written them:
   scenario runs with the API unreachable.
 - **NFR8** — a human-subjects study. Not automatable and not started; the project needs
   to either run it or narrow the claim.
-- **NFR11/NFR12/NFR16** — no evidence. NFR16 is blocked on the ML training track not
-  existing yet. NFR11 matters more than it did: `requireAuth` now performs a
-  primary-key lookup per authenticated request, and that trade is asserted nowhere.
+- **NFR12/NFR16** — no evidence. NFR16 is blocked on the ML training track not existing
+  yet. NFR12 (request IDs propagated across Go and Python) needs log assertions rather
+  than a harness.
 
 ## Where the tests live
 

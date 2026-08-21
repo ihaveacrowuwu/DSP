@@ -115,8 +115,12 @@ the provenance encoding. They were built and verified against the running stack 
 
 Not started: the ML training track.
 
-Measured so far: sync→label ~1.5s (target ≤30s), map with 10k sightings 22ms
-(target <2s).
+Measured, with a harness and a recorded run rather than from memory — `make perf`,
+figures and caveats in [`docs/evidence/performance/`](docs/evidence/performance/):
+sync→label **0.89s** (≤30s), map at 10,304 sightings **56ms** worst of 5 (≤2s), 50
+concurrent submissions **0 errors and 0 lost** at 919/s, inference **22ms** (≤500ms, but
+that is the fake model and means nothing until one is trained). The old notes here said
+22ms for the map and ~1.5s for sync; both were remembered, and the map figure was wrong.
 
 The reef map draws real geography: Natural Earth 10m clipped to the Maldives and
 committed as 67 KB of vector GeoJSON (`web/public/basemap/maldives.json`), so the map

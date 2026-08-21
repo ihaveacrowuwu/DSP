@@ -1,0 +1,73 @@
+{
+  "measured_at": "2026-08-21T15:26:58.033558+00:00",
+  "api": "http://localhost:8090",
+  "results": [
+    {
+      "requirement": "NFR11",
+      "claim": "50 concurrent submissions without error or data loss",
+      "passed": true,
+      "concurrency": 50,
+      "errors": 0,
+      "error_statuses": [],
+      "missing_after_write": 0,
+      "wall_seconds": 0.05,
+      "throughput_per_second": 919.4,
+      "latency_ms": {
+        "min": 20.4,
+        "p50": 37.1,
+        "p95": 43.7,
+        "max": 46.0
+      }
+    },
+    {
+      "requirement": "NFR1",
+      "claim": "an ML label is readable within 30s of sync",
+      "passed": true,
+      "seconds": 0.89,
+      "threshold_seconds": 30.0,
+      "label": "healthy"
+    },
+    {
+      "requirement": "NFR2",
+      "claim": "CPU inference \u2264500ms per image",
+      "passed": true,
+      "inference_ms": 22,
+      "threshold_ms": 500.0,
+      "caveat": "measured against the service's fake mode \u2014 no trained model yet"
+    },
+    {
+      "requirement": "NFR3",
+      "claim": "map viewport \u22642s with 10,000 sightings loaded",
+      "passed": true,
+      "seconds_worst_of_5": 0.056,
+      "threshold_seconds": 2.0,
+      "latency_ms": {
+        "min": 41.3,
+        "p50": 43.5,
+        "p95": 55.9,
+        "max": 55.9
+      },
+      "features_returned": 442,
+      "sightings_in_database": 10304,
+      "caveat": null
+    },
+    {
+      "requirement": "D45",
+      "claim": "the per-request user lookup added by D45 is affordable",
+      "passed": null,
+      "healthz_ms": {
+        "min": 0.9,
+        "p50": 1.6,
+        "p95": 3.4,
+        "max": 4.4
+      },
+      "authenticated_me_ms": {
+        "min": 2.6,
+        "p50": 3.5,
+        "p95": 4.4,
+        "max": 5.2
+      },
+      "note": "/v1/me does its own aggregate query, so the gap is an upper bound on the auth lookup rather than a measurement of it"
+    }
+  ]
+}
