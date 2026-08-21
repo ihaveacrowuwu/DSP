@@ -3,6 +3,10 @@
 # Host ports are overridable: make up API_PORT=9090
 
 COMPOSE := docker compose -f deploy/docker-compose.yml
+# The demo configuration terminates TLS (NFR4). It is an overlay because the two mobile
+# apps talk to the plain-HTTP development stack, and an HTTPS-only base stack would mean
+# installing a self-signed certificate into both emulators' trust stores.
+COMPOSE_TLS := docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.tls.yml
 GO      := go
 
 # `python3`, never `python`. On this machine `python` is a shell *alias*, so recipes
@@ -17,7 +21,7 @@ VENV_PY := $(VENV)/bin/python
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down logs ps restart seed reset-data smoke test test-go test-ml test-web \
+.PHONY: help up up-tls down down-tls logs ps restart seed reset-data smoke smoke-tls test test-go test-ml test-web \
         build fmt vet typecheck dev dev-api dev-ml dev-web psql perf \
         test-android test-ios android-build android-install android-lint \
         ios-generate ios-build mobile mobile-lint lint
@@ -34,6 +38,23 @@ up: ## Build and start the whole stack
 	@echo "  dashboard  http://localhost:$${WEB_PORT:-5180}"
 	@echo "  api        http://localhost:$${API_PORT:-8090}/healthz"
 	@echo "  ml         http://localhost:$${ML_PORT:-8010}/healthz"
+
+up-tls: deploy/tls/certs/server.crt ## Build and start the demo stack with TLS on :8443
+	$(COMPOSE_TLS) up -d --build
+	@echo
+	@echo "Demo stack on https://localhost:$${TLS_PORT:-8443} — dashboard and API share one origin."
+	@echo "The certificate is self-signed (NFR9 rules out a CA), so a browser will warn once."
+
+deploy/tls/certs/server.crt:
+	./deploy/tls/generate.sh
+
+down-tls: ## Stop the TLS demo stack
+	$(COMPOSE_TLS) down
+
+smoke-tls: up-tls ## Run the smoke test through TLS, proving the demo config works
+	@# Self-signed, so the client is told to accept it — the point of the check is that
+	@# the whole pipeline works over TLS, not that a demo certificate chains to a CA.
+	MURAKA_API=https://localhost:$${TLS_PORT:-8443} MURAKA_TLS_INSECURE=1 $(PY) scripts/smoke_test.py
 
 down: ## Stop the stack (keeps data)
 	$(COMPOSE) down
@@ -161,6 +182,9 @@ lint: mobile-lint ## Every lint and contract check, including the traceability m
 	@# The testing chapter of the project is assembled from TESTING.md, so a test it cites
 	@# having been renamed or deleted is a documentation bug that must fail the build.
 	$(PY) scripts/testing_matrix.py --check
+	@echo
+	@# NFR4's "config inspection" half. The live handshake is `make smoke-tls`.
+	$(PY) scripts/check_tls_config.py
 
 mobile-lint: ## Linters and cross-platform checks for both apps
 	cd android && ./gradlew ktlintCheck detekt

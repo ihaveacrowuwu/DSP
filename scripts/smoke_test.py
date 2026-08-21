@@ -10,14 +10,28 @@ from __future__ import annotations
 import datetime as dt
 import io
 import json
+import os
 import subprocess
+import ssl
 import sys
 import time
 import urllib.error
 import urllib.request
 import uuid
 
-API = "http://localhost:8090"
+# The demo configuration terminates TLS (NFR4), so this has to be able to talk to
+# https://localhost:8443 as well as the development stack's plain HTTP. The certificate
+# is self-signed because NFR9 rules out a certificate authority, so verification is
+# skipped **only** when explicitly asked for — a script that silently accepted any
+# certificate would be a worse example than one that cannot reach the demo at all.
+API = os.environ.get("MURAKA_API", "http://localhost:8090").rstrip("/")
+
+_TLS_CONTEXT = None
+if os.environ.get("MURAKA_TLS_INSECURE") == "1":
+    _TLS_CONTEXT = ssl.create_default_context()
+    _TLS_CONTEXT.check_hostname = False
+    _TLS_CONTEXT.verify_mode = ssl.CERT_NONE
+
 EMAIL = "smoke@muraka.test"
 PASSWORD = "smoke-test-password"
 
@@ -74,7 +88,7 @@ def call(
 
     request = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(request) as response:
+        with urllib.request.urlopen(request, context=_TLS_CONTEXT) as response:
             payload = response.read()
             if raw:
                 return response.status, payload

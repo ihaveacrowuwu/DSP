@@ -9,7 +9,7 @@ is not evidence, it is decoration — the value is in the rows that say **none**
 those are the project's honest limitations section and the build's to-do list at the
 same time.
 
-Of thirty-three requirements, **fourteen** have full automated evidence, thirteen are
+Of thirty-three requirements, **fifteen** have full automated evidence, twelve are
 partly covered, one rests on a human checklist and **five have none at all**. Those
 figures are tallied from the table below by `scripts/testing_matrix.py --check`, not
 written by hand — an early draft of this paragraph claimed sixteen when the true figure
@@ -48,6 +48,8 @@ one shaped like a Go, Python or Swift test method — as a build failure.
 | **Total automated** | **169** | `make test && make mobile` | |
 | End-to-end smoke | 33 checks | `make smoke` | the running stack |
 | Performance | 4 checks | `make perf` | the stack, seeded to 10,000 |
+| Config checks | 5 + matrix | `make lint` | nothing |
+| Smoke over TLS | 33 checks | `make smoke-tls` | Docker |
 
 All 169 passed and all 33 smoke checks passed on 2026-08-21.
 
@@ -120,7 +122,7 @@ is the argument for having written them:
 | NFR1 | ML label visible in the dashboard ≤ 30 s after sync | Must | `make perf` — **0.89 s** on 2026-08-21 (`docs/evidence/performance/`) | ✅ |
 | NFR2 | CPU inference ≤ 500 ms per image | Must | `make perf` — **22 ms**, but against the service's **fake mode**; says nothing about a trained model | ◐ |
 | NFR3 | Map interactive at 10,000 sightings; viewport ≤ 2 s | Must | `make perf` — **56 ms** worst of 5 at 10,304 sightings; the check fails if the corpus is smaller | ✅ |
-| NFR4 | argon2id, TLS in the demo config, JWT ≤ 15 min | Must | argon2id: `TestHashPasswordIsSaltedPerCall`, `TestHashPasswordProducesVerifiableArgon2idHash`; expiry: `TestParseAccessTokenRejectsExpiredToken`; refresh: `TestRefreshTokenStoresOnlyItsHash`, `TestRefreshTokensAreUnique` | ◐ |
+| NFR4 | argon2id, TLS in the demo config, JWT ≤ 15 min | Must | argon2id: `TestHashPasswordIsSaltedPerCall`, `TestHashPasswordProducesVerifiableArgon2idHash`; expiry: `TestParseAccessTokenRejectsExpiredToken`; refresh: `TestRefreshTokenStoresOnlyItsHash`, `TestRefreshTokensAreUnique`; TLS: `make lint` static checks + `make smoke-tls` (33 checks over TLS 1.3) | ✅ |
 | NFR5 | Validate, re-encode and strip EXIF from uploads | Must | smoke 8 refuses a non-image | ◐ |
 | NFR6 | Capture completable in < 60 s and ≤ 8 taps | Must | — | ○ |
 | NFR7 | Contributor app fully functional offline except register/login | Must | `journalsWriteAheadSoAReaderNeverBlocksTheCaptureFlow`, `commitsReachTheStorageMediumBeforeEnqueueReturns`, `DurabilityPragmaTests` | ◐ |
@@ -139,8 +141,10 @@ is the argument for having written them:
 - **NFR2** — the only one of the four performance numbers still short of evidence, and
   the gap is not the harness but the model: 22 ms measures a deterministic stub. It
   cannot be closed until the training track produces something to measure.
-- **NFR4** — two thirds done. **There is no TLS anywhere**, which is the single
-  clearest failure against a Must in this table.
+- **NFR4** — now complete, but with a caveat the project must state rather than bury:
+  the demo certificate is **self-signed**, because NFR9 rules out a certificate
+  authority. A browser warns on first visit. That is the honest cost of the key-free
+  constraint, not a defect.
 - **NFR5** — refusing a non-image is the easy half. Nothing tests the size cap, a
   hostile file (a valid image header with a huge decompressed size), or that EXIF is
   stripped *after* capture time and GPS are extracted — which is a privacy claim the
@@ -196,7 +200,9 @@ make test               # Go + ML + dashboard
 make smoke              # 33 end-to-end checks against the running stack
 make mobile             # Android + iOS unit tests
 make mobile-lint        # linters, the status-vocabulary contract, the ATS check
-make lint               # the above plus this document's citations
+make lint               # this document's citations, plus the demo TLS configuration
+make smoke-tls          # the 33 end-to-end checks again, through TLS (NFR4)
+make perf               # NFR1, NFR2, NFR3, NFR11
 cd android && ./gradlew connectedDebugAndroidTest   # needs an emulator
 ```
 

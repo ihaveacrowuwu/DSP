@@ -79,3 +79,7 @@ xcuserdata/
 # file. Note that this also excludes SwiftPM's Package.resolved, which lives inside it —
 # so ios/project.yml pins GRDB to an exact version rather than a range, and that file is
 # where dependency versions are reviewed.
+
+# Self-signed demo certificates. The private key must never be committed;
+# regenerate with deploy/tls/generate.sh.
+deploy/tls/certs/

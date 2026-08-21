@@ -69,6 +69,10 @@ make seed N=2000        # demo data
 make smoke              # end-to-end pipeline test
 make test               # Go + ML unit tests
 make dev-web            # dashboard with hot reload on :5180
+make perf               # NFR1/NFR2/NFR3/NFR11, writes docs/evidence/performance/
+make lint               # TESTING.md citations + the demo TLS configuration
+make up-tls             # the demo stack, TLS on :8443 (NFR4) — see deploy/README.md
+make smoke-tls          # the 33 end-to-end checks again, over TLS
 ```
 
 Ports: api 8090, web 5180, ml 8010, postgres 5433 — 8080 and 5173 were taken by
@@ -134,10 +138,7 @@ to-do list, and its counts are tallied by `scripts/testing_matrix.py` rather tha
 maintained by hand. 169 automated tests across five suites, all passing, plus 33
 end-to-end smoke checks.
 
-Known gaps, in the order they hurt the project: no TLS anywhere (NFR4 is a Must), no
-load test (NFR11) — which now matters more, because `requireAuth` performs a
-primary-key lookup per authenticated request since D45 and nothing measures it —
-dashboard tests cover
+Known gaps, in the order they hurt the project: dashboard tests cover
 only the map style, the basemap and the photo-resolution rule (`web/src/lib/*.test.ts`,
 20 tests) and never render a component, the capture flow is unmeasured against NFR6,
 and there is no trained model.
