@@ -159,52 +159,90 @@ final class SignInFlowUITests: XCTestCase {
         XCTAssertEqual(cells.count, unfiltered)
     }
 
-    /// Every screen in dark mode.
+    /// Every screen in dark mode, switched **from inside the app**.
     ///
-    /// NFR14 asks for both appearances to be **correct**, not merely to render, so this walks
-    /// the same route as the light-mode test with the interface style forced dark. The
-    /// screenshots it attaches are the evidence — a dark-mode bug is almost always something
-    /// a person has to look at, not something an assertion catches.
-    func testEveryScreenInDarkMode() throws {
+    /// NFR14 asks for both appearances to be correct, not merely to render. This drives the
+    /// appearance control on the Profile screen rather than the simulator's own setting,
+    /// which makes the test self-contained and — more usefully — means it tests the toggle
+    /// the contributor actually has.
+    ///
+    /// It leaves the device's own setting alone, so a dark screenshot here is proof the
+    /// override works rather than proof the simulator was already dark.
+    func testTheAppearanceToggleDarkensEveryScreen() throws {
         try skipUnlessStackIsUp()
-
-        // The appearance comes from the SIMULATOR, set by the caller:
-        //
-        //     xcrun simctl ui <device> appearance dark
-        //
-        // A `-UIUserInterfaceStyle Dark` launch argument was the first attempt and it does
-        // nothing for a UIKit app — the test passed while every screenshot came out light,
-        // which is exactly the kind of test that proves nothing. `make ios-dark-shots` sets
-        // the appearance, runs this, and sets it back.
-        try XCTSkipUnless(
-            app.windows.firstMatch.exists,
-            "the app should be running"
-        )
-
-        attach(name: "10-dark-sign-in")
         signIn()
 
         XCTAssertTrue(app.navigationBars["My sightings"].waitForExistence(timeout: 20))
-        attach(name: "11-dark-my-sightings")
+
+        // Set it from the Profile screen, which is where a contributor would.
+        app.tabBars.buttons["tab.profile"].tap()
+        XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 5))
+
+        let appearance = app.segmentedControls["Appearance"]
+        XCTAssertTrue(appearance.waitForExistence(timeout: 5), "the appearance control should be visible")
+        appearance.buttons["Dark"].tap()
+
+        // The caption is the assertion that the choice registered — a highlighted segment
+        // alone could be a control that looks selected and does nothing.
+        XCTAssertTrue(
+            app.staticTexts["Always dark, whatever your device is set to."].waitForExistence(timeout: 5),
+            "the control should say what it has done"
+        )
+        attach(name: "13-dark-profile")
 
         app.tabBars.buttons["tab.sync"].tap()
         XCTAssertTrue(app.navigationBars["Sync"].waitForExistence(timeout: 5))
         attach(name: "12-dark-sync")
 
-        app.tabBars.buttons["tab.profile"].tap()
-        XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 5))
-        attach(name: "13-dark-profile")
-
         app.tabBars.buttons["tab.sightings"].tap()
         let firstCell = app.tables.cells.element(boundBy: 0)
         XCTAssertTrue(firstCell.waitForExistence(timeout: 10))
+        attach(name: "11-dark-my-sightings")
+
         firstCell.tap()
         XCTAssertTrue(app.navigationBars["Sighting"].waitForExistence(timeout: 10))
         // The lattice and the photograph arrive asynchronously, and they are the whole point
-        // of this screenshot: the condition colours must NOT have followed the appearance
+        // of this screenshot: the condition colours must not have followed the appearance
         // into a different meaning.
         sleep(4)
         attach(name: "14-dark-sighting-detail")
+
+        // ── And back ─────────────────────────────────────────────────────────
+        // A setting you cannot undo is worse than no setting, so the return trip is part of
+        // the test rather than assumed.
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.tabBars.buttons["tab.profile"].tap()
+        app.segmentedControls["Appearance"].buttons["System"].tap()
+        XCTAssertTrue(
+            app.staticTexts["Following your device setting."].waitForExistence(timeout: 5),
+            "System should be selectable again"
+        )
+    }
+
+    /// The choice survives a relaunch, which is the difference between a setting and a toggle.
+    func testTheAppearanceChoiceIsRemembered() throws {
+        try skipUnlessStackIsUp()
+        signIn()
+
+        app.tabBars.buttons["tab.profile"].tap()
+        XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 10))
+        app.segmentedControls["Appearance"].buttons["Dark"].tap()
+        XCTAssertTrue(app.staticTexts["Always dark, whatever your device is set to."].waitForExistence(timeout: 5))
+
+        // Relaunch WITHOUT the session reset, so the app comes back signed in and the only
+        // thing being tested is whether it remembered.
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "-MurakaResetSession" }
+        app.launch()
+
+        app.tabBars.buttons["tab.profile"].tap()
+        XCTAssertTrue(
+            app.staticTexts["Always dark, whatever your device is set to."].waitForExistence(timeout: 15),
+            "the appearance choice should survive a relaunch"
+        )
+
+        // Put it back, so this test does not leave the next one in dark mode.
+        app.segmentedControls["Appearance"].buttons["System"].tap()
     }
 
     /// The contributor may never be shown a success the server has not confirmed (D21).

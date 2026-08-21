@@ -23,6 +23,7 @@ final class AppContainer {
     let syncEngine: SyncEngine
     let backgroundSync: BackgroundSync
     let locationProvider: LocationProvider
+    let appearanceStore = AppearanceStore()
 
     private init(database: DatabaseQueue) {
         tokens = TokenStore()

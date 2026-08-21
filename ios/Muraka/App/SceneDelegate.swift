@@ -28,6 +28,27 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.tintColor = ReefPalette.accent
         window.makeKeyAndVisible()
         self.window = window
+
+        applyThemePreference()
+        // The profile screen changes the setting; the window is the only thing that can act
+        // on it for the whole app, so it listens rather than being reached into.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applyThemePreference),
+            name: .murakaThemePreferenceChanged,
+            object: nil
+        )
+    }
+
+    @objc private func applyThemePreference() {
+        guard let delegate = UIApplication.shared.delegate as? AppDelegate else { return }
+        let style = delegate.container.appearanceStore.preference.interfaceStyle
+
+        // Animated, because an instant inversion of the whole screen is jarring — and
+        // because UIKit will cross-fade this for free if asked.
+        UIView.animate(withDuration: 0.25) { [weak self] in
+            self?.window?.overrideUserInterfaceStyle = style
+        }
     }
 
     /// Trigger: app foreground. One of the five the sync protocol asks for.

@@ -133,6 +133,19 @@ data class QueuedItem(
     val nextAttemptAt: java.time.Instant?,
 )
 
+/**
+ * The contributor's display preferences.
+ *
+ * Separate from [AuthRepository] because these outlive a session: signing out must not reset
+ * somebody's chosen appearance, and on a shared boat phone the next diver inherits the
+ * screen, not the account's taste.
+ */
+interface AppearanceRepository {
+    val themePreference: kotlinx.coroutines.flow.Flow<mv.muraka.core.model.ThemePreference>
+
+    suspend fun setThemePreference(preference: mv.muraka.core.model.ThemePreference)
+}
+
 /** Position, however the platform can supply it. */
 interface LocationProvider {
     /** True when the app currently holds a location permission. */

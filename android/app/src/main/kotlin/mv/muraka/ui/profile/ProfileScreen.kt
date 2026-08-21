@@ -6,15 +6,24 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Contrast
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -29,12 +38,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import mv.muraka.core.designsystem.component.LoadingState
 import mv.muraka.core.designsystem.component.Readout
 import mv.muraka.core.designsystem.theme.MurakaTheme
+import mv.muraka.core.model.ThemePreference
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel, modifier: Modifier = Modifier) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val theme by viewModel.themePreference.collectAsStateWithLifecycle()
     var confirmingDelete by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -60,6 +71,11 @@ fun ProfileScreen(viewModel: ProfileViewModel, modifier: Modifier = Modifier) {
                 current.user.email,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            AppearanceSection(
+                selected = theme,
+                onSelect = viewModel::onThemePreferenceChange,
             )
 
             Card(modifier = Modifier.fillMaxWidth()) {
@@ -148,6 +164,61 @@ fun ProfileScreen(viewModel: ProfileViewModel, modifier: Modifier = Modifier) {
             dismissButton = {
                 TextButton(onClick = { confirmingDelete = false }) { Text("Keep my account") }
             },
+        )
+    }
+}
+
+/**
+ * The appearance toggle.
+ *
+ * A Material 3 **single-choice segmented button row**, which is the M3 component for
+ * precisely this — a small set of mutually exclusive options where all of them should be
+ * visible at once. A dropdown would hide two of the three behind a tap, and this is a
+ * setting people flip on a boat with wet hands.
+ *
+ * It sits above the totals rather than at the bottom of the screen because a control nobody
+ * can find is not a control. "System" is the default and stays first, since it is what most
+ * people should leave it on.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AppearanceSection(selected: ThemePreference, onSelect: (ThemePreference) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Appearance", style = MaterialTheme.typography.titleMedium)
+
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            ThemePreference.entries.forEachIndexed { index, preference ->
+                SegmentedButton(
+                    selected = selected == preference,
+                    onClick = { onSelect(preference) },
+                    shape = SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = ThemePreference.entries.size,
+                    ),
+                    icon = {
+                        Icon(
+                            imageVector = when (preference) {
+                                ThemePreference.SYSTEM -> Icons.Outlined.Contrast
+                                ThemePreference.LIGHT -> Icons.Outlined.LightMode
+                                ThemePreference.DARK -> Icons.Outlined.DarkMode
+                            },
+                            contentDescription = null,
+                            modifier = Modifier.size(SegmentedButtonDefaults.IconSize),
+                        )
+                    },
+                    label = { Text(preference.label) },
+                )
+            }
+        }
+
+        Text(
+            text = when (selected) {
+                ThemePreference.SYSTEM -> "Following your device setting."
+                ThemePreference.LIGHT -> "Always light, whatever your device is set to."
+                ThemePreference.DARK -> "Always dark, whatever your device is set to."
+            },
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }

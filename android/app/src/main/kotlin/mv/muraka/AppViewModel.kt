@@ -13,11 +13,13 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import mv.muraka.core.common.SessionEvent
 import mv.muraka.core.common.SessionEvents
+import mv.muraka.core.domain.AppearanceRepository
 import mv.muraka.core.domain.AuthRepository
 import mv.muraka.core.domain.NetworkMonitor
 import mv.muraka.core.domain.OutboxRepository
 import mv.muraka.core.domain.SyncScheduler
 import mv.muraka.core.model.SessionState
+import mv.muraka.core.model.ThemePreference
 import javax.inject.Inject
 
 /**
@@ -29,6 +31,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class AppViewModel @Inject constructor(
+    appearanceRepository: AppearanceRepository,
     authRepository: AuthRepository,
     outboxRepository: OutboxRepository,
     networkMonitor: NetworkMonitor,
@@ -49,6 +52,15 @@ class AppViewModel @Inject constructor(
      */
     val pendingCount: StateFlow<Int> = outboxRepository.observePendingCount()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), 0)
+
+    /**
+     * The contributor's chosen appearance.
+     *
+     * Held here rather than on the profile screen because it themes the **whole** app,
+     * including the sign-in screen — which the profile screen cannot reach.
+     */
+    val themePreference: StateFlow<ThemePreference> = appearanceRepository.themePreference
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), ThemePreference.DEFAULT)
 
     init {
         // Trigger: connectivity becoming available.

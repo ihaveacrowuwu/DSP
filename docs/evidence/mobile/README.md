@@ -17,9 +17,15 @@ re-running `make test-ios` regenerates them. The Android set was captured with
 | Filtered history | `android-filtered.png` | `ios-filtered.png` |
 | Filter control | (in `android-filtered.png`) | `ios-filter-menu.png` |
 
-`dark/` holds the same screens in dark mode (NFR14). The iOS set comes from
-`make dark-shots-ios`, which sets the simulator's appearance, runs
-`testEveryScreenInDarkMode`, and sets it back.
+| Appearance toggle | `android-appearance-toggle.png` | `ios-appearance-toggle.png` |
+
+`dark/` holds the same screens in dark mode (NFR14).
+
+**The dark screenshots were taken with the device set to LIGHT.** Both sets come from
+switching the in-app appearance control to Dark, not from changing the simulator or emulator
+— which is what makes them evidence that the toggle works rather than evidence that the
+device was already dark. The iOS set is produced by
+`testTheAppearanceToggleDarkensEveryScreen`, so `make test-ios` regenerates it.
 
 ## What to look at
 
@@ -47,6 +53,11 @@ independently report **"6 of 50"** — same seeded account, same criteria, two i
 written from the same reasoning. The controls are deliberately different: Material filter chips
 on Android, a native `UIMenu` on iOS. What matches is the filter and its wording, not the
 widget.
+
+**The appearance toggle.** `System` is the default and follows the device, which is what
+NFR14 is really about. `Light` and `Dark` override it, and the choice survives a relaunch and
+a sign-out — it is a display preference, not part of the session. The Android screenshot shows
+the same screen before and after: the device is in light mode in both halves.
 
 **Dark mode is where the data palette earns its separation.** Compare the two sighting-detail
 screenshots in `dark/` against the light ones. The chrome inverts, as it should. The bleached

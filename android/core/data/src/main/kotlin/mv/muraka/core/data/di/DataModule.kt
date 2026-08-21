@@ -6,11 +6,13 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import mv.muraka.core.common.DispatcherProvider
 import mv.muraka.core.common.StandardDispatcherProvider
+import mv.muraka.core.data.repository.AppearanceRepositoryImpl
 import mv.muraka.core.data.repository.AuthRepositoryImpl
 import mv.muraka.core.data.repository.NetworkMonitorImpl
 import mv.muraka.core.data.repository.OutboxRepositoryImpl
 import mv.muraka.core.data.repository.SightingRepositoryImpl
 import mv.muraka.core.data.sync.SyncEngineImpl
+import mv.muraka.core.domain.AppearanceRepository
 import mv.muraka.core.domain.AuthRepository
 import mv.muraka.core.domain.NetworkMonitor
 import mv.muraka.core.domain.OutboxRepository
@@ -29,6 +31,10 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 interface DataModule {
+
+    @Binds
+    @Singleton
+    fun appearanceRepository(impl: AppearanceRepositoryImpl): AppearanceRepository
 
     @Binds
     @Singleton

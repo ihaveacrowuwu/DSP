@@ -10,8 +10,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import mv.muraka.core.domain.AppearanceRepository
 import mv.muraka.core.domain.AuthRepository
 import mv.muraka.core.model.Profile
+import mv.muraka.core.model.ThemePreference
 import javax.inject.Inject
 
 data class ProfileUiState(val refreshing: Boolean = false, val message: String? = null, val deleting: Boolean = false)
@@ -24,7 +26,18 @@ data class ProfileUiState(val refreshing: Boolean = false, val message: String? 
  * the contributor sees would then disagree with the dashboard — D21 again.
  */
 @HiltViewModel
-class ProfileViewModel @Inject constructor(private val authRepository: AuthRepository) : ViewModel() {
+class ProfileViewModel @Inject constructor(
+    private val appearanceRepository: AppearanceRepository,
+    private val authRepository: AuthRepository,
+) : ViewModel() {
+
+    /** The current appearance choice, so the control can show which one is on. */
+    val themePreference: StateFlow<ThemePreference> = appearanceRepository.themePreference
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), ThemePreference.DEFAULT)
+
+    fun onThemePreferenceChange(preference: ThemePreference) {
+        viewModelScope.launch { appearanceRepository.setThemePreference(preference) }
+    }
 
     val profile: StateFlow<Profile?> = authRepository.observeProfile()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)

@@ -16,6 +16,11 @@ final class ProfileViewController: UIViewController {
     private let totalsRow = UIStackView()
     private let messageLabel = UILabel()
 
+    private let appearanceControl = UISegmentedControl(
+        items: ThemePreference.allCases.map(\.label)
+    )
+    private let appearanceExplanation = UILabel()
+
     init(container: AppContainer, onSignedOut: @escaping () -> Void) {
         self.container = container
         self.onSignedOut = onSignedOut
@@ -55,6 +60,42 @@ final class ProfileViewController: UIViewController {
         emailLabel.font = .preferredFont(forTextStyle: .body)
         emailLabel.adjustsFontForContentSizeCategory = true
         emailLabel.textColor = .secondaryLabel
+
+        // ── Appearance ───────────────────────────────────────────────────────
+        //
+        // A `UISegmentedControl`, which is the UIKit control for a small set of mutually
+        // exclusive options where all of them should be visible at once. A picker or a
+        // push-to-a-subscreen would hide two of the three behind a tap, and this is a
+        // setting people flip on a boat with wet hands.
+        //
+        // It sits above the totals rather than at the bottom of the screen, because a
+        // control nobody can find is not a control.
+        let appearanceHeading = UILabel()
+        appearanceHeading.text = "Appearance"
+        appearanceHeading.font = .preferredFont(forTextStyle: .headline)
+        appearanceHeading.adjustsFontForContentSizeCategory = true
+
+        // Words, not symbols. `UISegmentedControl` shows one or the other per segment, and
+        // a symbol cannot distinguish "System" from "Light" — which is exactly the pair a
+        // contributor needs to tell apart. (An earlier version called `setImage` here as
+        // well; `setAction` replaces the segment, so the image was silently discarded.)
+        for (index, preference) in ThemePreference.allCases.enumerated() {
+            appearanceControl.setAction(
+                UIAction(title: preference.label) { [weak self] _ in
+                    self?.selectAppearance(preference)
+                },
+                forSegmentAt: index
+            )
+        }
+        appearanceControl.accessibilityLabel = "Appearance"
+        appearanceControl.selectedSegmentIndex =
+            ThemePreference.allCases.firstIndex(of: container.appearanceStore.preference) ?? 0
+
+        appearanceExplanation.font = .preferredFont(forTextStyle: .caption1)
+        appearanceExplanation.adjustsFontForContentSizeCategory = true
+        appearanceExplanation.textColor = .secondaryLabel
+        appearanceExplanation.numberOfLines = 0
+        appearanceExplanation.text = container.appearanceStore.preference.explanation
 
         let totalsHeading = UILabel()
         totalsHeading.text = "Your contributions"
@@ -101,7 +142,9 @@ final class ProfileViewController: UIViewController {
         delete.setTitle("Delete my account", for: .normal)
         delete.addTarget(self, action: #selector(confirmDelete), for: .touchUpInside)
 
-        [nameLabel, emailLabel, totalsHeading, totalsRow, totalsNote, messageLabel,
+        [nameLabel, emailLabel,
+         appearanceHeading, appearanceControl, appearanceExplanation,
+         totalsHeading, totalsRow, totalsNote, messageLabel,
          refresh, signOutButton, signOutNote, delete].forEach(stack.addArrangedSubview)
 
         let guide = view.safeAreaLayoutGuide
@@ -154,6 +197,13 @@ final class ProfileViewController: UIViewController {
         totalsRow.addArrangedSubview(ReadoutView(caption: "Verified", value: "\(profile.stats.verified)"))
         totalsRow.addArrangedSubview(ReadoutView(caption: "Pending", value: "\(profile.stats.pending)"))
         totalsRow.addArrangedSubview(ReadoutView(caption: "Rejected", value: "\(profile.stats.rejected)"))
+    }
+
+    /// Applies the choice, and tells the window so the change reaches the whole app.
+    private func selectAppearance(_ preference: ThemePreference) {
+        container.appearanceStore.preference = preference
+        appearanceExplanation.text = preference.explanation
+        NotificationCenter.default.post(name: .murakaThemePreferenceChanged, object: nil)
     }
 
     @objc private func signOutTapped() {

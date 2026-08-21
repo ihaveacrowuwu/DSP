@@ -10,7 +10,7 @@ GO      := go
 .PHONY: help up down logs ps restart seed reset-data smoke test test-go test-ml test-web \
         build fmt vet typecheck dev dev-api dev-ml dev-web psql \
         test-android test-ios android-build android-install android-lint \
-        ios-generate ios-build mobile mobile-lint dark-shots-ios
+        ios-generate ios-build mobile mobile-lint
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -131,18 +131,6 @@ ios-build: ios-generate ## Build the iOS app for the simulator
 test-ios: ios-generate ## iOS unit tests on the simulator
 	cd ios && xcodebuild -project Muraka.xcodeproj -scheme Muraka \
 	  -destination '$(IOS_SIM)' test
-
-dark-shots-ios: ios-generate ## Walk every iOS screen in dark mode and keep the screenshots
-	@# The appearance comes from the simulator, not from the app: a
-	@# `-UIUserInterfaceStyle Dark` launch argument does nothing for a UIKit app, and the
-	@# test happily passed while every screenshot came out light.
-	$(eval SIM_ID := $(shell xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k,v in d.items() if '26-5' in k for x in v if x['name']=='iPhone 17'))"))
-	xcrun simctl boot $(SIM_ID) 2>/dev/null || true
-	xcrun simctl ui $(SIM_ID) appearance dark
-	-cd ios && xcodebuild -project Muraka.xcodeproj -scheme Muraka \
-	  -destination 'platform=iOS Simulator,id=$(SIM_ID)' \
-	  -only-testing:MurakaUITests/SignInFlowUITests/testEveryScreenInDarkMode test
-	xcrun simctl ui $(SIM_ID) appearance light
 
 mobile: test-android test-ios ## Unit tests for both apps
 
