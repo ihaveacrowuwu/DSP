@@ -187,6 +187,24 @@ weights.
 6. ~~**Check CPU latency** for a 25-patch batch. If it is slow, drop to
    MobileNetV3-Large before touching accuracy.~~ **Done** — 381 ms per photograph, so
    EfficientNet-B0 stays.
+7. **Then the domain-gap work** (D60 in `docs/08`): pull the **Central Indian
+   Ocean** region of the Seaview Survey dataset — that region only, the whole thing
+   is 1.5 TB across 22 regional partitions — and record the survey IDs and a
+   manifest hash in `configs/baseline.yaml`, which already has the fields waiting
+   under `evaluation.cross_domain_sets`. Evaluate the NOAA-trained model on
+   Maldivian quadrats, then hand-label ~100 of them for the image-level set.
+   Label them *before* looking at any model output on them.
+
+Two things it is easy to get wrong here:
+
+- **Seaview has no healthy/bleached labels.** Its label set is hard coral, algae,
+  soft coral, other invertebrate, other. It is an evaluation and hand-labelling
+  corpus only — never add it to a training split.
+- **The NOAA crops being low-quality is the point, not a problem.** Contributors
+  photograph reefs on phones through moving water. A classifier trained on clean
+  survey imagery would look better in a table and worse in the product. Do not
+  swap NOAA out for something prettier; it is also the dataset the published
+  0.902 acc / 0.896 macro-F1 comparison is measured on.
 
 ### Constraints
 
