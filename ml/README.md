@@ -111,6 +111,23 @@ first run has a starting point rather than a blank page.
 5. **Export ONNX**, then run the parity test against the PyTorch model.
 6. **Check CPU latency** for a 25-patch batch. If it is slow, drop to
    MobileNetV3-Large before touching accuracy.
+7. **Then the domain-gap work** (D25 in `docs/08`): pull the **Central Indian
+   Ocean** region of the Seaview Survey dataset — that region only, the whole thing
+   is 1.5 TB across 22 regional partitions — and record the survey IDs and a
+   manifest hash in `configs/baseline.yaml`. Evaluate the NOAA-trained model on
+   Maldivian quadrats, then hand-label ~100 of them for the image-level set.
+   Label them *before* looking at any model output on them.
+
+Two things it is easy to get wrong here:
+
+- **Seaview has no healthy/bleached labels.** Its label set is hard coral, algae,
+  soft coral, other invertebrate, other. It is an evaluation and hand-labelling
+  corpus only — never add it to a training split.
+- **The NOAA crops being low-quality is the point, not a problem.** Contributors
+  photograph reefs on phones through moving water. A classifier trained on clean
+  survey imagery would look better in a table and worse in the product. Do not
+  swap NOAA out for something prettier; it is also the dataset the published
+  0.902 acc / 0.896 macro-F1 comparison is measured on.
 
 ### Constraints
 

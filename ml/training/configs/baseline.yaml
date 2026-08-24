@@ -105,8 +105,44 @@ evaluation:
   # Out-of-domain check: the NOAA data is Hawaiian and consists of square tissue
   # samples, while contributors send wide Maldivian reef scenes. Measuring that
   # gap honestly is a key report section, not a failure.
+  #
+  # Two sets, in priority order (D25 in docs/08). Seaview is the one that matters:
+  # it is Maldivian reef scenes, so it separates the content gap (tissue crop ->
+  # full scene) from the geographic gap (Hawaii -> Maldives). The Kaggle set is
+  # generic web photos and conflates the two, so it is now only a secondary
+  # comparison point.
+  #
+  # Seaview carries NO healthy/bleached labels — its label set is hard coral /
+  # algae / soft coral / other invertebrate / other. It is therefore an evaluation
+  # and hand-labelling corpus ONLY. Never add it to a training split.
   cross_domain_sets:
-    - kaggle:vencerlanz09/healthy-and-bleached-corals-image-classification
+    - name: seaview-central-indian-ocean
+      # UQ eSpace UQ:734799, DOI 10.14264/uql.2019.930, CC-BY 3.0, keyless.
+      # 1.5 TB in total across 22 regional datasets — pull the Central Indian
+      # Ocean region only. Record the survey IDs and a manifest hash below once
+      # downloaded, so the project's data section is reproducible.
+      # Under /ml/datasets/, which .gitignore already excludes — imagery this
+      # large must never be stageable.
+      local_path: ../datasets/seaview/central-indian-ocean
+      labels: none          # hand-labelled subset lives in image_level_set
+      survey_ids: []        # fill at download time
+      manifest_sha256: null # fill at download time
+    - name: kaggle-healthy-bleached
+      source: kaggle:vencerlanz09/healthy-and-bleached-corals-image-classification
+      labels: healthy_bleached
+
+  # Image-level evaluation set (~100 full reef photos), hand-labelled once from
+  # the Seaview Maldivian quadrats before any model output is seen on them.
+  # Prior work never measured image level at all — this is a report section.
+  image_level_set:
+    # Images live under the gitignored dataset tree; the label file is small and
+    # IS committed, because it is report evidence and the only part that took
+    # human judgement to produce.
+    images: ../datasets/eval/image-level-maldives
+    labels: labels/image-level-maldives.csv
+    target_size: 100
+    source: seaview-central-indian-ocean
+    labelled: false
 
 export:
   format: onnx
