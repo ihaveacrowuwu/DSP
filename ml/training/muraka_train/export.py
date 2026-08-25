@@ -128,21 +128,52 @@ def read_metadata(onnx_path: Path) -> dict[str, str]:
     return {entry.key: entry.value for entry in graph.metadata_props}
 
 
-def cpu_latency(onnx_path: Path, config, *, batch: int | None = None, runs: int = 20) -> dict[str, float]:
+# The session the service builds, in ml/service/app/inference.py. A latency figure is
+# only evidence for NFR2 if it measures the configuration that will actually serve, and
+# thread count moves this number by more than any architecture choice does.
+#
+# This mirrors ONNX_THREADS in deploy/docker-compose.yml — the *deployed* value, which is
+# not the same as `Settings.onnx_threads`'s fallback of 2. `test_the_benchmark_measures
+# _the_threads_the_stack_deploys` fails if the two drift apart, because a benchmark that
+# quietly measures a different thread count than the stack runs is how the 381 ms figure
+# in D58 came to describe a deployment nobody had.
+SERVICE_INTRA_OP_THREADS = 4
+SERVICE_INTER_OP_THREADS = 1
+
+
+def _service_session(onnx_path: Path, *, threads: int = SERVICE_INTRA_OP_THREADS):
+    """An onnxruntime session configured exactly as `ml/service/app/inference.py` does."""
+    import onnxruntime
+
+    options = onnxruntime.SessionOptions()
+    options.intra_op_num_threads = threads
+    options.inter_op_num_threads = SERVICE_INTER_OP_THREADS
+    options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
+    return onnxruntime.InferenceSession(
+        str(onnx_path), sess_options=options, providers=["CPUExecutionProvider"]
+    )
+
+
+def cpu_latency(
+    onnx_path: Path, config, *, batch: int | None = None, runs: int = 20, threads: int = SERVICE_INTRA_OP_THREADS
+) -> dict[str, float]:
     """Per-image CPU latency for one patch batch — NFR2's ≤500 ms per image.
 
     The batch defaults to `patch_grid²`, because the service never classifies one patch:
     it sends the whole lattice for a photograph in a single call, and the per-image figure
     the requirement asks about is that call divided by the patches in it.
-    """
-    import onnxruntime
 
+    The session is built the way the service builds it, `ONNX_THREADS` included. An
+    earlier version of this function took onnxruntime's defaults, which on an 8-core
+    machine is a different — and faster — configuration than the one that serves; the
+    figure it produced was evidence for a deployment nobody runs.
+    """
     grid = int(config.raw.get("data", {}).get("patch_grid", 5))
     count = batch or grid * grid
     size = config.data.image_size
     example = np.random.default_rng(0).standard_normal((count, 3, size, size), dtype=np.float32)
 
-    session = onnxruntime.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
+    session = _service_session(onnx_path, threads=threads)
     # Two warm-up calls: the first includes graph optimisation and arena allocation, and
     # reporting that as latency would overstate it several-fold.
     for _ in range(2):
@@ -162,4 +193,5 @@ def cpu_latency(onnx_path: Path, config, *, batch: int | None = None, runs: int 
         "batch_ms_p50": round(samples[len(samples) // 2], 2),
         "batch_ms_p95": round(samples[int(0.95 * (len(samples) - 1))], 2),
         "per_patch_ms_p50": round(samples[len(samples) // 2] / count, 3),
+        "intra_op_threads": float(threads),
     }

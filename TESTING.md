@@ -42,17 +42,19 @@ one shaped like a Go, Python or Swift test method — as a build failure.
 | Go integration | 26 | `make test-go` | PostgreSQL+PostGIS; skips without it |
 | ML service (pytest) | 15 | `make test-ml` | creates a venv on first run |
 | Dashboard (Vitest) | 84 | `make test-web` | `npm install` |
-| ML training | 29 | `make test-train` | `ml/training/requirements.txt` |
+| ML training | 41 | `make test-train` | `ml/training/requirements.txt` |
 | Android unit (JVM) | 47 | `cd android && ./gradlew testDebugUnitTest` | nothing |
 | Android instrumented | 20 | `cd android && ./gradlew connectedDebugAndroidTest` | an emulator |
 | iOS (XCTest + XCUITest) | 9 | `make test-ios` | a simulator; skips without the stack |
-| **Total automated** | **270** | `make test && make mobile` | |
+| **Total automated** | **282** | `make test && make mobile` | |
 | End-to-end smoke | 33 checks | `make smoke` | the running stack |
 | Performance | 4 checks | `make perf` | the stack, seeded to 10,000 |
 | Config checks | 5 + matrix | `make lint` | nothing |
 | Smoke over TLS | 33 checks | `make smoke-tls` | Docker |
 
-All 270 passed and all 33 smoke checks passed on 2026-08-21.
+All 270 passed and all 33 smoke checks passed on 2026-08-21. The ML training suite
+grew from 29 to 41 on 2026-08-26 (corpus fetch and verification, plus the ONNX thread
+contract); those 41 were re-run and pass. The other suites have not been re-run since.
 
 The counts in this table are **runtime results from the runners** — what
 `Tests 84 passed` and `ok muraka/backend/...` actually reported.
@@ -130,7 +132,7 @@ is the argument for having written them:
 | ID | Requirement | MoSCoW | Evidence | |
 |---|---|---|---|---|
 | NFR1 | ML label visible in the dashboard ≤ 30 s after sync | Must | `make perf` — **0.89 s** on 2026-08-21 (`docs/evidence/performance/`) | ✅ |
-| NFR2 | CPU inference ≤ 500 ms per image | Must | **381 ms** per photograph (a 25-patch lattice) for EfficientNet-B0 on ONNX/CPU — `docs/evidence/performance/nfr2-onnx-cpu-latency.json`. Accuracy still needs a trained model | ✅ |
+| NFR2 | CPU inference ≤ 500 ms per image | Must | **406 ms p50 / 417 ms p95** per photograph (a 25-patch lattice) for EfficientNet-B0 on ONNX/CPU **at the deployed `ONNX_THREADS=4`** — `docs/evidence/performance/nfr2-backbone-comparison.json`. The earlier 381 ms measured onnxruntime's default thread count, not the stack's (D64). Accuracy still needs a trained model | ✅ |
 | NFR3 | Map interactive at 10,000 sightings; viewport ≤ 2 s | Must | `make perf` — **56 ms** worst of 5 at 10,304 sightings; the check fails if the corpus is smaller | ✅ |
 | NFR4 | argon2id, TLS in the demo config, JWT ≤ 15 min | Must | argon2id: `TestHashPasswordIsSaltedPerCall`, `TestHashPasswordProducesVerifiableArgon2idHash`; expiry: `TestParseAccessTokenRejectsExpiredToken`; refresh: `TestRefreshTokenStoresOnlyItsHash`, `TestRefreshTokensAreUnique`; TLS: `make lint` static checks + `make smoke-tls` (33 checks over TLS 1.3) | ✅ |
 | NFR5 | Validate, re-encode and strip EXIF from uploads | Must | smoke 8 refuses a non-image | ◐ |
@@ -148,10 +150,17 @@ is the argument for having written them:
 
 ### What the non-functional gaps actually are
 
-- **NFR2** — closed for the architecture: 381 ms per photograph for EfficientNet-B0 on
-  ONNX/CPU, inside the 500 ms budget with headroom, which also settles the "drop to
-  MobileNetV3 if it is slow" fallback in `ml/README.md`. The service's own 22 ms figure is
-  still the stub.
+- **NFR2** — closed for the architecture, but the first figure was wrong in a way worth
+  reading (D64). 381 ms was measured through a default `InferenceSession`, which takes one
+  thread per core; the service runs `ONNX_THREADS`, and at the shipped value of 2 the same
+  graph measured 477–497 ms p50 and up to 544 ms p95 — **over the budget at the tail in two
+  runs of three**. The deployed thread count is now **4**, giving **406 ms p50 / 417 ms p95**
+  with roughly 19%
+  headroom, and a contract test fails if the benchmark and the compose file ever disagree
+  again. This also settles the "drop to MobileNetV3 if it is slow" fallback in
+  `ml/README.md`, and D65 closes the backbone comparison: ConvNeXt-Tiny (1,486 ms) and
+  EfficientNetV2-S (862 ms) are both far outside the budget. The service's own 22 ms
+  figure is still the stub.
 - **NFR4** — now complete, but with a caveat the project must state rather than bury:
   the demo certificate is **self-signed**, because NFR9 rules out a certificate
   authority. A browser warns on first visit. That is the honest cost of the key-free

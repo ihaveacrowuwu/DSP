@@ -106,7 +106,7 @@ interaction, `.btn` plus a variant on every button, MDI icons only via
 do not float over content. Read the file headers — they explain the reasoning,
 including several bugs that are easy to reintroduce.
 
-## Current status (2026-08-21)
+## Current status (2026-08-26)
 
 Built and running: Go API and worker, ML service (**fake mode — no trained model
 yet**), Vue dashboard, database, seeded sightings, Docker stack, **and both mobile
@@ -119,8 +119,11 @@ the provenance encoding. They were built and verified against the running stack 
 
 The ML training track is **built and verified, but untrained**: the pipeline, the
 service cross-check, the ONNX export with its parity test and the reproducibility tests
-all work and run on synthetic data (`make test-train`, 29 tests). The one thing missing
-is the dataset — see step 1 of `ml/README.md`, which is the project's open question Q6.
+all work and run on synthetic data (`make test-train`, 41 tests). Q6 is **resolved** —
+the NOAA corpus is cleared for use (D63) — and `ml/training/scripts/fetch_noaa.py` now
+downloads it anonymously, verifies it against the dataset card and writes a committed
+SHA-256 manifest. **Nothing has been downloaded yet**; that is step 1 of `ml/README.md`
+and the only thing between here and a trained model.
 
 Measured, with a harness and a recorded run rather than from memory — `make perf`,
 figures and caveats in [`docs/evidence/performance/`](docs/evidence/performance/):
@@ -128,6 +131,15 @@ sync→label **0.89s** (≤30s), map at 10,304 sightings **56ms** worst of 5 (�
 concurrent submissions **0 errors and 0 lost** at 919/s, inference **22ms** (≤500ms, but
 that is the fake model and means nothing until one is trained). The old notes here said
 22ms for the map and ~1.5s for sync; both were remembered, and the map figure was wrong.
+
+**NFR2 for the real architecture is 406ms p50 / 417ms p95** per photograph — EfficientNet-B0,
+a 25-patch lattice, ONNX on CPU, at the deployed `ONNX_THREADS=4`. The figure these notes
+would have quoted a day ago was 381ms, and it was a correct measurement of a session
+onnxruntime built with one thread per core rather than the two the stack shipped; at 2
+threads the same graph breached 500ms at the tail. `ONNX_THREADS` is now 4 and a contract
+test fails if the benchmark and `docker-compose.yml` drift apart again (D64). D65 closed
+the backbone question by measurement: ConvNeXt-Tiny 1,486ms and EfficientNetV2-S 862ms are
+both well outside the budget, so EfficientNet-B0 is not a preference but the only fit.
 
 The reef map draws real geography: Natural Earth 10m clipped to the Maldives and
 committed as 67 KB of vector GeoJSON (`web/public/basemap/maldives.json`), so the map
@@ -138,7 +150,7 @@ the header of `web/src/lib/mapStyle.ts`.
 the honest picture: of 33 requirements, **20** have full automated evidence, 10 are
 partly covered and **3 have none**. Read it before planning work — it is also the
 to-do list, and its counts are tallied by `scripts/testing_matrix.py` rather than
-maintained by hand. 270 automated tests across six suites, all passing, plus 33
+maintained by hand. 282 automated tests across six suites, all passing, plus 33
 end-to-end smoke checks and 4 measured performance checks.
 
 Known gaps, in the order they hurt the project: **no trained model** (the pipeline is

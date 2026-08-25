@@ -18,31 +18,84 @@ seeded, ML service in fake mode.
 | Requirement | Threshold | Measured | |
 |---|---|---|---|
 | NFR1 — label readable after sync | ≤ 30 s | **0.89 s** | ✅ |
-| NFR2 — CPU inference per image | ≤ 500 ms | **22 ms** (stub) / **381 ms** (real EfficientNet-B0) | ✅ |
+| NFR2 — CPU inference per image | ≤ 500 ms | **22 ms** (stub) / **406 ms** (EfficientNet-B0, deployed config) | ✅ |
 | NFR3 — map viewport at 10,000 sightings | ≤ 2 s | **56 ms** worst of 5 | ✅ |
 | NFR11 — 50 concurrent submissions | no error, no loss | **0 errors, 0 lost**, 919/s | ✅ |
 
-### NFR2, measured against the real architecture — [`nfr2-onnx-cpu-latency.json`](nfr2-onnx-cpu-latency.json)
+### NFR2, measured against the real architecture — [`nfr2-backbone-comparison.json`](nfr2-backbone-comparison.json)
 
-The 22 ms above is the service's stub. The **architecture** is now measured too:
+The 22 ms above is the service's stub. The **architecture** is measured separately:
 EfficientNet-B0 at 224 px, exported to ONNX and run on `CPUExecutionProvider`, for one
 5×5 patch lattice — which is one photograph, in one call.
 
 | | |
 |---|---|
-| Per photograph (25 patches), p50 | **381 ms** |
-| p95 | 391 ms |
-| Per patch | 15.2 ms |
+| Per photograph (25 patches), p50 | **406 ms** |
+| p95 | 417 ms |
+| Per patch | 16.2 ms |
 | NFR2 threshold | 500 ms |
+| Deployed `ONNX_THREADS` | 4 |
 
-**Inside the budget, with about 24% headroom.** That settles a decision the plan left
+**Inside the budget, with about 19% headroom.** That settles a decision the plan left
 open: `ml/README.md` said "if it is slow, drop to MobileNetV3-Large before touching
 accuracy", and it is not slow, so the accuracy-first backbone stays.
 
-The weights came from a synthetic pipeline-verification run, so this says nothing about
-accuracy. Latency depends on the architecture, the input size and the runtime, not on
-what the weights learned — so it is valid evidence for the *choice of backbone* and not
-for the model's quality. ONNX/PyTorch parity on the same graph was 6.9e-07.
+⚠️ **This figure replaces the 381 ms recorded on 2026-08-21, and the reason is worth a
+paragraph in the evaluation chapter** (D64). The original measurement was correct
+arithmetic on the wrong session: `cpu_latency` built a plain `InferenceSession`, which
+takes onnxruntime's default of one thread per core — ten on this machine — while
+`ml/service/app/inference.py` builds its session with `intra_op_num_threads =
+ONNX_THREADS` and the stack shipped `ONNX_THREADS: "2"`. Measured back to back on one
+graph: **384.70 ms at the defaults, 479.71 ms at the service's setting**, 0.2% drift on a
+repeat. At 2 threads the p95 reached **544 ms across runs — outside the budget** — so a
+requirement recorded as passing with 24% headroom was in fact marginal in the
+configuration that ships. `ONNX_THREADS` is now **4**, `cpu_latency` builds the service's
+session, and `test_the_benchmark_measures_the_threads_the_stack_deploys` fails if the two
+ever drift apart again.
+
+#### The `ONNX_THREADS` sweep behind that choice
+
+One graph, one machine, 25 timed runs each. p95 is the column that decides, because a
+requirement met at the median and missed at the tail is not met.
+
+| Threads | p50 | p95 | |
+|---|---|---|---|
+| 1 | 647 ms | 663 ms | ✗ fails outright |
+| 2 (was shipped) | 497 ms | 527 ms | ✗ breaches at the tail |
+| 3 | 432 ms | 445 ms | ✅ but only 11% |
+| **4 (now shipped)** | **405 ms** | **411 ms** | ✅ ~18% headroom |
+| 6 | 389 ms | 408 ms | ✅ 16 ms more, for 2 more cores |
+| 8 | 445 ms | 454 ms | ✅ past the knee, and slower |
+
+Those are one run. Across the three sweeps taken while making this change, `threads=2`
+measured **477–497 ms p50 and 491–544 ms p95, over the 500 ms budget at the tail in two
+runs of three** — which is the point: it was not reliably passing, and a single lucky
+measurement is what made it look settled. `threads=4` measured 402–406 p50 and 411–417
+p95 in every run.
+
+4 is the knee. Beyond it the curve flattens while the cores are wanted by Postgres, the
+Go API and the worker, which share this laptop in the compose stack — and every figure
+here is from an *idle* machine, so the tail under real contention is worse than the table.
+
+#### The backbone comparison — D65
+
+`baseline.yaml` left open whether a modern backbone of similar size could be used
+instead. Measured rather than argued, at the deployed configuration:
+
+| Backbone | Parameters | p50 | vs 500 ms |
+|---|---|---|---|
+| **EfficientNet-B0** | 4.0 M | **406 ms** | ✅ |
+| EfficientNetV2-S | 20.2 M | 862 ms | ✗ 1.7× over |
+| ConvNeXt-Tiny | 27.8 M | 1,486 ms | ✗ 3.0× over |
+
+Neither alternative is marginal, so the question is closed: accuracy has to come from the
+recipe, the data or the patch grid rather than from a larger backbone.
+
+The weights in all of these came from random or synthetic initialisation, so none of it
+says anything about accuracy. Latency depends on the architecture, the input size and the
+runtime, not on what the weights learned — so it is valid evidence for the *choice of
+backbone* and not for the model's quality. ONNX/PyTorch parity on the same graph was
+6.9e-07.
 
 ⚠️ **The 22 ms figure below is the fake model.** The ML service ships a deterministic stub until
 the training track produces a real one, so 22 ms measures the plumbing and says nothing

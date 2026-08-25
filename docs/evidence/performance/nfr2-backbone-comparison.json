@@ -1,0 +1,126 @@
+{
+  "measured_at": "2026-08-26",
+  "what": "CPU inference latency of the exported ONNX graph for each candidate backbone, at 224px, one photograph per call.",
+  "why": "NFR2 requires CPU inference at or under 500 ms per image, and the recipe's backbone choice should be bounded by measurement rather than by argument. The service classifies a whole patch lattice for one photograph in a single call, so the per-image figure is that call.",
+  "caveat": "Random weights, deliberately: latency depends on the architecture, the input size and the runtime, not on what the weights learned, so an untrained graph times identically to a trained one. These figures are evidence for the backbone choice and say nothing about accuracy. The session matches ml/service/app/inference.py (intra-op threads from ONNX_THREADS, one inter-op thread, full graph optimisation) because a figure measured on onnxruntime's defaults describes a deployment nobody runs.",
+  "machine": "Apple M1 Pro, onnxruntime 1.20.1, CPUExecutionProvider",
+  "intra_op_threads": 4,
+  "timed_runs": 25,
+  "threshold_ms": 500,
+  "backbones": [
+    {
+      "backbone": "efficientnet_b0",
+      "parameters_m": 4.01,
+      "onnx_bytes": 15931780,
+      "onnx_parity_max_abs_diff": 0.0,
+      "latency": {
+        "patches": 25.0,
+        "batch_ms_p50": 406.22,
+        "batch_ms_p95": 417.31,
+        "per_patch_ms_p50": 16.249,
+        "intra_op_threads": 4.0
+      },
+      "passed": true
+    },
+    {
+      "backbone": "convnext_tiny",
+      "parameters_m": 27.82,
+      "onnx_bytes": 111154832,
+      "onnx_parity_max_abs_diff": 1.0207295417785645e-06,
+      "latency": {
+        "patches": 25.0,
+        "batch_ms_p50": 1485.69,
+        "batch_ms_p95": 1572.84,
+        "per_patch_ms_p50": 59.428,
+        "intra_op_threads": 4.0
+      },
+      "passed": false
+    },
+    {
+      "backbone": "efficientnet_v2_s",
+      "parameters_m": 20.18,
+      "onnx_bytes": 80150994,
+      "onnx_parity_max_abs_diff": 2.0489096641540527e-08,
+      "latency": {
+        "patches": 25.0,
+        "batch_ms_p50": 861.74,
+        "batch_ms_p95": 875.68,
+        "per_patch_ms_p50": 34.47,
+        "intra_op_threads": 4.0
+      },
+      "passed": false
+    }
+  ],
+  "thread_sweep": {
+    "backbone": "efficientnet_b0",
+    "why": "The service sets ONNX_THREADS=2 (deploy/docker-compose.yml). onnxruntime's default is one thread per core, which on this machine is a materially faster and undeployed configuration. This sweep is what makes the setting's cost explicit.",
+    "results": [
+      {
+        "intra_op_threads": 1,
+        "latency": {
+          "patches": 25.0,
+          "batch_ms_p50": 646.97,
+          "batch_ms_p95": 662.52,
+          "per_patch_ms_p50": 25.879,
+          "intra_op_threads": 1.0
+        },
+        "passed": false
+      },
+      {
+        "intra_op_threads": 2,
+        "latency": {
+          "patches": 25.0,
+          "batch_ms_p50": 496.96,
+          "batch_ms_p95": 527.03,
+          "per_patch_ms_p50": 19.878,
+          "intra_op_threads": 2.0
+        },
+        "passed": false
+      },
+      {
+        "intra_op_threads": 3,
+        "latency": {
+          "patches": 25.0,
+          "batch_ms_p50": 432.43,
+          "batch_ms_p95": 444.69,
+          "per_patch_ms_p50": 17.297,
+          "intra_op_threads": 3.0
+        },
+        "passed": true
+      },
+      {
+        "intra_op_threads": 4,
+        "latency": {
+          "patches": 25.0,
+          "batch_ms_p50": 405.42,
+          "batch_ms_p95": 411.15,
+          "per_patch_ms_p50": 16.217,
+          "intra_op_threads": 4.0
+        },
+        "passed": true
+      },
+      {
+        "intra_op_threads": 6,
+        "latency": {
+          "patches": 25.0,
+          "batch_ms_p50": 389.23,
+          "batch_ms_p95": 408.07,
+          "per_patch_ms_p50": 15.569,
+          "intra_op_threads": 6.0
+        },
+        "passed": true
+      },
+      {
+        "intra_op_threads": 8,
+        "latency": {
+          "patches": 25.0,
+          "batch_ms_p50": 444.78,
+          "batch_ms_p95": 454.33,
+          "per_patch_ms_p50": 17.791,
+          "intra_op_threads": 8.0
+        },
+        "passed": true
+      }
+    ]
+  }
+}

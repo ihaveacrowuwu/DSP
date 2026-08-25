@@ -120,3 +120,30 @@ def test_the_export_target_is_where_the_service_looks_for_a_model():
     # reads MODEL_PATH=/app/models/active.onnx, so the recipe must export to that name.
     assert raw["export"]["output"].endswith("models/active.onnx")
     assert raw["export"]["format"] == "onnx"
+
+
+def test_the_benchmark_measures_the_threads_the_stack_deploys():
+    """A latency benchmark must use the thread count the service will actually run.
+
+    This is the check that D58's 381 ms figure needed and did not have. That number was a
+    correct measurement of `onnxruntime`'s default thread count — one per core — while the
+    stack shipped ONNX_THREADS=2, and the difference was 1.25x: the whole gap between
+    "24% headroom" and a p95 over the 500 ms budget. Nothing failed, because nothing was
+    comparing the two.
+    """
+    import re
+
+    from muraka_train import export as export_module
+
+    compose = (TRAINING_ROOT.parent.parent / "deploy" / "docker-compose.yml").read_text()
+    # Read the value rather than the whole file: the compose file is not this test's
+    # subject and a YAML parse would drag in the rest of the stack's schema.
+    match = re.search(r"^\s*ONNX_THREADS:\s*\"?(\d+)\"?\s*$", compose, re.MULTILINE)
+    assert match, "deploy/docker-compose.yml no longer sets ONNX_THREADS for the ml service"
+    deployed = int(match.group(1))
+
+    assert export_module.SERVICE_INTRA_OP_THREADS == deployed, (
+        f"the benchmark measures {export_module.SERVICE_INTRA_OP_THREADS} intra-op threads but the "
+        f"stack deploys {deployed}. Every NFR2 figure in the project would describe a configuration "
+        "nobody runs. Change both together, and re-run scripts/bench_backbones.py."
+    )

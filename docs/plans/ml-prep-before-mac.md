@@ -1,5 +1,14 @@
 # Plan: ML prep on the Windows machine, before the Mac training session
 
+> **✅ Executed 2026-08-26, on the Mac rather than the Windows machine.** Tasks 2, 3 and 4
+> are done: `scripts/fetch_noaa.py` (+11 tests), `scripts/bench_backbones.py`, and the doc
+> syncs. Task 1's push could not be completed — the `origin` remote returns "Repository not
+> found". Two things came out differently from the plan: the benchmark's evidence run
+> **found a real defect** rather than just filling a table (D64 — the 381 ms NFR2 figure
+> measured the wrong thread count, and the shipped `ONNX_THREADS=2` breached the budget at
+> the tail), and the corpus itself is still **not downloaded**, paused at the user's
+> request. The steps below are kept as written, for the record.
+
 **Written 2026-08-24, for a Claude (Opus) session to implement on this machine.**
 Context: Q6 is resolved (D63 — the NOAA dataset is cleared for use), so the Mac
 session can train as soon as it starts. This plan removes everything from that

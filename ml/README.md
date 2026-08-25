@@ -57,7 +57,7 @@ curl http://localhost:8010/healthz
 | `PATCH_OVERLAP` | `0` | 0–0.9; grows each patch for extra context |
 | `INPUT_SIZE` | `224` | Must match training |
 | `BLEACHED_LABEL_THRESHOLD` | `0.35` | Severity at which the image reads bleached |
-| `ONNX_THREADS` | `2` | CPU threads for inference |
+| `ONNX_THREADS` | `2` (compose sets **4**) | CPU threads for inference. The code's fallback is 2; `deploy/docker-compose.yml` sets 4, because at 2 a 25-patch lattice breaches NFR2 at the tail — D64 |
 
 `PATCH_GRID`, `PATCH_OVERLAP` and `BLEACHED_LABEL_THRESHOLD` are deliberately
 configurable: grid granularity and the label threshold are experiments the project
@@ -116,10 +116,14 @@ cd ml/training && python3 scripts/train.py --config configs/baseline.yaml     --
 
 Three things that verification already settled:
 
-- **CPU latency is fine.** EfficientNet-B0 at 224 px, exported to ONNX, classifies a
-  whole 5×5 lattice — one photograph — in **381 ms** on the M1 Pro, against NFR2's 500 ms.
-  So the fallback in step 6 below is not needed and the accuracy-first backbone stays.
-  Figures in [`docs/evidence/performance/`](../docs/evidence/performance/).
+- **CPU latency fits, at the thread count the stack actually deploys.** EfficientNet-B0 at
+  224 px, exported to ONNX, classifies a whole 5×5 lattice — one photograph — in **406 ms
+  p50 / 417 ms p95** on the M1 Pro at `ONNX_THREADS=4`, against NFR2's 500 ms. So the
+  fallback in step 6 below is not needed and the accuracy-first backbone stays. An earlier
+  381 ms figure measured onnxruntime's *default* thread count rather than the service's,
+  and at the previously shipped `ONNX_THREADS=2` the same graph breached the budget at the
+  tail — see D64, and `scripts/bench_backbones.py --sweep-threads` for the sweep that
+  chose 4. Figures in [`docs/evidence/performance/`](../docs/evidence/performance/).
 - **The graph the service will serve matches the model that gets evaluated**, to 6.9e-07.
 - **Runs are reproducible** — same seed, same metrics; different seed, different metrics.
   Both directions are asserted, because a pipeline that ignores the seed passes the first
@@ -145,11 +149,15 @@ The steps, in order (the prep for steps 1–2 is planned in
 `docs/plans/ml-prep-before-mac.md`):
 
 ```bash
-# 1. Get the corpus (768 MB) into ml/datasets/noaa as train/ val/ test/ subdirectories,
-#    each containing CORAL/ and CORAL_BL/. The recipe's folder_map expects those names.
+# 1. Get the corpus (768 MB) into ml/datasets/noaa. The script downloads it anonymously,
+#    checks the split totals and per-class counts against the dataset card, writes a
+#    SHA-256 manifest to manifests/noaa.sha256 (committed — it is the project's
+#    provenance evidence), and prints the citation D63 owes.
+cd ml/training
+python3 scripts/fetch_noaa.py
+python3 scripts/fetch_noaa.py --verify-only    # re-check an existing copy, no network
 
 # 2. Sanity-check the recipe against the real data before spending an hour on a run:
-cd ml/training
 python3 scripts/train.py --config configs/baseline.yaml     --data-root ../datasets/noaa --epochs 1 --output-dir runs/smoke
 
 # 3. The real baseline. Roughly an hour on the M1 Pro.
@@ -167,9 +175,9 @@ On macOS, if the ImageNet weights fail with `CERTIFICATE_VERIFY_FAILED`:
 
 Two things to compare against when the numbers arrive: prior published work on this
 dataset reports roughly **0.90 accuracy and 0.90 macro-F1** at patch level with a
-comparable backbone, and CPU latency is already known to be **381 ms** per photograph, so
-a slowdown after training would mean something changed in the graph rather than in the
-weights.
+comparable backbone, and CPU latency is already known to be **406 ms** per photograph at the
+deployed `ONNX_THREADS=4`, so a slowdown after training would mean something changed in the
+graph rather than in the weights.
 
 ### The plan, in order
 
@@ -187,8 +195,10 @@ weights.
    confusion matrix and an error gallery.
 5. **Export ONNX**, then run the parity test against the PyTorch model.
 6. ~~**Check CPU latency** for a 25-patch batch. If it is slow, drop to
-   MobileNetV3-Large before touching accuracy.~~ **Done** — 381 ms per photograph, so
-   EfficientNet-B0 stays.
+   MobileNetV3-Large before touching accuracy.~~ **Done** — 406 ms per photograph at
+   `ONNX_THREADS=4`, so EfficientNet-B0 stays. `scripts/bench_backbones.py` also closed the
+   "compare a modern backbone" question (D65): ConvNeXt-Tiny is 1,486 ms and
+   EfficientNetV2-S 862 ms, both far outside the budget rather than marginally over.
 7. **Then the domain-gap work** (D60 in `docs/08`): pull the **Central Indian
    Ocean** region of the Seaview Survey dataset — that region only, the whole thing
    is 1.5 TB across 22 regional partitions — and record the survey IDs and a
