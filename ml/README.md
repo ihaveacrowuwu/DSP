@@ -134,13 +134,15 @@ Neither crashes, so neither would be noticed.
 
 ### Picking this up next session — the exact next steps
 
-Everything below the dataset is done. **Q6 (the licence) is the gate, and it is a human
-decision, not more research** — the terms are recorded in `docs/08-scope-risks-decisions.md`
-under Q6: no explicit licence tag, the standard NOAA as-is disclaimer, a requested
+Everything below the dataset is done. **The gate is open: Q6 was resolved on 2026-08-24
+(D63 in `docs/08`) — the NOAA dataset is cleared for use**, with a citation and the as-is
+disclaimer owed in the project's data section. The terms as read are recorded in
+`docs/08-scope-risks-decisions.md` under Q6: no explicit licence tag, the standard NOAA as-is disclaimer, a requested
 citation, and the dataset's own facts (224 px, `CORAL`/`CORAL_BL`, 7,292 training images)
 matching `configs/baseline.yaml` exactly. **Nothing has been downloaded.**
 
-Once that call is made:
+The steps, in order (the prep for steps 1–2 is planned in
+`docs/plans/ml-prep-before-mac.md`):
 
 ```bash
 # 1. Get the corpus (768 MB) into ml/datasets/noaa as train/ val/ test/ subdirectories,
@@ -191,7 +193,12 @@ weights.
    Ocean** region of the Seaview Survey dataset — that region only, the whole thing
    is 1.5 TB across 22 regional partitions — and record the survey IDs and a
    manifest hash in `configs/baseline.yaml`, which already has the fields waiting
-   under `evaluation.cross_domain_sets`. Evaluate the NOAA-trained model on
+   under `evaluation.cross_domain_sets`. The eSpace page (read 2026-08-24, docs/08
+   Q6) describes the region as "Indian Ocean (Maldives, Chagos Archipelago)": confirm
+   the partition's real name at download, select Maldivian transects via the shipped
+   CSV metadata rather than by folder name, and take only the photo-quadrats,
+   annotations and tabular files — never the raw 360° triplets, which are the bulk
+   of the 1.5 TB. Evaluate the NOAA-trained model on
    Maldivian quadrats, then hand-label ~100 of them for the image-level set.
    Label them *before* looking at any model output on them.
 

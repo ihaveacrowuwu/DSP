@@ -71,7 +71,7 @@ def extract_spec() -> dict[str, tuple[float, float] | None]:
     full = ROOT / SPEC_PATH
     if not full.exists():
         return {"overlay": None, "glyph": None}
-    lattice = json.loads(full.read_text()).get("patchLattice", {})
+    lattice = json.loads(full.read_text(encoding="utf-8")).get("patchLattice", {})
     out: dict[str, tuple[float, float] | None] = {}
     for mode in ("overlay", "glyph"):
         match = FORMULA.match(str(lattice.get(mode, {}).get("opacity", "")))
@@ -83,7 +83,7 @@ def extract(path: str, patterns: dict[str, str]) -> dict[str, tuple[float, float
     full = ROOT / path
     if not full.exists():
         return {mode: None for mode in patterns}
-    text = full.read_text()
+    text = full.read_text(encoding="utf-8")
     out: dict[str, tuple[float, float] | None] = {}
     for mode, pattern in patterns.items():
         found = re.findall(pattern, text, re.S)

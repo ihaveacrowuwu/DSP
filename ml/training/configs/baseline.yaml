@@ -118,9 +118,20 @@ evaluation:
   cross_domain_sets:
     - name: seaview-central-indian-ocean
       # UQ eSpace UQ:734799, DOI 10.14264/uql.2019.930, CC-BY 3.0, keyless.
+      # Licence confirmed on the publisher's page by a human read, 2026-08-24
+      # (docs/08 Q6): Open Access, no terms beyond CC-BY.
       # 1.5 TB in total across 22 regional datasets — pull the Central Indian
       # Ocean region only. Record the survey IDs and a manifest hash below once
       # downloaded, so the project's data section is reproducible.
+      # Three cautions from the eSpace page (docs/08, "Q6, the Seaview page
+      # itself"): the region is described as "Indian Ocean (Maldives, Chagos
+      # Archipelago)", so confirm the partition's actual name at download and
+      # select Maldivian transects via the tabular metadata (CSV GPS/transect
+      # files), not by folder name — Chagos shares the region. Take only the
+      # photo-quadrats, annotations and tabular files; NEVER the raw 360°
+      # triplets, which are the bulk of the volume. Quadrats are standardised
+      # downward-facing ~1 m² frames — describe them as such in the domain-gap
+      # analysis, not as oblique reef scenes.
       # Under /ml/datasets/, which .gitignore already excludes — imagery this
       # large must never be stageable.
       local_path: ../datasets/seaview/central-indian-ocean

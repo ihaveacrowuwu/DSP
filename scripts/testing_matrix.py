@@ -28,6 +28,12 @@ import re
 import sys
 from pathlib import Path
 
+# The document and this output carry ✅/◐/○; a Windows console defaults to cp1252
+# and dies on the first one. Files are read with an explicit encoding for the same
+# reason — the repository is UTF-8 on every platform, whatever the OS default says.
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8")
+
 ROOT = Path(__file__).resolve().parent.parent
 
 # Build outputs contain copies of test sources; counting them would inflate every
@@ -57,14 +63,14 @@ def collect() -> dict[str, set[str]]:
     # Go: `func TestFoo(t *testing.T)` and benchmarks.
     go = set()
     for path in _walk(ROOT / "backend", "*_test.go"):
-        go |= set(re.findall(r"^func ((?:Test|Benchmark|Fuzz)\w+)", path.read_text(), re.M))
+        go |= set(re.findall(r"^func ((?:Test|Benchmark|Fuzz)\w+)", path.read_text(encoding="utf-8"), re.M))
     found["go"] = go
 
     # Python: pytest functions in the ML service and in scripts/.
     py = set()
     for base in (ROOT / "ml", ROOT / "scripts", ROOT / "backend"):
         for path in _walk(base, "*.py"):
-            py |= set(re.findall(r"^def (test_\w+)", path.read_text(), re.M))
+            py |= set(re.findall(r"^def (test_\w+)", path.read_text(encoding="utf-8"), re.M))
     found["python"] = py
 
     # Web: Vitest. The name IS the sentence, so it is matched verbatim rather than as
@@ -77,7 +83,7 @@ def collect() -> dict[str, set[str]]:
     # TESTING.md come from the runners; this count exists to resolve citations.
     web = set()
     for path in _walk(ROOT / "web", "*.test.ts"):
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         for quote in ("'", '"'):
             web |= set(re.findall(
                 r"(?:it|test)(?:\.each\(.*?\))?\(\s*" + quote + r"([^" + quote + r"]+)" + quote,
@@ -93,7 +99,7 @@ def collect() -> dict[str, set[str]]:
     for path in _walk(ROOT / "android", "*.kt"):
         if "src/test" not in path.as_posix() and "src/androidTest" not in path.as_posix():
             continue
-        for chunk in path.read_text().split("@Test")[1:]:
+        for chunk in path.read_text(encoding="utf-8").split("@Test")[1:]:
             match = re.search(r"fun\s+(?:`([^`]+)`|(\w+))\s*\(", chunk)
             if match:
                 kotlin.add(match.group(1) or match.group(2))
@@ -103,7 +109,7 @@ def collect() -> dict[str, set[str]]:
     swift = set()
     for base in (ROOT / "ios" / "MurakaTests", ROOT / "ios" / "MurakaUITests"):
         for path in _walk(base, "*.swift"):
-            swift |= set(re.findall(r"func (test\w+)", path.read_text()))
+            swift |= set(re.findall(r"func (test\w+)", path.read_text(encoding="utf-8")))
     found["swift"] = swift
 
     return found
@@ -159,7 +165,7 @@ def main() -> int:
         return 1
 
     every = set().union(*found.values())
-    cited = citations(doc.read_text())
+    cited = citations(doc.read_text(encoding="utf-8"))
 
     # A citation only has to match SOME suite: the matrix cites Go, Python, Swift,
     # Kotlin and web names in one table, and which language a name belongs to is not
@@ -181,7 +187,7 @@ def main() -> int:
     # coverage figure that was written before the table was filled in and was wrong by
     # a factor of five, so the count is computed here rather than remembered.
     glyphs = {"✅": "automated", "◐": "partial", "✋": "manual only", "○": "no evidence"}
-    rows = re.findall(r"^\| (FR\d+|NFR\d+) \|.*\| ([✅◐✋○]) \|$", doc.read_text(), re.M)
+    rows = re.findall(r"^\| (FR\d+|NFR\d+) \|.*\| ([✅◐✋○]) \|$", doc.read_text(encoding="utf-8"), re.M)
     if rows:
         tally: dict[str, int] = {}
         for _, glyph in rows:
