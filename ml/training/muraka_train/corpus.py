@@ -77,24 +77,105 @@ class Verification:
         return {"counts": self.counts, "totals": self.totals, "images": sum(self.totals.values())}
 
 
-def download(target: Path, *, repo_id: str = REPO_ID) -> Path:
-    """Fetch the dataset snapshot into `target`, anonymously.
+def backoff_delays(attempts: int, *, base: float = 30.0, cap: float = 900.0) -> list[float]:
+    """Seconds to wait before each retry: 30s, 60s, 120s, … capped at 15 minutes.
 
-    Imported here rather than at module scope so the verification and manifest paths —
-    which are what the tests exercise — need neither the dependency nor a network.
+    Anonymous downloads of this corpus **do** get rate limited — 10,419 files is a lot of
+    requests from one IP, and HuggingFace answers with a 429 partway through suggesting an
+    `HF_TOKEN`. The project forbids one (constraint 2), so waiting is the whole strategy.
+    The first delay is deliberately long: a limiter that has just fired is not going to
+    forgive a retry two seconds later, and hammering it extends the ban.
     """
+    return [min(base * (2**i), cap) for i in range(attempts)]
+
+
+def download(
+    target: Path,
+    *,
+    repo_id: str = REPO_ID,
+    max_workers: int = 4,
+    attempts: int = 10,
+    on_retry=None,
+) -> Path:
+    """Fetch the dataset snapshot into `target`, anonymously, resuming and backing off.
+
+    Three choices here are all consequences of having no token:
+
+    * **`max_workers=4`**, not the library's 8. Concurrency is what trips the limiter, and
+      a download that finishes slowly beats one that 429s at 8% and has to be nursed.
+    * **Retries with a long backoff.** `snapshot_download` skips files already on disk, so
+      a retry resumes rather than restarts — the 429 is a pause, not a loss.
+    * **Xet disabled.** The rate limit observed on this corpus came from the
+      `xet-read-token` endpoint, which does a token exchange *per file*; the plain CDN
+      path makes far fewer such calls. Set before the import, because the flag is read at
+      module load.
+
+    Imported inside the function rather than at module scope so the verification and
+    manifest paths — which are what the tests exercise — need neither the dependency nor a
+    network.
+    """
+    import os
+
+    os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+
     from huggingface_hub import snapshot_download
+    from huggingface_hub.errors import HfHubHTTPError
 
     target = Path(target)
     target.mkdir(parents=True, exist_ok=True)
-    snapshot_download(
-        repo_id=repo_id,
-        repo_type="dataset",
-        local_dir=str(target),
-        # No token, ever. See the module docstring.
-        token=False,
-    )
-    return target
+
+    delays = backoff_delays(attempts)
+    last_error: Exception | None = None
+
+    for attempt, delay in enumerate(delays, start=1):
+        error: Exception | None = None
+        try:
+            snapshot_download(
+                repo_id=repo_id,
+                repo_type="dataset",
+                local_dir=str(target),
+                # No token, ever. See the module docstring.
+                token=False,
+                max_workers=max_workers,
+            )
+        except HfHubHTTPError as raised:
+            status = getattr(getattr(raised, "response", None), "status_code", None)
+            # A 429 is worth waiting out. A 404 or a 401 is not: those mean the repo id is
+            # wrong or the dataset stopped being public, and retrying six times just makes
+            # the failure take an hour to report.
+            if status is not None and status != 429:
+                raise
+            error = raised
+
+        # Completeness decides whether to retry — NOT whether `snapshot_download`
+        # returned. When the rate limit reaches the metadata call, the library logs
+        # "Returning existing local_dir ... as remote repo cannot be accessed" and
+        # returns **successfully** with a partial tree. Trusting that return is how a
+        # 7%-downloaded corpus gets handed to a trainer, and the resulting model would be
+        # trained on whichever classes happened to arrive first.
+        try:
+            verify(target)
+            return target
+        except CorpusError as incomplete:
+            error = error or incomplete
+            last_error = error
+
+        if attempt == len(delays):
+            break
+        if on_retry:
+            on_retry(attempt, len(delays), delay, error)
+        import time
+
+        time.sleep(delay)
+
+    raise CorpusError(
+        f"the download was rate limited and did not finish after {len(delays)} attempts. "
+        "Every file already fetched is kept, so re-running resumes rather than restarts — "
+        "wait a while and run the same command again. Do NOT set HF_TOKEN to work around "
+        "this: the project forbids API-key services (constraint 2 in CLAUDE.md), and the "
+        "corpus is public. Last error: "
+        f"{last_error}"
+    ) from last_error
 
 
 def verify(root: Path, *, expected: dict[str, dict[str, int]] | None = None) -> Verification:

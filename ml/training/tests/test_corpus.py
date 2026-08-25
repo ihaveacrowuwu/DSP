@@ -136,3 +136,25 @@ def test_writing_the_manifest_returns_a_quotable_digest(tmp_path):
     import hashlib
 
     assert digest == hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+
+def test_the_retry_backoff_starts_long_and_is_capped():
+    """Waiting is the only tool a keyless download has against a rate limiter.
+
+    The corpus is 10,419 files, and fetching it anonymously does get 429'd partway
+    through — HuggingFace's own message suggests setting HF_TOKEN, which constraint 2 in
+    CLAUDE.md forbids. So the retry schedule has to be genuinely patient: a limiter that
+    has just fired will not forgive a retry two seconds later, and hammering it extends
+    the ban rather than shortening it.
+    """
+    delays = corpus_module.backoff_delays(10)
+    assert len(delays) == 10
+    assert delays[0] >= 30, "the first wait must be long enough to matter to a limiter"
+    assert delays == sorted(delays), "backoff must not decrease"
+    assert max(delays) <= 900, "capped, or a stuck download waits for hours"
+    # Patient overall, but bounded: this must be able to outlast a rate limit
+    # without becoming an unattended all-day process.
+    assert 45 * 60 <= sum(delays) <= 3 * 60 * 60
+    # Doubling, which is what makes six attempts span a useful range rather than six
+    # equal-length naps.
+    assert delays[1] == delays[0] * 2

@@ -34,6 +34,12 @@ def main() -> int:
     parser.add_argument("--target", default=str(DEFAULT_TARGET), help="where the corpus lands")
     parser.add_argument("--manifest", default=str(DEFAULT_MANIFEST), help="manifest to write")
     parser.add_argument("--repo-id", default=corpus_module.REPO_ID)
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=4,
+        help="concurrent downloads; above ~4 the anonymous rate limiter tends to fire",
+    )
     parser.add_argument("--verify-only", action="store_true", help="skip the download; verify what is on disk")
     parser.add_argument("--no-manifest", action="store_true", help="verify without rewriting the manifest")
     args = parser.parse_args()
@@ -42,7 +48,22 @@ def main() -> int:
 
     if not args.verify_only:
         print(f"downloading {args.repo_id} -> {target} (anonymous, no token)")
-        corpus_module.download(target, repo_id=args.repo_id)
+        print(f"{args.workers} workers, resumes on restart; a 429 is waited out, not tokened around")
+
+        def announce(attempt: int, total: int, delay: float, error: Exception) -> None:
+            print(
+                f"\n  rate limited (attempt {attempt}/{total}). Waiting {delay:.0f}s and resuming; "
+                f"files already fetched are kept.\n  {str(error).splitlines()[0]}",
+                flush=True,
+            )
+
+        try:
+            corpus_module.download(
+                target, repo_id=args.repo_id, max_workers=args.workers, on_retry=announce
+            )
+        except corpus_module.CorpusError as error:
+            print(f"\nDOWNLOAD INCOMPLETE\n{error}", file=sys.stderr)
+            return 1
 
     try:
         verification = corpus_module.verify(target)
