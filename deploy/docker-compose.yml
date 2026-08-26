@@ -31,7 +31,7 @@ services:
       context: ../ml/service
     environment:
       # Flip to 0 and mount a model to serve real predictions (see ml/README.md).
-      FAKE_MODE: "1"
+      FAKE_MODE: "0"
       MODEL_PATH: /app/models/active.onnx
       PATCH_GRID: "5"
       PATCH_OVERLAP: "0"

@@ -45,8 +45,10 @@ a constraint silently.
 
 ```
 backend/      Go API, worker, seed loader. chi router, pgx, argon2id, JWT
-ml/           service/ = FastAPI + ONNX (CPU, fake mode by default)
-              training/ = M1 Pro recipes. Only configs/baseline.yaml exists so far
+ml/           service/ = FastAPI + ONNX (CPU). Compose now sets FAKE_MODE=0 and
+              serves models/active.onnx; fake mode is still the code default
+              training/ = M1 Pro recipes, fetch/train/evaluate/bench/quantize
+              models/active.onnx = the served artefact (gitignored)
 web/          Vue 3 + TypeScript dashboard, MapLibre, Vite
 android/      Kotlin + Compose + M3. Multi-module Gradle; see its README
 ios/          Swift + UIKit + Liquid Glass. XcodeGen; the .xcodeproj is generated
@@ -108,8 +110,8 @@ including several bugs that are easy to reintroduce.
 
 ## Current status (2026-08-26)
 
-Built and running: Go API and worker, ML service (**fake mode — no trained model
-yet**), Vue dashboard, database, seeded sightings, Docker stack, **and both mobile
+Built and running: Go API and worker, ML service (**serving a real trained model since
+2026-08-26**), Vue dashboard, database, seeded sightings, Docker stack, **and both mobile
 apps**.
 
 Both contributor apps are feature-complete against the `mobile-shared` contract: all
@@ -117,28 +119,39 @@ six screens, the offline outbox, reconciliation, token refresh, the patch lattic
 the provenance encoding. They were built and verified against the running stack — see
 `docs/evidence/mobile/` for screenshots of every screen on both platforms.
 
-The ML training track is **built and verified, but untrained**: the pipeline, the
-service cross-check, the ONNX export with its parity test and the reproducibility tests
-all work and run on synthetic data (`make test-train`, 41 tests). Q6 is **resolved** —
-the NOAA corpus is cleared for use (D63) — and `ml/training/scripts/fetch_noaa.py` now
-downloads it anonymously, verifies it against the dataset card and writes a committed
-SHA-256 manifest. **Nothing has been downloaded yet**; that is step 1 of `ml/README.md`
-and the only thing between here and a trained model.
+**The ML track is trained and serving.** `effnetb0-0.1.0`: EfficientNet-B0 fine-tuned on
+the NOAA-PIFSC corpus (10,419 images, manifest `7a7bd814…60672b3`), 59 minutes on MPS,
+early stopped at epoch 25 with the epoch-17 checkpoint. Held-out test split, opened once:
+**0.8575 accuracy, 0.8548 macro-F1, 0.9027 F2-bleached, 0.9543 recall on bleached** — 27
+of 591 bleached patches missed. All 33 smoke checks pass with `FAKE_MODE=0`. Full evidence
+and the honest caveats in [`docs/evidence/ml/baseline-effnetb0.md`](docs/evidence/ml/baseline-effnetb0.md).
+
+We sit ~4.5 points under the published ~0.902 accuracy, and that is the selection metric
+doing its job rather than a shortfall: the checkpoint is chosen on F2 over the bleached
+class, and the final epoch had *higher* val accuracy (0.8713) with worse bleached recall.
+**The model has never seen a Maldivian reef** — NOAA is Hawaiian tissue crops — so nothing
+here evidences field accuracy until the D60 domain-gap work runs.
 
 Measured, with a harness and a recorded run rather than from memory — `make perf`,
 figures and caveats in [`docs/evidence/performance/`](docs/evidence/performance/):
 sync→label **0.89s** (≤30s), map at 10,304 sightings **56ms** worst of 5 (≤2s), 50
-concurrent submissions **0 errors and 0 lost** at 919/s, inference **22ms** (≤500ms, but
-that is the fake model and means nothing until one is trained). The old notes here said
-22ms for the map and ~1.5s for sync; both were remembered, and the map figure was wrong.
+concurrent submissions **0 errors and 0 lost** at 919/s. The 22ms inference figure in that
+run was the *stub*; the real model's latency is the paragraph below, and `make perf` has
+not been re-run against it. The old notes here said 22ms for the map and ~1.5s for sync;
+both were remembered, and the map figure was wrong.
 
-**NFR2 for the real architecture is 406ms p50 / 417ms p95** per photograph — EfficientNet-B0,
-a 25-patch lattice, ONNX on CPU, at the deployed `ONNX_THREADS=4`. The figure these notes
-would have quoted a day ago was 381ms, and it was a correct measurement of a session
-onnxruntime built with one thread per core rather than the two the stack shipped; at 2
-threads the same graph breached 500ms at the tail. `ONNX_THREADS` is now 4 and a contract
-test fails if the benchmark and `docker-compose.yml` drift apart again (D64). D65 closed
-the backbone question by measurement: ConvNeXt-Tiny 1,486ms and EfficientNetV2-S 862ms are
+**NFR2 is met on the CPU and missed in the container, and the story is worth reading before
+touching latency.** The trained model is **405ms p50 / 414ms p95** per photograph on the
+host at the deployed `ONNX_THREADS=4` — within 2ms of the random-weights benchmark, which
+is a clean confirmation that latency tracks architecture and not weights. Inside the
+compose stack the same graph takes **822ms**, because Docker Desktop on macOS is a VM and
+costs ~2x; not emulation, not a CPU quota, not contention, all four ruled out by
+measurement (D67). No thread count recovers it. INT8 quantisation *did* — 4.2x, 98ms — and
+was **rejected**, because it cost 14 points of bleached recall while accuracy fell only 2
+(D68). The lattice stays 5x5. Two earlier NFR2 figures were wrong for instructive reasons:
+381ms measured onnxruntime's default thread count rather than the stack's (D64), and a
+contract test now fails if the benchmark and `docker-compose.yml` disagree. D65 closed the
+backbone question by measurement: ConvNeXt-Tiny 1,486ms and EfficientNetV2-S 862ms are
 both well outside the budget, so EfficientNet-B0 is not a preference but the only fit.
 
 The reef map draws real geography: Natural Earth 10m clipped to the Maldives and
@@ -153,9 +166,10 @@ to-do list, and its counts are tallied by `scripts/testing_matrix.py` rather tha
 maintained by hand. 282 automated tests across six suites, all passing, plus 33
 end-to-end smoke checks and 4 measured performance checks.
 
-Known gaps, in the order they hurt the project: **no trained model** (the pipeline is
-ready; the dataset licence is Q6, and it blocks FR5's real accuracy and FR17), no
-dashboard **view** tests (the components are covered but nothing mounts `QueueView`,
+Known gaps, in the order they hurt the project: **no domain-gap evidence** (the model is
+trained and served, but on Hawaiian tissue crops — until the Seaview Maldivian evaluation
+in D60 runs, no claim about field accuracy is supported), **NFR2 in the container** (D67),
+no dashboard **view** tests (the components are covered but nothing mounts `QueueView`,
 `ReefMapView` or `SightingDetailView`), the NFR6 **timing** is unmeasured (the tap count is
 now 5, counted from the code), no request-ID propagation test (NFR12), and no SUS study
 (NFR8). The mobile acceptance checklist is now mostly automated —

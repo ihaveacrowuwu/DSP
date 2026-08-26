@@ -91,9 +91,11 @@ uploads. Once the NOAA dataset is downloaded for training, it is the obvious sou
 
 ## Training
 
-Not yet written — that work happens on the MacBook, where PyTorch has Metal
-acceleration. `training/configs/baseline.yaml` records the intended recipe so the
-first run has a starting point rather than a blank page.
+**Done — there is a trained model.** `effnetb0-0.1.0`, 59 minutes on the M1 Pro via MPS,
+0.8575 accuracy and 0.9027 F2-bleached on the held-out test split, exported to ONNX and
+served. Full numbers, the training curve and the honest caveats are in
+[`docs/evidence/ml/baseline-effnetb0.md`](../docs/evidence/ml/baseline-effnetb0.md).
+The recipe that produced it is `training/configs/baseline.yaml`, unmodified.
 
 ### What exists now
 
