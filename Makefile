@@ -193,6 +193,12 @@ lint: mobile-lint ## Every lint and contract check, including the traceability m
 	@# having been renamed or deleted is a documentation bug that must fail the build.
 	$(PY) scripts/testing_matrix.py --check
 	@echo
+	@# The submission is the project plus the setup README, so the project has to be
+	@# self-contained: its appendices reproduce the requirements table, the decision log
+	@# and the traceability matrix. They are generated, and a stale copy would put the
+	@# same facts in two places with different values.
+	$(PY) scripts/build_appendices.py --check
+	@echo
 	@# NFR4's "config inspection" half. The live handshake is `make smoke-tls`.
 	$(PY) scripts/check_tls_config.py
 
