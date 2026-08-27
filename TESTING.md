@@ -138,7 +138,6 @@ is the argument for having written them:
 | NFR5 | Validate, re-encode and strip EXIF from uploads | Must | smoke 8 refuses a non-image | ◐ |
 | NFR6 | Capture completable in < 60 s and ≤ 8 taps | Must | **5 taps**, counted from the capture code (6 on the first ever capture, including the permission grant). The **timing** has never been measured | ◐ |
 | NFR7 | Contributor app fully functional offline except register/login | Must | the 8 `SyncEngineOfflineTest` cases, `journalsWriteAheadSoAReaderNeverBlocksTheCaptureFlow`, `commitsReachTheStorageMediumBeforeEnqueueReturns`, `DurabilityPragmaTests`; plus a device walkthrough with the radio off — GPS resolved, camera captured (`docs/evidence/mobile/acceptance.md`) | ✅ |
-| NFR8 | SUS ≥ 70 from ≥ 5 users | Must | — | ○ |
 | NFR9 | No component depends on a key-requiring external service | Must | `make mobile-lint` fails on an App Transport Security exception in a release plist; the basemap is committed vector GeoJSON with no tile or glyph server (D22/D23) | ◐ |
 | NFR10 | Startable by one documented command; seed by one more | Must | `make up`, `make seed`; `make test`, `make test-ml`, `make test-web` and `make smoke` were all broken before 2026-08-21 and now run (D42) | ◐ |
 | NFR11 | 50 concurrent sighting submissions with no error or loss | Should | `make perf` — **0 errors, 0 lost**, 919/s; every client-generated id is read back afterwards | ✅ |
@@ -179,8 +178,13 @@ is the argument for having written them:
   walked with the radio genuinely off, resolving GPS and taking a photograph. One ANR
   during that walkthrough is recorded as a risk to re-check on physical hardware — the
   launcher ANR'd first, which points at the emulator, but it is not settled.
-- **NFR8** — a human-subjects study. Not automatable and not started; the project needs
-  to either run it or narrow the claim.
+- **NFR8 is withdrawn, not outstanding** (D70, 2026-08-27). It required a SUS score from
+  five recruited users, and it was **self-imposed** — the module brief requires no user
+  study under either reading of its contradictory weightings, and the requirements chapter
+  needs at least 10 functional and 10 non-functional requirements, which 16 NFRs still
+  clears comfortably. The honest alternative was a rushed five-person study behind an
+  unresolved ethics process (Q5). Usability is now evidenced by **NFR6** instead — 5 taps,
+  counted from the capture code, with the timing still to be measured.
 - **NFR12** — no evidence. Request IDs propagated across Go and Python needs log
   assertions rather than a harness.
 

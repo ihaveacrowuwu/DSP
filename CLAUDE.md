@@ -160,8 +160,8 @@ path has no tile server, no glyph server and no network. See D22/D23 in `docs/08
 the header of `web/src/lib/mapStyle.ts`.
 
 [`TESTING.md`](TESTING.md) is the requirement-to-test traceability matrix, and it is
-the honest picture: of 33 requirements, **20** have full automated evidence, 10 are
-partly covered and **3 have none**. Read it before planning work — it is also the
+the honest picture: of 32 tracked requirements (NFR8 withdrawn, D70), **20** have full automated evidence, 10 are
+partly covered and **2 have none**. Read it before planning work — it is also the
 to-do list, and its counts are tallied by `scripts/testing_matrix.py` rather than
 maintained by hand. 282 automated tests across six suites, all passing, plus 33
 end-to-end smoke checks and 4 measured performance checks.
