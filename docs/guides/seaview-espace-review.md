@@ -1,5 +1,14 @@
 # Seaview UQ eSpace page — human review guide
 
+> **Status: fully closed 2026-08-27.** Checks 5 and 6 (partition size, survey IDs) are
+> answered without downloading anything — see
+> `docs/evidence/datasets/seaview-partition-scope.md` and **D69**. Short version: the data
+> is not on this page at all, it is on a keyless HTTP index at
+> `data.qld.edu.au/public/Q1281/`; Maldives is its own ISO-coded partition (`IND_MDV`,
+> 63 surveys, 124.8 GB) so the CSV-filtering plan in §2 check 4 is unnecessary; and the
+> right download is 3.2 GB of annotations + tabular data, not the full quadrat set. The
+> licence screenshot in §3 is the only outstanding item.
+>
 > **Status: done 2026-08-24.** The user read the page and pasted its metadata; the
 > outcome is recorded in the Q6 row of `docs/08`. Checks 1 and 3 (licence at the
 > source, no extra terms) are confirmed. Check 2 is closed: the page has no

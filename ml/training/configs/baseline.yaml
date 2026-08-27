@@ -120,24 +120,31 @@ evaluation:
       # UQ eSpace UQ:734799, DOI 10.14264/uql.2019.930, CC-BY 3.0, keyless.
       # Licence confirmed on the publisher's page by a human read, 2026-08-24
       # (docs/08 Q6): Open Access, no terms beyond CC-BY.
-      # 1.5 TB in total across 22 regional datasets — pull the Central Indian
-      # Ocean region only. Record the survey IDs and a manifest hash below once
-      # downloaded, so the project's data section is reproducible.
-      # Three cautions from the eSpace page (docs/08, "Q6, the Seaview page
-      # itself"): the region is described as "Indian Ocean (Maldives, Chagos
-      # Archipelago)", so confirm the partition's actual name at download and
-      # select Maldivian transects via the tabular metadata (CSV GPS/transect
-      # files), not by folder name — Chagos shares the region. Take only the
-      # photo-quadrats, annotations and tabular files; NEVER the raw 360°
-      # triplets, which are the bulk of the volume. Quadrats are standardised
-      # downward-facing ~1 m² frames — describe them as such in the domain-gap
-      # analysis, not as oblique reef scenes.
+      # 1.45 TB in total across 22 ISO-coded regional partitions. Quadrats are
+      # standardised downward-facing ~1 m² frames — describe them as such in the
+      # domain-gap analysis, not as oblique reef scenes. The raw 360° triplets
+      # D60 warned about are not published, so there is nothing to avoid.
       # Under /ml/datasets/, which .gitignore already excludes — imagery this
       # large must never be stageable.
-      local_path: ../datasets/seaview/central-indian-ocean
+      # Scoped 2026-08-27 without downloading (D69). The data is NOT on the eSpace
+      # page, which 403s; it is a keyless HTTP index at data.qld.edu.au/public/Q1281/.
+      # Maldives is its own ISO-coded partition, so the planned CSV filtering to
+      # exclude Chagos (IND_CHA) is unnecessary — the filename prefix separates them.
+      # Take annotated-images/IND_MDV.zip (2.55 GB) + tabular-data.zip (358 MB), NOT
+      # the 124.8 GB of full-resolution quadrats.
+      local_path: ../datasets/seaview/ind-mdv
       labels: none          # hand-labelled subset lives in image_level_set
-      survey_ids: []        # fill at download time
-      manifest_sha256: null # fill at download time
+      # The 63 Maldivian surveys, from the published file listing. Two campaigns
+      # either side of the 2016 bleaching event: 37xxx is 2015-03/04, 46xxx is
+      # 2017-03/04, same sites and same SVII optics.
+      survey_ids: [37001, 37002, 37003, 37004, 37005, 37006, 37007, 37008, 37009, 37010,
+                   37011, 37012, 37013, 37014, 37015, 37016, 37017, 37018, 37019, 37020,
+                   37021, 37022, 37025, 37026, 37027, 37028, 37029, 37030, 37031, 37032,
+                   37033, 37034, 37035, 37036, 37037, 37038, 37039,
+                   46001, 46002, 46003, 46004, 46006, 46007, 46008, 46009, 46010, 46011,
+                   46014, 46015, 46020, 46021, 46022, 46027, 46028, 46029, 46030, 46031,
+                   46032, 46033, 46035, 46037, 46038, 46039]
+      manifest_sha256: null # fill at download time — needs the bytes
     - name: kaggle-healthy-bleached
       source: kaggle:vencerlanz09/healthy-and-bleached-corals-image-classification
       labels: healthy_bleached
