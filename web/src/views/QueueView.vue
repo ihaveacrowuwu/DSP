@@ -274,7 +274,7 @@ function formatCoord(value: number, positive: string, negative: string): string 
             <p class="verdict">
               <span class="readout severity">{{ Math.round(prediction.severity * 100) }}%</span>
               <span class="verdict-text">
-                bleached extent — reads
+                bleached extent - reads
                 <strong>{{ prediction.label }}</strong>
               </span>
             </p>

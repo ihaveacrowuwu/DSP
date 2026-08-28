@@ -60,7 +60,7 @@ func TestContributorsCannotReachResearcherOrAdminRoutes(t *testing.T) {
 		t.Run(route.method+" "+route.path, func(t *testing.T) {
 			status, body := h.do(route.method, route.path, contributor.Token, route.body)
 			if status != http.StatusForbidden {
-				t.Errorf("a contributor got %d, want 403 — body: %s", status, body)
+				t.Errorf("a contributor got %d, want 403 - body: %s", status, body)
 			}
 		})
 	}
@@ -77,7 +77,7 @@ func TestResearchersCannotReachAdminRoutes(t *testing.T) {
 		t.Run(route.method+" "+route.path, func(t *testing.T) {
 			status, body := h.do(route.method, route.path, researcher.Token, route.body)
 			if status != http.StatusForbidden {
-				t.Errorf("a researcher got %d, want 403 — body: %s", status, body)
+				t.Errorf("a researcher got %d, want 403 - body: %s", status, body)
 			}
 		})
 	}
@@ -94,7 +94,7 @@ func TestEachRoleReachesItsOwnRoutes(t *testing.T) {
 		t.Run("researcher "+route.path, func(t *testing.T) {
 			status, body := h.do(route.method, route.path, researcher.Token, route.body)
 			if status == http.StatusForbidden || status == http.StatusUnauthorized {
-				t.Errorf("a researcher was refused their own route: %d — body: %s", status, body)
+				t.Errorf("a researcher was refused their own route: %d - body: %s", status, body)
 			}
 		})
 	}
@@ -104,7 +104,7 @@ func TestEachRoleReachesItsOwnRoutes(t *testing.T) {
 		t.Run("admin "+route.path, func(t *testing.T) {
 			status, body := h.do(route.method, route.path, admin.Token, route.body)
 			if status == http.StatusForbidden || status == http.StatusUnauthorized {
-				t.Errorf("an admin was refused a researcher route: %d — body: %s", status, body)
+				t.Errorf("an admin was refused a researcher route: %d - body: %s", status, body)
 			}
 		})
 	}
@@ -112,7 +112,7 @@ func TestEachRoleReachesItsOwnRoutes(t *testing.T) {
 		t.Run("admin "+route.path, func(t *testing.T) {
 			status, body := h.do(route.method, route.path, admin.Token, route.body)
 			if status == http.StatusForbidden || status == http.StatusUnauthorized {
-				t.Errorf("an admin was refused their own route: %d — body: %s", status, body)
+				t.Errorf("an admin was refused their own route: %d - body: %s", status, body)
 			}
 		})
 	}
@@ -135,7 +135,7 @@ func TestUnauthenticatedRequestsAreRefused(t *testing.T) {
 		t.Run(route.method+" "+route.path, func(t *testing.T) {
 			status, body := h.do(route.method, route.path, "", route.body)
 			if status != http.StatusUnauthorized {
-				t.Errorf("an anonymous caller got %d, want 401 — body: %s", status, body)
+				t.Errorf("an anonymous caller got %d, want 401 - body: %s", status, body)
 			}
 		})
 	}
@@ -162,7 +162,7 @@ func TestAGarbageOrForeignTokenIsRefused(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			status, body := h.do(http.MethodGet, "/v1/me", token, nil)
 			if status != http.StatusUnauthorized {
-				t.Errorf("got %d, want 401 — body: %s", status, body)
+				t.Errorf("got %d, want 401 - body: %s", status, body)
 			}
 		})
 	}
@@ -179,7 +179,7 @@ func TestAContributorCannotVerifyEvenTheirOwnSighting(t *testing.T) {
 	status, body := h.do(http.MethodPost, "/v1/sightings/"+id.String()+"/verification",
 		contributor.Token, map[string]any{"decision": "confirmed", "label": "bleached"})
 	if status != http.StatusForbidden {
-		t.Fatalf("a contributor verified their own sighting: %d — body: %s", status, body)
+		t.Fatalf("a contributor verified their own sighting: %d - body: %s", status, body)
 	}
 	if got := h.statusOf(id); got != "awaiting_verification" {
 		t.Errorf("status changed to %q despite the refusal", got)
@@ -197,7 +197,7 @@ func TestAContributorCannotReadAnotherContributorsSighting(t *testing.T) {
 
 	status, body := h.do(http.MethodGet, "/v1/sightings/"+id.String(), stranger.Token, nil)
 	if status != http.StatusNotFound && status != http.StatusForbidden {
-		t.Fatalf("a stranger read another contributor's sighting: %d — body: %s", status, body)
+		t.Fatalf("a stranger read another contributor's sighting: %d - body: %s", status, body)
 	}
 }
 
@@ -221,7 +221,7 @@ func TestReplayingAnotherContributorsIDIsRefused(t *testing.T) {
 		"capturedAt":     "2026-01-01T00:00:00Z",
 	})
 	if status < 400 {
-		t.Fatalf("an attacker replayed another contributor's id and got %d — body: %s", status, body)
+		t.Fatalf("an attacker replayed another contributor's id and got %d - body: %s", status, body)
 	}
 
 	// Refusing the request is not enough on its own: the row must be untouched, and

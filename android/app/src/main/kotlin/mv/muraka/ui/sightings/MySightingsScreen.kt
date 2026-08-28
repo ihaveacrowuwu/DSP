@@ -88,7 +88,7 @@ fun MySightingsScreen(
                         EmptyState(
                             title = "No sightings yet",
                             body = "Photograph a reef and Muraka will queue it. It uploads by itself " +
-                                "when you have a connection — you can capture all day with no signal.",
+                                "when you have a connection - you can capture all day with no signal.",
                             icon = Icons.Outlined.Waves,
                         )
                     }

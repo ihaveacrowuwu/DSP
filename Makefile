@@ -1,4 +1,4 @@
-# Muraka — common tasks.
+# Muraka - common tasks.
 #
 # Host ports are overridable: make up API_PORT=9090
 
@@ -10,12 +10,12 @@ COMPOSE_TLS := docker compose -f deploy/docker-compose.yml -f deploy/docker-comp
 GO      := go
 
 # `python3`, never `python`. On this machine `python` is a shell *alias*, so recipes
-# using it failed with "No such file or directory" — make runs /bin/sh, which does not
+# using it failed with "No such file or directory" - make runs /bin/sh, which does not
 # read the interactive shell's aliases. `make smoke` was broken that way.
 PY      := python3
 # The ML tests run in a virtualenv created on demand. The path was `.venv/Scripts/python`,
-# which is the **Windows** layout — part of this repository was written on a Windows
-# machine — so `make test-ml`, and therefore `make test`, failed on macOS and Linux.
+# which is the **Windows** layout - part of this repository was written on a Windows
+# machine - so `make test-ml`, and therefore `make test`, failed on macOS and Linux.
 VENV    := ml/service/.venv
 VENV_PY := $(VENV)/bin/python
 
@@ -42,7 +42,7 @@ up: ## Build and start the whole stack
 up-tls: deploy/tls/certs/server.crt ## Build and start the demo stack with TLS on :8443
 	$(COMPOSE_TLS) up -d --build
 	@echo
-	@echo "Demo stack on https://localhost:$${TLS_PORT:-8443} — dashboard and API share one origin."
+	@echo "Demo stack on https://localhost:$${TLS_PORT:-8443} - dashboard and API share one origin."
 	@echo "The certificate is self-signed (NFR9 rules out a CA), so a browser will warn once."
 
 deploy/tls/certs/server.crt:
@@ -52,7 +52,7 @@ down-tls: ## Stop the TLS demo stack
 	$(COMPOSE_TLS) down
 
 smoke-tls: up-tls ## Run the smoke test through TLS, proving the demo config works
-	@# Self-signed, so the client is told to accept it — the point of the check is that
+	@# Self-signed, so the client is told to accept it - the point of the check is that
 	@# the whole pipeline works over TLS, not that a demo certificate chains to a CA.
 	MURAKA_API=https://localhost:$${TLS_PORT:-8443} MURAKA_TLS_INSECURE=1 $(PY) scripts/smoke_test.py
 
@@ -141,7 +141,7 @@ dev-ml: $(VENV_PY) ## Run the ML service on the host with reload
 	cd ml/service && .venv/bin/python -m uvicorn app.main:app --reload --port 8000
 
 dev-web: ## Dashboard with hot reload on :5180 (replaces the static web container)
-	@echo "Freeing :5180 — the static web container serves the last build there."
+	@echo "Freeing :5180 - the static web container serves the last build there."
 	-$(COMPOSE) stop web
 	cd web && npm run dev
 
@@ -171,7 +171,7 @@ ios-generate: ## Regenerate Muraka.xcodeproj from ios/project.yml
 	cd ios && xcodegen generate
 
 # The OS is pinned deliberately. `name=iPhone 17` alone is AMBIGUOUS when more than one
-# runtime is installed — this machine has an iPhone 17 on both 26.1 and 26.5, and xcodebuild
+# runtime is installed - this machine has an iPhone 17 on both 26.1 and 26.5, and xcodebuild
 # silently picks one while `xcrun simctl` commands address whichever is booted. That cost an
 # hour of "dark mode does not work" when the screenshots were simply coming from the other
 # device. Override with `make test-ios IOS_SIM='...'` if you need a different one.

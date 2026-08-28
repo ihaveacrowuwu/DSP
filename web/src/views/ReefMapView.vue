@@ -472,7 +472,7 @@ function bucketLabel(iso: string): string {
       <p class="credit">
         {{
           basemapFailed
-            ? 'Geography could not be loaded — markers only.'
+            ? 'Geography could not be loaded - markers only.'
             : 'Geography: Natural Earth 10m, public domain.'
         }}
       </p>
@@ -527,7 +527,7 @@ function bucketLabel(iso: string): string {
 }
 
 /* A quiet in-flight marker. The map has no room for a spinner and no need for
-   one — this only has to say "numbers are still moving". */
+   one - this only has to say "numbers are still moving". */
 .pulse {
   width: 0.5rem;
   height: 0.5rem;
@@ -714,7 +714,7 @@ function bucketLabel(iso: string): string {
    the component's style scope, so these rules cannot be scoped. */
 
 /* Place names. A marker element sits directly under the cursor wherever it lands,
-   so it must not take pointer events — it would block panning and steal hover
+   so it must not take pointer events - it would block panning and steal hover
    from the markers it labels. */
 .map-label {
   pointer-events: none;

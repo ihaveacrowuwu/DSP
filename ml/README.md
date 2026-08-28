@@ -2,14 +2,14 @@
 
 Two halves with one contract between them:
 
-- **`training/`** — runs on the M1 Pro. Fine-tunes a patch classifier, evaluates
+- **`training/`** - runs on the M1 Pro. Fine-tunes a patch classifier, evaluates
   it, exports ONNX. Never runs in production.
-- **`service/`** — runs in Docker on CPU. Loads the exported ONNX, tiles incoming
+- **`service/`** - runs in Docker on CPU. Loads the exported ONNX, tiles incoming
   photos into a grid, returns per-patch labels plus a bleached-extent severity.
 
 The contract is the exported artefact plus the preprocessing recipe. Both halves
 share the same normalisation constants, and a golden-file test asserts that
-PyTorch and ONNX agree — a silent mismatch there is the classic way to lose
+PyTorch and ONNX agree - a silent mismatch there is the classic way to lose
 accuracy points with nothing in the logs.
 
 See [`docs/06-ml-specification.md`](../docs/06-ml-specification.md) for the task
@@ -54,10 +54,10 @@ curl http://localhost:8010/healthz
 | `MODEL_PATH` | `models/active.onnx` | ONNX artefact to load |
 | `MODEL_VERSION` | from artefact metadata | Recorded on every prediction |
 | `PATCH_GRID` | `5` | Grid is `N×N` over the centre square |
-| `PATCH_OVERLAP` | `0` | 0–0.9; grows each patch for extra context |
+| `PATCH_OVERLAP` | `0` | 0-0.9; grows each patch for extra context |
 | `INPUT_SIZE` | `224` | Must match training |
 | `BLEACHED_LABEL_THRESHOLD` | `0.35` | Severity at which the image reads bleached |
-| `ONNX_THREADS` | `2` (compose sets **4**) | CPU threads for inference. The code's fallback is 2; `deploy/docker-compose.yml` sets 4, because at 2 a 25-patch lattice breaches NFR2 at the tail — D64 |
+| `ONNX_THREADS` | `2` (compose sets **4**) | CPU threads for inference. The code's fallback is 2; `deploy/docker-compose.yml` sets 4, because at 2 a 25-patch lattice breaches NFR2 at the tail - D64 |
 
 `PATCH_GRID`, `PATCH_OVERLAP` and `BLEACHED_LABEL_THRESHOLD` are deliberately
 configurable: grid granularity and the label threshold are experiments the project
@@ -66,7 +66,7 @@ reports on, not constants.
 ## Demo photographs for the dashboard
 
 `make seed` attaches a photograph to every synthetic sighting. By default that is a
-plain hatched swatch, because a fresh clone has no reef imagery — which means the
+plain hatched swatch, because a fresh clone has no reef imagery - which means the
 dashboard shows the model's patch overlay sitting on a blank blue-green square.
 
 To see real coral under the overlay, drop reef photographs into
@@ -91,7 +91,7 @@ uploads. Once the NOAA dataset is downloaded for training, it is the obvious sou
 
 ## Training
 
-**Done — there is a trained model.** `effnetb0-0.1.0`, 59 minutes on the M1 Pro via MPS,
+**Done - there is a trained model.** `effnetb0-0.1.0`, 59 minutes on the M1 Pro via MPS,
 0.8575 accuracy and 0.9027 F2-bleached on the held-out test split, exported to ONNX and
 served. Full numbers, the training curve and the honest caveats are in
 [`docs/evidence/ml/baseline-effnetb0.md`](../docs/evidence/ml/baseline-effnetb0.md).
@@ -119,15 +119,15 @@ cd ml/training && python3 scripts/train.py --config configs/baseline.yaml     --
 Three things that verification already settled:
 
 - **CPU latency fits, at the thread count the stack actually deploys.** EfficientNet-B0 at
-  224 px, exported to ONNX, classifies a whole 5×5 lattice — one photograph — in **406 ms
+  224 px, exported to ONNX, classifies a whole 5×5 lattice - one photograph - in **406 ms
   p50 / 417 ms p95** on the M1 Pro at `ONNX_THREADS=4`, against NFR2's 500 ms. So the
   fallback in step 6 below is not needed and the accuracy-first backbone stays. An earlier
   381 ms figure measured onnxruntime's *default* thread count rather than the service's,
   and at the previously shipped `ONNX_THREADS=2` the same graph breached the budget at the
-  tail — see D64, and `scripts/bench_backbones.py --sweep-threads` for the sweep that
+  tail - see D64, and `scripts/bench_backbones.py --sweep-threads` for the sweep that
   chose 4. Figures in [`docs/evidence/performance/`](../docs/evidence/performance/).
 - **The graph the service will serve matches the model that gets evaluated**, to 6.9e-07.
-- **Runs are reproducible** — same seed, same metrics; different seed, different metrics.
+- **Runs are reproducible** - same seed, same metrics; different seed, different metrics.
   Both directions are asserted, because a pipeline that ignores the seed passes the first
   test and fails the requirement.
 
@@ -138,21 +138,21 @@ Neither crashes, so neither would be noticed.
 
 **What is missing is the data**, and nothing else.
 
-### Picking this up next session — the exact next steps
+### Picking this up next session - the exact next steps
 
-Everything below the dataset is done. **The gate is open: Q6 was resolved on 2026-08-24 — the NOAA dataset is cleared for use**, with a citation and the as-is
+Everything below the dataset is done. **The gate is open: Q6 was resolved on 2026-08-24 - the NOAA dataset is cleared for use**, with a citation and the as-is
 disclaimer owed in the project's data section. The terms as read are recorded in
 the decision log under Q6: no explicit licence tag, the standard NOAA as-is disclaimer, a requested
 citation, and the dataset's own facts (224 px, `CORAL`/`CORAL_BL`, 7,292 training images)
 matching `configs/baseline.yaml` exactly. **Nothing has been downloaded.**
 
-The steps, in order (the prep for steps 1–2 is planned in
+The steps, in order (the prep for steps 1-2 is planned in
 the ML prep notes):
 
 ```bash
 # 1. Get the corpus (768 MB) into ml/datasets/noaa. The script downloads it anonymously,
 #    checks the split totals and per-class counts against the dataset card, writes a
-#    SHA-256 manifest to manifests/noaa.sha256 (committed — it is the project's
+#    SHA-256 manifest to manifests/noaa.sha256 (committed - it is the project's
 #    provenance evidence), and prints the citation D63 owes.
 cd ml/training
 python3 scripts/fetch_noaa.py
@@ -191,23 +191,23 @@ graph rather than in the weights.
    evaluation. Say so in the project; it is a discipline markers notice.
 3. **Train the baseline**: EfficientNet-B0, head first, then staged unfreeze.
    Target under an hour per run on the M1 Pro.
-4. **Evaluate**: accuracy, macro-F1, and **F2 on the bleached class** — a missed
+4. **Evaluate**: accuracy, macro-F1, and **F2 on the bleached class** - a missed
    bleaching event costs more than a false alarm, so recall is weighted. Plus a
    confusion matrix and an error gallery.
 5. **Export ONNX**, then run the parity test against the PyTorch model.
 6. ~~**Check CPU latency** for a 25-patch batch. If it is slow, drop to
-   MobileNetV3-Large before touching accuracy.~~ **Done** — 406 ms per photograph at
+   MobileNetV3-Large before touching accuracy.~~ **Done** - 406 ms per photograph at
    `ONNX_THREADS=4`, so EfficientNet-B0 stays. `scripts/bench_backbones.py` also closed the
    "compare a modern backbone" question: ConvNeXt-Tiny is 1,486 ms and
    EfficientNetV2-S 862 ms, both far outside the budget rather than marginally over.
 7. **Then the domain-gap work**: pull the **Central Indian
-   Ocean** region of the Seaview Survey dataset — that region only, the whole thing
-   is 1.5 TB across 22 regional partitions — and record the survey IDs and a
+   Ocean** region of the Seaview Survey dataset - that region only, the whole thing
+   is 1.5 TB across 22 regional partitions - and record the survey IDs and a
    manifest hash in `configs/baseline.yaml`, which already has the fields waiting
    under `evaluation.cross_domain_sets`. The eSpace page describes the region as "Indian Ocean (Maldives, Chagos Archipelago)": confirm
    the partition's real name at download, select Maldivian transects via the shipped
    CSV metadata rather than by folder name, and take only the photo-quadrats,
-   annotations and tabular files — never the raw 360° triplets, which are the bulk
+   annotations and tabular files - never the raw 360° triplets, which are the bulk
    of the 1.5 TB. Evaluate the NOAA-trained model on
    Maldivian quadrats, then hand-label ~100 of them for the image-level set.
    Label them *before* looking at any model output on them.
@@ -216,7 +216,7 @@ Two things it is easy to get wrong here:
 
 - **Seaview has no healthy/bleached labels.** Its label set is hard coral, algae,
   soft coral, other invertebrate, other. It is an evaluation and hand-labelling
-  corpus only — never add it to a training split.
+  corpus only - never add it to a training split.
 - **The NOAA crops being low-quality is the point, not a problem.** Contributors
   photograph reefs on phones through moving water. A classifier trained on clean
   survey imagery would look better in a table and worse in the product. Do not
@@ -229,7 +229,7 @@ Two things it is easy to get wrong here:
   backup. The work DGX is a bonus and must never be a dependency.
 - **Inference is CPU-only.**
 - **No API-key services**: no comet-ml, no W&B, no Roboflow. Log runs to local
-  CSV/JSON — that is also what makes them reproducible for the project.
+  CSV/JSON - that is also what makes them reproducible for the project.
 - Everything config-driven and seeded, so a run can be repeated exactly.
 
 ### Layout
@@ -238,7 +238,7 @@ Two things it is easy to get wrong here:
 training/
   configs/          run configuration; one file per experiment
   muraka_train/     the library: config, data, model, metrics, train, export
-  scripts/          train.py, evaluate.py — thin CLIs over the library
+  scripts/          train.py, evaluate.py - thin CLIs over the library
   tests/            contract, metrics, reproducibility, ONNX parity
   runs/             metrics and checkpoints per run (gitignored)
 ```

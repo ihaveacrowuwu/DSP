@@ -165,7 +165,7 @@ def main() -> int:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="print the result but do not write it into docs/evidence — for proving the script works off-machine",
+        help="print the result but do not write it into docs/evidence - for proving the script works off-machine",
     )
     args = parser.parse_args()
 
@@ -201,7 +201,7 @@ def main() -> int:
             verdict = "under" if result["passed"] else "OVER"
             print(
                 f"  {backbone}: p50 {result['latency']['batch_ms_p50']} ms, "
-                f"p95 {result['latency']['batch_ms_p95']} ms — {verdict} the {THRESHOLD_MS} ms budget"
+                f"p95 {result['latency']['batch_ms_p95']} ms - {verdict} the {THRESHOLD_MS} ms budget"
             )
 
     report = {

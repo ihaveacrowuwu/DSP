@@ -11,7 +11,7 @@
 // with no Local.xcconfig still builds.
 // ────────────────────────────────────────────────────────────────────────────
 
-// Declared BEFORE the include so Local.xcconfig can override it — a later assignment
+// Declared BEFORE the include so Local.xcconfig can override it - a later assignment
 // wins. Bundle identifiers are globally unique across Apple developers, so anyone
 // running this on their own iPhone needs their own.
 MURAKA_BUNDLE_ID = mv.muraka

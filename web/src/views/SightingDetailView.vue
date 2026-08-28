@@ -159,7 +159,7 @@ onUnmounted(() => {
                     {{ Math.round(photo.prediction.severity * 100) }}%
                   </span>
                   <span class="verdict-text">
-                    bleached extent — reads
+                    bleached extent - reads
                     <strong>{{ photo.prediction.label }}</strong>
                   </span>
                 </p>

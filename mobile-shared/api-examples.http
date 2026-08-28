@@ -1,4 +1,4 @@
-### Muraka API — reference requests
+### Muraka API - reference requests
 ###
 ### Every call a mobile client makes, in the order it makes them. Runnable from
 ### VS Code REST Client, JetBrains HTTP Client, or by translating to curl.
@@ -105,14 +105,14 @@ GET {{host}}/v1/sightings?limit=25&offset=0
 Authorization: Bearer {{accessToken}}
 
 ### Photograph bytes. Needs the bearer token, so an image loader has to be
-### configured with the auth header — a bare URL will 401.
+### configured with the auth header - a bare URL will 401.
 
 GET {{host}}/v1/photos/018f3c2b-0000-7000-8000-000000000001/image
 Authorization: Bearer {{accessToken}}
 
 ### --- token refresh ---------------------------------------------------------
 ### On 401: refresh once, store BOTH new tokens, retry the original request.
-### Serialise this — two concurrent refreshes will kill the session, because the
+### Serialise this - two concurrent refreshes will kill the session, because the
 ### second presents an already-used token.
 
 POST {{host}}/v1/auth/refresh
@@ -163,7 +163,7 @@ Content-Type: {{contentType}}
 ### 401 without a token
 GET {{host}}/v1/sightings
 
-### 403 — a contributor reaching for a researcher endpoint
+### 403 - a contributor reaching for a researcher endpoint
 GET {{host}}/v1/verifications/queue
 Authorization: Bearer {{accessToken}}
 
@@ -189,7 +189,7 @@ GET {{host}}/v1/verifications/queue?limit=10
 Authorization: Bearer {{researcherToken}}
 
 ### Record a decision. confirmed/corrected need `label`; rejected needs
-### `rejectReason`. Appends to history — the model's prediction is preserved.
+### `rejectReason`. Appends to history - the model's prediction is preserved.
 
 POST {{host}}/v1/sightings/018f3c2a-0000-7000-8000-000000000001/verification
 Authorization: Bearer {{researcherToken}}

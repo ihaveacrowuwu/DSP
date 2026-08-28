@@ -74,7 +74,7 @@ deployable component while still giving at-least-once delivery, crash recovery
 (stale `running` jobs are reclaimed after a timeout) and horizontal scalability.
 
 **Predictions and verifications are append-only.** A sighting's effective
-condition is derived — the latest expert verdict wins over the model — so the full
+condition is derived - the latest expert verdict wins over the model - so the full
 provenance chain survives and the dashboard can always show who decided what.
 
 **Bounding boxes are inlined into SQL as literals, not bound as parameters.**

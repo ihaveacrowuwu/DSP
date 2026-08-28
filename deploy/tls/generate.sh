@@ -3,7 +3,7 @@
 #
 # NFR4 requires TLS in the deployed/demo configuration. NFR9 forbids depending on any
 # external service that needs an account, which rules out Let's Encrypt and every
-# managed certificate authority — so the demo terminates TLS with a certificate it
+# managed certificate authority - so the demo terminates TLS with a certificate it
 # generates itself. A browser will warn about it, and that warning is the honest
 # consequence of the key-free constraint rather than a defect: the project says so.
 #

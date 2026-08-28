@@ -6,7 +6,7 @@
   There was a `keychain-access-groups` entry here, and it broke the app: simulator builds are
   unsigned (CODE_SIGNING_ALLOWED is NO for iphonesimulator, so the app can run without a
   developer account), an unsigned build is granted no keychain access group, and every
-  SecItemAdd then failed with errSecMissingEntitlement — which the app noticed only as
+  SecItemAdd then failed with errSecMissingEntitlement - which the app noticed only as
   "signing in returns you to the sign-in screen".
 
   A keychain access group is only needed to SHARE the keychain with an app extension or a

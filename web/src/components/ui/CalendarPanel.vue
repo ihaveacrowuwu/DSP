@@ -332,7 +332,7 @@ defineExpose({
 }
 
 /* While the range is half-open the far end is only a preview, so it is drawn
-   hollow — you can see what you would get without it looking already chosen. */
+   hollow - you can see what you would get without it looking already chosen. */
 .day.is-provisional.is-end {
   background: var(--reef-wash);
   border-color: var(--reef);

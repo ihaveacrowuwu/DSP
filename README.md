@@ -1,4 +1,4 @@
-# Muraka — reef condition monitoring for the Maldives
+# Muraka - reef condition monitoring for the Maldives
 
 Final-year project (UFCFXK-30-3 Digital Systems Project, Villa College / UWE
 Bristol) by Ahmed Nauhaan Athif.
@@ -27,17 +27,17 @@ correct every result before it counts as data.
 ```
 
 Five components, all self-hosted. **Nothing in the system depends on an external
-API key** — that is a hard project constraint, and it shapes the map tiles,
+API key** - that is a hard project constraint, and it shapes the map tiles,
 notification strategy and ML stack.
 
 | Component | Stack | Status |
 |---|---|---|
 | API + worker | Go 1.26, chi, pgx | Working |
-| ML service | Python 3.12, FastAPI, ONNX Runtime | Working — serving a trained model |
+| ML service | Python 3.12, FastAPI, ONNX Runtime | Working - serving a trained model |
 | Dashboard | Vue 3, TypeScript, MapLibre | Working |
 | Database | PostgreSQL 16 + PostGIS | Working |
-| Android app | Kotlin, Jetpack Compose, Material 3 | Working — all six screens, offline outbox |
-| iOS app | Swift, UIKit, Liquid Glass | Working — all six screens, offline outbox |
+| Android app | Kotlin, Jetpack Compose, Material 3 | Working - all six screens, offline outbox |
+| iOS app | Swift, UIKit, Liquid Glass | Working - all six screens, offline outbox |
 
 ## Getting started
 
@@ -57,7 +57,7 @@ Ports are overridable if they clash: `make up API_PORT=9090 WEB_PORT=5190`.
 ### Working on the dashboard
 
 `make up` serves the dashboard as a **static production build** behind nginx, which
-is what the demo demo should run. It does not pick up source edits — a change needs
+is what the demo demo should run. It does not pick up source edits - a change needs
 `make restart S=web` to be rebuilt.
 
 For frontend work, run the dev server instead and get hot module reload: edits to a
@@ -70,7 +70,7 @@ make dev                # the same, plus starting postgres/api/ml first
 ```
 
 `make dev-web` stops the static `web` container so the dev server can own port
-5180 — the URL never changes, only what is answering on it. Vite is set to
+5180 - the URL never changes, only what is answering on it. Vite is set to
 `strictPort`, so if something else holds 5180 it says so instead of quietly moving
 to another port and leaving you looking at a stale build. `make up` puts the static
 container back.
@@ -140,7 +140,7 @@ survives.
 ## Measured behaviour
 
 Measured on the development machine (Apple M1 Pro) against 10,312 seeded sightings.
-Every figure here comes from a harness or a timed request, not from memory — three
+Every figure here comes from a harness or a timed request, not from memory - three
 earlier numbers in this table were recalled rather than measured and turned out to
 be wrong.
 
@@ -156,7 +156,7 @@ be wrong.
 | CPU inference, one 5×5 patch lattice | **405 ms** native (target: ≤ 500 ms) |
 
 ⚠️ That last figure is met on the processor and **missed inside Docker on macOS**,
-where the same model takes ~822 ms — Docker Desktop runs containers in a virtual
+where the same model takes ~822 ms - Docker Desktop runs containers in a virtual
 machine, which roughly doubles it. A Linux host has no such penalty.
 
 ## Constraints worth knowing before changing anything

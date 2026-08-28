@@ -75,7 +75,7 @@ def main() -> int:
             "the two apps disagree about the status vocabulary:\n"
             f"  android: {android}\n"
             f"  ios    : {ios}\n"
-            "  Both must change together — see mobile-shared/design-language.md."
+            "  Both must change together - see mobile-shared/design-language.md."
         )
 
     for label in android + ios:

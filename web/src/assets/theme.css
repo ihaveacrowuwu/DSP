@@ -1,4 +1,4 @@
-/* theme.css — every colour in the interface.
+/* theme.css - every colour in the interface.
  *
  * The palette is derived from the phenomenon being measured rather than chosen
  * for taste: living coral tissue reads teal, bleached skeleton reads bone-white,
@@ -30,9 +30,9 @@
   --surface-2: rgba(150, 214, 226, 0.1);
   --surface-3: rgba(150, 214, 226, 0.16);
   /* Floating chrome that sits over unknown content: the rail, the map overlays,
-     menus, the calendar. A tint alone is not enough — blurred over a bright
+     menus, the calendar. A tint alone is not enough - blurred over a bright
      saturated photograph it becomes a wash of that photograph's colour and takes
-     the labels with it — so this is a scrim of the ground colour, thin enough to
+     the labels with it - so this is a scrim of the ground colour, thin enough to
      see through and dark enough to keep small text legible over anything. Every
      floating surface uses this one value so they all read as the same material. */
   --chrome: rgba(7, 27, 37, 0.62);
@@ -48,13 +48,13 @@
 
   /* ── the sea floor: the basemap the reef map draws its geography on ──────
      Read as a nautical chart, not as scenery: shallower is lighter. Three
-     depths — the abyss the page sits on, the slope inside the 1000 m isobath,
-     the platform inside the 200 m one — so the atoll chain lifts out of the
+     depths - the abyss the page sits on, the slope inside the 1000 m isobath,
+     the platform inside the 200 m one - so the atoll chain lifts out of the
      ocean floor. Both schemes keep that direction.
 
      Every one of these is deliberately desaturated and blue-biased. The
      condition scale owns teal-through-bone, and a sandy island or a green
-     lagoon would put basemap colour on the same axis as the measurement —
+     lagoon would put basemap colour on the same axis as the measurement -
      a viewer would not know whether a pale patch was a reef or a beach. */
   --sea-abyss: #03121c;
   --sea-slope: #072736;
@@ -95,7 +95,7 @@
   --glow-accent: 0 0 0 1px rgba(46, 200, 162, 0.28), 0 4px 18px rgba(46, 200, 162, 0.18);
 }
 
-/* Light scheme — same semantics, inverted ground. Applied when the OS asks for
+/* Light scheme - same semantics, inverted ground. Applied when the OS asks for
    light and the user hasn't pinned dark, or when pinned explicitly below. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme='dark']) {
@@ -156,7 +156,7 @@
 }
 
 /* Pinned light: identical to the block above. Duplicated rather than combined
-   into one selector list because a media query cannot be factored out of one —
+   into one selector list because a media query cannot be factored out of one -
    and the light values must apply on a dark-preferring OS too. */
 :root[data-theme='light'] {
   --abyss: #eef3f3;

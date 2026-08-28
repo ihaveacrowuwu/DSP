@@ -45,7 +45,7 @@ const panel = useAnchoredPanel({
 })
 
 const label = computed(() => {
-  if (from.value && to.value) return `${formatDay(from.value)} – ${formatDay(to.value)}`
+  if (from.value && to.value) return `${formatDay(from.value)} - ${formatDay(to.value)}`
   if (from.value) return `From ${formatDay(from.value)}`
   if (to.value) return `Until ${formatDay(to.value)}`
   return 'Any dates'

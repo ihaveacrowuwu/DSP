@@ -44,7 +44,7 @@ Thumbs.db
 # ---------------------------------------------------------------- mobile
 #
 # Both apps are built on this machine; neither has a secret to protect
-# (constraint 2 — no API keys anywhere), so what follows is build output and
+# (constraint 2 - no API keys anywhere), so what follows is build output and
 # per-developer IDE state only.
 
 # Gradle / Android
@@ -63,7 +63,7 @@ captures/
 *.ap_
 *.dex
 *.hprof
-# The wrapper JAR is committed on purpose — it is what makes `./gradlew` reproducible
+# The wrapper JAR is committed on purpose - it is what makes `./gradlew` reproducible
 # on a clean machine. Do not add gradle-wrapper.jar here.
 
 # Xcode / Swift
@@ -84,7 +84,7 @@ xcuserdata/
 *.dSYM.zip
 .build/
 # ios/*.xcodeproj is generated from ios/project.yml by XcodeGen and is not a source
-# file. Note that this also excludes SwiftPM's Package.resolved, which lives inside it —
+# file. Note that this also excludes SwiftPM's Package.resolved, which lives inside it -
 # so ios/project.yml pins GRDB to an exact version rather than a range, and that file is
 # where dependency versions are reviewed.
 

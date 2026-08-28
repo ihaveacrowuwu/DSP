@@ -43,10 +43,10 @@ def check(name: str, condition: bool, detail: str = "") -> None:
     global passed
     if condition:
         passed += 1
-        print(f"  PASS  {name}" + (f" — {detail}" if detail else ""))
+        print(f"  PASS  {name}" + (f" - {detail}" if detail else ""))
     else:
         failed.append(name)
-        print(f"  FAIL  {name}" + (f" — {detail}" if detail else ""))
+        print(f"  FAIL  {name}" + (f" - {detail}" if detail else ""))
 
 
 def call(

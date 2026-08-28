@@ -71,7 +71,7 @@ def main() -> int:
     limit = re.search(r"^\s*client_max_body_size\s+(\d+)([kKmMgG])?;", nginx, re.M)
     api_limit = api_max_upload_bytes()
     if not limit:
-        fail("deploy/tls/nginx.conf sets no client_max_body_size — nginx defaults to "
+        fail("deploy/tls/nginx.conf sets no client_max_body_size - nginx defaults to "
              "1 MB and will reject photo uploads with 413 before the API sees them")
     else:
         scale = {"k": 1024, "m": 1024 ** 2, "g": 1024 ** 3}
@@ -100,7 +100,7 @@ def main() -> int:
     # -- The certificate must never be committed -----------------------------
     gitignore = read(".gitignore")
     if "deploy/tls/certs" not in gitignore:
-        fail("deploy/tls/certs/ is not gitignored — the private key could be committed")
+        fail("deploy/tls/certs/ is not gitignored - the private key could be committed")
     else:
         ok("deploy/tls/certs/ is gitignored")
 
@@ -111,7 +111,7 @@ def main() -> int:
             cwd=ROOT, capture_output=True, text=True, check=False,
         )
         if tracked.returncode == 0:
-            fail(f"{stray.relative_to(ROOT)} is TRACKED BY GIT — it is a private key")
+            fail(f"{stray.relative_to(ROOT)} is TRACKED BY GIT - it is a private key")
 
     # -- The certificate needs a SAN, not just a commonName ------------------
     if generator and "subjectAltName" not in generator:

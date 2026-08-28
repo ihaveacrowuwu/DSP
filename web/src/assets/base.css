@@ -1,4 +1,4 @@
-/* base.css — reset, structural tokens, scrollbars, accessibility.
+/* base.css - reset, structural tokens, scrollbars, accessibility.
  *
  * Layer order is load-bearing: base -> theme -> components. Structural tokens
  * (geometry, motion, type, depth) live here because they never change with the
@@ -27,7 +27,7 @@
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'JetBrains Mono', Menlo,
     Consolas, 'Liberation Mono', monospace;
 
-  /* The existing scale, kept verbatim — this interface is deliberately compact
+  /* The existing scale, kept verbatim - this interface is deliberately compact
      and the overhaul must not inflate it. 14px body, 12px labels. */
   --step--2: 0.6875rem;
   --step--1: 0.75rem;
@@ -176,7 +176,7 @@ svg {
 }
 
 /* Buttons are styled exclusively through .btn variants (see components.css).
-   Only the font and cursor are normalised here — a bare <button> is a bug. */
+   Only the font and cursor are normalised here - a bare <button> is a bug. */
 button {
   font: inherit;
   color: inherit;
@@ -244,7 +244,7 @@ button {
 
   /* Killing the transition alone leaves hover growth snapping instead of
      easing, which is worse than no effect. Only the scale/rotate longhands are
-     reset — this codebase reserves them for pointer feedback and never for
+     reset - this codebase reserves them for pointer feedback and never for
      resting layout, so clearing them cannot move anything. */
   :where(*:hover, *:active, *:focus-visible) {
     scale: none !important;

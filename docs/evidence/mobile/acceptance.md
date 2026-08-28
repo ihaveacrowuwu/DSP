@@ -1,10 +1,10 @@
-# Mobile acceptance checklist — results
+# Mobile acceptance checklist - results
 
 The checklist at the end of [`mobile-shared/README.md`](../../../mobile-shared/README.md)
 is the apps' stated definition of done. Every item was unticked until 2026-08-21, and
 the offline half had never been walked at all.
 
-This records what is now **automated**, what was **measured**, and what is still open —
+This records what is now **automated**, what was **measured**, and what is still open -
 including one risk that is neither a pass nor a defect. An acceptance checklist that
 quietly marks itself done is worth less than one with a gap in it.
 
@@ -26,14 +26,14 @@ quietly marks itself done is worth less than one with a gap in it.
 
 ## The offline items are automated, not just walked once
 
-`android/core/data/src/androidTest/.../SyncEngineOfflineTest.kt` — 8 tests, all passing
+`android/core/data/src/androidTest/.../SyncEngineOfflineTest.kt` - 8 tests, all passing
 on the `SkyCast_API36` emulator.
 
 Each checklist item describes a **situation** rather than a function: no network, a
 force-quit, a connection dropped halfway through an upload. Walking those by hand is
 worth doing once and useless as a regression guard, because nobody re-walks it after
 every change. So the situations are constructed instead: real Room, real files on disk,
-a real Keystore-encrypted session store, and only the server faked — and the fake keeps
+a real Keystore-encrypted session store, and only the server faked - and the fake keeps
 genuine state rather than expectations, so a test cannot pass while describing a server
 that could not exist.
 
@@ -43,7 +43,7 @@ Two things that only came out of writing them:
    `UnknownHostException` and `ConnectException` to `ApiError.Offline`, and a plain
    `IOException` to `ApiError.Timeout`. The first version of the fake threw
    `IOException`, so every "airplane mode" test silently exercised the
-   *retryable-failure* path instead — burning attempt counters against a network that
+   *retryable-failure* path instead - burning attempt counters against a network that
    was not there and never reporting itself offline. A device with its radio off fails to
    resolve the host, so `UnknownHostException` is both faithful and the one the engine
    reads correctly.
@@ -55,7 +55,7 @@ Two things that only came out of writing them:
 
 The reconciliation assertion is the one worth reading. After a connection drops during
 the second of three photographs, the test does not merely check that all three end up
-stored — it checks that **only the two missing ones were re-sent**. That is the
+stored - it checks that **only the two missing ones were re-sent**. That is the
 difference between "safe because the ids are idempotent" and "actually reconciled", and
 only the second one saves a diver's tethering allowance.
 
@@ -72,7 +72,7 @@ only the second one saves a diver's tethering allowance.
 
 GPS is acquired automatically, and depth, note and self-assessment are all optional. The
 **first ever** capture adds one tap for the camera permission grant, so it is 6 once and
-5 thereafter — both inside the limit.
+5 thereafter - both inside the limit.
 
 **< 60 seconds: still not measured.** NFR6's verification method is "usability testing
 measurement", and a tap count is not a stopwatch. This stays open, and the project should
@@ -88,12 +88,12 @@ say so rather than infer the timing from the tap count.
 What the walkthrough established, with no network at all:
 
 - The capture screen renders and is fully usable.
-- **Position resolves** — `37.42200, -122.08400`, accuracy `±5 m`. GPS is a sensor, not a
+- **Position resolves** - `37.42200, -122.08400`, accuracy `±5 m`. GPS is a sensor, not a
   radio service, which is exactly why FR2 allows a sighting without connectivity.
-- `Queue this sighting` is **disabled at 0 photographs**, enforcing the 1–5 rule before
+- `Queue this sighting` is **disabled at 0 photographs**, enforcing the 1-5 rule before
   the button can be pressed rather than after.
-- Permissions are requested **at the moment of capture** — location when the screen
-  opens, camera when "Take a photograph" is chosen — which is rule 6 of
+- Permissions are requested **at the moment of capture** - location when the screen
+  opens, camera when "Take a photograph" is chosen - which is rule 6 of
   `mobile-shared/README.md`, and neither was asked on launch.
 - The camera path works offline: the shutter produced
   `Photographs 1 of 5` with a thumbnail
@@ -106,7 +106,7 @@ automatically, by `capturingWithNoNetworkQueuesTheSightingAndKeepsThePhotograph`
 ### The emulator, and one observation worth following up on hardware
 
 Getting this far took five attempts. The first four failed inside the emulator rather
-than the app: `logcat` put the ANRs in **`system_server`** with Muraka at 17–23% CPU,
+than the app: `logcat` put the ANRs in **`system_server`** with Muraka at 17-23% CPU,
 preceded by a `Bluetooth keeps stopping` system crash, recurring immediately after
 `adb reboot`, with host ping latency averaging 448 ms. A full cold boot
 (`emulator -no-snapshot-load`) fixed it, and the 8 instrumented tests then passed in 10
@@ -116,8 +116,8 @@ On the successful walkthrough an ANR **did** appear in Muraka right after the ca
 returned. Two reasons to think it is the emulator and not the app, and one reason not to
 close the question:
 
-- The launcher ANR'd **first** — `ANR in com.google.android.apps.nexuslauncher`,
-  `[Gesture Monitor] swipe-up is not responding` — twenty seconds before Muraka's, which
+- The launcher ANR'd **first** - `ANR in com.google.android.apps.nexuslauncher`,
+  `[Gesture Monitor] swipe-up is not responding` - twenty seconds before Muraka's, which
   is system-wide input starvation rather than one app blocking its own main thread.
 - Muraka's reason is `Waited 5016ms for MotionEvent`, i.e. input dispatch, not a blocked
   computation.

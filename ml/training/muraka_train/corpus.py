@@ -168,7 +168,7 @@ def download(
 
     raise CorpusError(
         f"the download was rate limited and did not finish after {len(delays)} attempts. "
-        "Every file already fetched is kept, so re-running resumes rather than restarts — "
+        "Every file already fetched is kept, so re-running resumes rather than restarts - "
         "wait a while and run the same command again. Do NOT set HF_TOKEN to work around "
         "this: the corpus is public and the project does not use API-key services. "
         "Last error: "

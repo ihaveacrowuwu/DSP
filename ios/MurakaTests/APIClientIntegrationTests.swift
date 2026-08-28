@@ -29,7 +29,7 @@ struct APIClientIntegrationTests {
         let reachable = (try? await URLSession.shared.data(for: request)).map { _, response in
             (response as? HTTPURLResponse)?.statusCode == 200
         } ?? false
-        try #require(reachable, "the Muraka stack is not running — start it with `make up`")
+        try #require(reachable, "the Muraka stack is not running - start it with `make up`")
     }
 
     @Test func signsInAndDecodesTheSessionTheServerActuallySends() async throws {

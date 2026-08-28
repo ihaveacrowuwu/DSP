@@ -14,14 +14,14 @@ authoritative about everything that has.**
 
 The client may state two things on its own authority, because they are facts about
 its own queue: *waiting to upload* and *uploading*. It may never assert anything
-else. "Synced", "analysing", "awaiting review", "verified", "rejected" — every one of
+else. "Synced", "analysing", "awaiting review", "verified", "rejected" - every one of
 those comes from the server or is not shown at all.
 
 This exists because a local `synced = 1` flag is a *claim*, not a fact. Set it a
 moment before the process dies, or after a response the client misread, and the app
 shows a confident green tick for a sighting the server never received. The
 contributor then believes their reef data is safe when it is not, which is the worst
-failure this system can have — worse than an obvious error, because nobody goes
+failure this system can have - worse than an obvious error, because nobody goes
 looking for it.
 
 So the rules are:
@@ -40,7 +40,7 @@ So the rules are:
 The outbox itself stays, and it is not in tension with any of the above. It holds
 bytes the server has not accepted yet, so that a dead process, a timeout or a boat
 with no signal cannot destroy a sighting. Deleting it would not make uploads more
-truthful — it would make a failed upload unrecoverable, which is how you lose data
+truthful - it would make a failed upload unrecoverable, which is how you lose data
 rather than merely misreport it.
 
 ## The rule that makes everything else simple
@@ -52,7 +52,7 @@ time. That id is the idempotency key. The server upserts on it, so:
 
 - a retry after a timeout creates nothing new
 - a retry after the app was killed mid-request creates nothing new
-- the client never needs to ask "did that one get through?" — it can just send
+- the client never needs to ask "did that one get through?" - it can just send
   again
 
 UUIDv7 rather than v4 because it is time-ordered, which keeps database index
@@ -63,7 +63,7 @@ locality good and makes the queue naturally chronological.
 | Android | `java.util.UUID` has no v7; use a small helper or `com.fasterxml.uuid` |
 | iOS | `UUID()` is v4; write a v7 helper (48-bit big-endian millisecond timestamp, version nibble 7, random remainder) |
 
-A v4 id still works — the server only requires a UUID — but prefer v7.
+A v4 id still works - the server only requires a UUID - but prefer v7.
 
 ## Local schema
 
@@ -97,13 +97,13 @@ photo_queue
 ```
 
 `state` is a string, not a `synced` boolean, because a boolean cannot express **"we
-sent it and do not know what happened"** — and that is the state a lost response
+sent it and do not know what happened"** - and that is the state a lost response
 actually leaves you in. Collapsing it to `0` re-sends work that already succeeded;
 collapsing it to `1` tells the contributor their sighting is safe when nobody has
 confirmed it. Both are the bug this protocol exists to prevent, so the third value
 is not optional.
 
-`state` decides what to send next. It is never what the user is shown — see
+`state` decides what to send next. It is never what the user is shown - see
 [Source of truth](#source-of-truth).
 
 Copy the picked image into app-private storage at capture time. A gallery URI can
@@ -111,7 +111,7 @@ be revoked or the file deleted before the upload runs.
 
 A row's job ends when the server acknowledges it. Keep it if you want a replay path
 or an offline history, but from that moment it is a **display cache holding
-last-known server state** — never the answer to "did this upload succeed?". Mark
+last-known server state** - never the answer to "did this upload succeed?". Mark
 cached records as such in the UI (a "last updated" line is enough) and refresh from
 the server whenever the app can reach it.
 
@@ -123,7 +123,7 @@ client could not parse.
 Two steps, in order. Metadata first, because a photo cannot be attached to a
 sighting the server has not seen.
 
-### Step 1 — metadata
+### Step 1 - metadata
 
 ```
 POST /v1/sightings
@@ -146,7 +146,7 @@ Content-Type: application/json
 | Response | Meaning | Client action |
 |---|---|---|
 | `201` | Created | `state = confirmed` for the metadata; photos still to go |
-| `200` | Already existed — this was a replay | Identical to `201`. The client never has to know which it was |
+| `200` | Already existed - this was a replay | Identical to `201`. The client never has to know which it was |
 | `422` | A field is invalid; `fields` says which | **Do not retry.** Mark the item failed and show the reason |
 | `409` | The id belongs to another account | Do not retry. Regenerate the id or discard |
 | `401` | Access token expired | Refresh once, then retry (see below) |
@@ -155,7 +155,7 @@ Content-Type: application/json
 Treating `200` and `201` identically is the whole point. The client never has to
 know whether it had already succeeded.
 
-### Step 2 — each photo
+### Step 2 - each photo
 
 ```
 POST /v1/sightings/{sightingId}/photos
@@ -166,7 +166,7 @@ photoId: 018f3c2b-...
 file:    <JPEG or PNG bytes>
 ```
 
-Same status handling. `413` means the file is too large — do not retry; downscale
+Same status handling. `413` means the file is too large - do not retry; downscale
 locally and upload as a new photo id, or fail the item with a clear message.
 
 Downscale before uploading anyway. The server analyses at 224 px per grid cell,
@@ -192,7 +192,7 @@ as a field, not left in the file's metadata.
 Exponential backoff with jitter, capped: `min(2^attempts, 300) seconds ± 20%`.
 
 Give up after 8 attempts, mark the item failed, and surface it in the sync list
-with a **Retry** action. Never retry silently forever — a contributor deserves to
+with a **Retry** action. Never retry silently forever - a contributor deserves to
 know something is stuck.
 
 Retry on: timeouts, connection failures, `5xx`, `429`.
@@ -237,7 +237,7 @@ not an in-memory `dataTask`, or a suspended app loses the transfer.
 ## Reading state back
 
 Uploading is not finishing. When the last photo of a sighting has been accepted,
-**read the sighting back** — `GET /v1/sightings/{id}` — and show what comes back. The
+**read the sighting back** - `GET /v1/sightings/{id}` - and show what comes back. The
 list screen refreshes the same way from `GET /v1/sightings?limit=50`. Until that read
 succeeds, the sighting's status is *unknown to the client*, and "unknown" is an
 honest thing to display; "synced" is not.
@@ -249,7 +249,7 @@ line is the server's answer or nothing:
 |---|---|---|
 | Outbox | in the queue, not sent | Waiting to upload |
 | Outbox | request in flight | Uploading |
-| — | accepted, not yet read back | Checking… |
+| - | accepted, not yet read back | Checking… |
 | Server | `pending_photos` | Photos pending |
 | Server | `processing` | Analysing |
 | Server | `awaiting_verification` | Awaiting expert review |
@@ -264,7 +264,7 @@ Show the model's assessment as soon as it exists, clearly marked as automatic,
 and replace it with the expert verdict when one arrives. Never let the two look
 alike.
 
-## Reconciliation — how the outbox and the database agree
+## Reconciliation - how the outbox and the database agree
 
 Everything above assumes the client knows whether a request succeeded. Sometimes it
 cannot: the server commits, then the response is lost to a dropped connection or the
@@ -282,7 +282,7 @@ client's own:
 | `200` | The sighting exists. `photos[]` carries the ids **the server actually holds** |
 
 Photo rows are keyed on the client-generated `photoId` too, so comparing local photo
-ids against `photos[].id` yields the exact set still missing — not an estimate. No
+ids against `photos[].id` yields the exact set still missing - not an estimate. No
 extra endpoint and no bookkeeping column can be more trustworthy than this, because
 it is the database answering.
 
@@ -293,11 +293,11 @@ queued ──▶ sending ──▶ in doubt ──▶ confirmed ──▶ (row d
    ▲          │            │
    └──────────┴────────────┘   transient failure: back to queued, with backoff
               │
-              └──▶ failed   terminal (422/409/413) — needs the user
+              └──▶ failed   terminal (422/409/413) - needs the user
 ```
 
 **`in doubt` is a real state and must be modelled.** Any row whose request was sent
-but whose outcome was not durably recorded lands here — that is exactly the state the
+but whose outcome was not durably recorded lands here - that is exactly the state the
 UI shows as "Checking…". A row may only leave for `confirmed` on the server's word.
 
 ### The algorithm
@@ -306,25 +306,25 @@ Run for every row that is not `confirmed`, on launch, on regaining connectivity,
 "My sightings" opens, and after any upload finishes:
 
 1. `GET /v1/sightings/{id}`
-2. **`404`** — send the metadata, then every photo.
-3. **`200`** — diff local photo ids against `photos[].id`:
+2. **`404`** - send the metadata, then every photo.
+3. **`200`** - diff local photo ids against `photos[].id`:
    - **missing ids** → upload only those. Never re-send one the server already has;
      it is harmless but wastes a diver's tethering allowance.
    - **none missing** → the row is complete. Drop it, and cache the returned record.
-4. **`401`** — refresh once, then repeat.
-5. **`5xx`, timeout, offline** — leave the row as it is and try later. Never downgrade
+4. **`401`** - refresh once, then repeat.
+5. **`5xx`, timeout, offline** - leave the row as it is and try later. Never downgrade
    a row's state on a failure to reach the server; not knowing is not the same as not
    existing.
 
 Reconciliation is idempotent and safe to run as often as you like. If in doubt, run
-it — that is cheaper than showing the contributor something untrue.
+it - that is cheaper than showing the contributor something untrue.
 
 ### When local data may be deleted
 
 Only ever on the server's confirmation:
 
 - **A photo's local file** may be deleted once its id appears in `photos[]`. Not when
-  the upload call returns, not when a flag is set — when the database says so.
+  the upload call returns, not when a flag is set - when the database says so.
 - **An outbox row** may be dropped once the sighting exists and every one of its
   photos is present.
 - **Everything for an account** is purged after `DELETE /v1/me` succeeds.
@@ -339,14 +339,14 @@ user's session**.
 
 Two people share a boat and a phone more often than you would think. Without this
 rule, one diver's queued sighting uploads under whoever signs in next, and the
-record is silently attributed to the wrong contributor — corrupt scientific data,
+record is silently attributed to the wrong contributor - corrupt scientific data,
 and an ethics problem in a project that collects named contributions. On sign-out,
 keep the rows; on sign-in as somebody else, leave them alone until their owner
 returns.
 
 ### Server-side changes always win
 
-A cached record is replaced wholesale on every refresh — never merged, never
+A cached record is replaced wholesale on every refresh - never merged, never
 patched field by field. An expert correcting a label, a rejection, or an account
 anonymisation all reach the app the same way: the next read returns different data
 and the cache is overwritten. There is no client-side merge logic to get wrong, and
@@ -355,14 +355,14 @@ no field the client may edit after acknowledgement (D11, append-only).
 ### Two cases worth designing for explicitly
 
 **A sighting stranded in `pending_photos`.** The metadata is on the server but a
-photo will not upload — usually a `413` that retrying cannot fix. The record is real
+photo will not upload - usually a `413` that retrying cannot fix. The record is real
 and visible to researchers with fewer photographs than intended. Offer the
 contributor a way out: retry after downscaling, or accept it as it stands. A sighting
 that reached the server with **zero** photos should be surfaced clearly, because it
 can never be classified.
 
 **A device clock that is ahead.** `capturedAt` must not be in the future or the
-server returns `422` and the row fails terminally — a captured sighting lost to a
+server returns `422` and the row fails terminally - a captured sighting lost to a
 wrong clock. Clamp `capturedAt` to "now" at capture time if the device clock is
 ahead of it, and prefer a monotonically-sane value over whatever the OS reports.
 
@@ -379,8 +379,8 @@ it is worth more care than a cache would be:
 - **Copy the picked image at capture time.** A gallery URI can be revoked or the
   underlying file deleted before the upload runs.
 - **Never delete before acknowledgement**, and never on an unparseable response.
-- **Let the OS drive the transfer** — WorkManager on Android, background
-  `URLSession` tasks on iOS — so a suspended or killed app resumes rather than
+- **Let the OS drive the transfer** - WorkManager on Android, background
+  `URLSession` tasks on iOS - so a suspended or killed app resumes rather than
   restarting from nothing.
 - **Make pending work visible.** A count of unsent sightings, somewhere permanent.
   Silent queues are how data goes missing unnoticed.

@@ -1,7 +1,7 @@
 #include "Base.xcconfig"
 
 // The iOS simulator shares the host's loopback, so the dev stack is simply localhost.
-// A physical iPhone on the same Wi-Fi needs the machine's LAN IP — set
+// A physical iPhone on the same Wi-Fi needs the machine's LAN IP - set
 // MURAKA_API_BASE_URL in Config/Local.xcconfig, which is gitignored.
 //
 // NOTE: xcconfig treats `//` as a comment ANYWHERE on a line, so a URL cannot be

@@ -70,13 +70,13 @@ func newHarness(t *testing.T) *harness {
 
 	admin, err := pgxpool.New(ctx, adminURL())
 	if err != nil {
-		t.Skipf("no PostgreSQL at %s: %v — start it with `make up`", adminURL(), err)
+		t.Skipf("no PostgreSQL at %s: %v - start it with `make up`", adminURL(), err)
 	}
 	pingCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	if err := admin.Ping(pingCtx); err != nil {
 		admin.Close()
-		t.Skipf("PostgreSQL unreachable: %v — start it with `make up`", err)
+		t.Skipf("PostgreSQL unreachable: %v - start it with `make up`", err)
 	}
 
 	// A UUID, not the test name: Go subtests contain slashes and spaces, and
@@ -261,7 +261,7 @@ func (h *harness) mustJSON(method, path, token string, payload any, wantStatus i
 	h.t.Helper()
 	status, body := h.do(method, path, token, payload)
 	if status != wantStatus {
-		h.t.Fatalf("%s %s: got %d, want %d — body: %s", method, path, status, wantStatus, body)
+		h.t.Fatalf("%s %s: got %d, want %d - body: %s", method, path, status, wantStatus, body)
 	}
 	if out != nil {
 		if err := json.Unmarshal(body, out); err != nil {

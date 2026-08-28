@@ -3,7 +3,7 @@
 //
 //     cp Config/Local.xcconfig.example Config/Local.xcconfig
 //
-// There is no API key to put here. Muraka depends on no keyed service at all — that
+// There is no API key to put here. Muraka depends on no keyed service at all - that
 // is a hard project constraint, not an oversight.
 // ────────────────────────────────────────────────────────────────────────────
 

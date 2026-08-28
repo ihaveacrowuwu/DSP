@@ -34,13 +34,13 @@ func TestPromotingAUserTakesEffectImmediately(t *testing.T) {
 	// to expire. Before that, this assertion was inverted: the old token kept the old
 	// role for up to fifteen minutes.
 	if status, body := h.do(http.MethodGet, "/v1/verifications/queue", user.Token, nil); status != http.StatusOK {
-		t.Errorf("a promoted user was still refused with their existing token: %d — body: %s", status, body)
+		t.Errorf("a promoted user was still refused with their existing token: %d - body: %s", status, body)
 	}
 
 	// And a fresh login is equally fine, which is the case that always worked.
 	fresh := h.login(user.Email, "muraka-integration-2026")
 	if status, body := h.do(http.MethodGet, "/v1/verifications/queue", fresh, nil); status != http.StatusOK {
-		t.Errorf("after re-login the promoted user got %d, want 200 — body: %s", status, body)
+		t.Errorf("after re-login the promoted user got %d, want 200 - body: %s", status, body)
 	}
 }
 
@@ -59,11 +59,11 @@ func TestDemotingAUserRemovesTheirAccess(t *testing.T) {
 	// The dangerous direction: a demotion that waits for a token to expire leaves the
 	// user holding privileges an administrator has just taken away.
 	if status, body := h.do(http.MethodGet, "/v1/verifications/queue", user.Token, nil); status != http.StatusForbidden {
-		t.Errorf("a demoted user kept access with their existing token: %d — body: %s", status, body)
+		t.Errorf("a demoted user kept access with their existing token: %d - body: %s", status, body)
 	}
 	fresh := h.login(user.Email, "muraka-integration-2026")
 	if status, body := h.do(http.MethodGet, "/v1/verifications/queue", fresh, nil); status != http.StatusForbidden {
-		t.Errorf("a demoted user still reached the queue after re-login: %d — body: %s", status, body)
+		t.Errorf("a demoted user still reached the queue after re-login: %d - body: %s", status, body)
 	}
 }
 
@@ -89,7 +89,7 @@ func TestBanningAUserStopsThemSigningIn(t *testing.T) {
 		"email": user.Email, "password": "muraka-integration-2026",
 	})
 	if code < 400 {
-		t.Errorf("a banned user signed in successfully: %d — body: %s", code, body)
+		t.Errorf("a banned user signed in successfully: %d - body: %s", code, body)
 	}
 }
 
@@ -110,7 +110,7 @@ func TestBanningAUserStopsTheirExistingSession(t *testing.T) {
 
 	status, body := h.do(http.MethodGet, "/v1/me", user.Token, nil)
 	if status < 400 {
-		t.Errorf("a banned user's existing token still worked: %d — body: %s", status, body)
+		t.Errorf("a banned user's existing token still worked: %d - body: %s", status, body)
 	}
 }
 
@@ -123,7 +123,7 @@ func TestAnAdminCannotBanThemselves(t *testing.T) {
 	status, body := h.do(http.MethodPut, "/v1/admin/users/"+admin.ID.String()+"/status",
 		admin.Token, map[string]any{"status": "banned"})
 	if status < 400 {
-		t.Errorf("an admin banned themselves: %d — body: %s", status, body)
+		t.Errorf("an admin banned themselves: %d - body: %s", status, body)
 	}
 }
 

@@ -381,7 +381,7 @@ const isLight = computed(() => theme.resolved() === 'light')
 .nav-link.router-link-active:active {
   scale: 1;
   /* Instant, not eased. Clicking an item you are hovering makes it active, which
-     switches it from 1.05 to 1 — and easing that over 240ms is 240ms of the base
+     switches it from 1.05 to 1 - and easing that over 240ms is 240ms of the base
      copy at a different size from the highlight copy stacked on it, which is
      exactly what reads as the label swelling as the pill lands. */
   transition-duration: 0s;
@@ -436,7 +436,7 @@ const isLight = computed(() => theme.resolved() === 'light')
   /* Hidden until the first sync, so there is never an unclipped first frame.
      NO transition on clip-path: usePillMotion rewrites it every frame from the
      pill's painted rect, and a transition would make the clip chase a value the
-     pill has already left — the highlight would lag its own pill. */
+     pill has already left - the highlight would lag its own pill. */
   clip-path: inset(0 0 100% 0);
 }
 

@@ -115,7 +115,7 @@ class SignInViewModel @Inject constructor(
         // the only screen where being offline is genuinely a problem.
         is ApiError.Offline -> copy(
             submitting = false,
-            message = "No connection. Signing in is the only thing Muraka needs the network for — " +
+            message = "No connection. Signing in is the only thing Muraka needs the network for - " +
                 "everything else works offline.",
         )
 

@@ -61,7 +61,7 @@ def main() -> int:
     if args.synthetic:
         n = args.synthetic_size
         sizes = {"train": n, "val": max(64, n // 4), "test": max(64, n // 4)}
-        print(f"SYNTHETIC RUN — generated data, seed {cfg.seed}. No metric here is about coral.")
+        print(f"SYNTHETIC RUN - generated data, seed {cfg.seed}. No metric here is about coral.")
 
     loaders = data_module.make_loaders(cfg, synthetic_sizes=sizes)
     print(f"{cfg.name}: {', '.join(f'{k}={len(v.dataset)}' for k, v in loaders.items())}")

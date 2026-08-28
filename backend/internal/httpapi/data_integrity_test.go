@@ -47,7 +47,7 @@ func TestReplayingASubmissionCreatesExactlyOneRow(t *testing.T) {
 	for i := 0; i < 8; i++ {
 		status, body := h.do(http.MethodPost, "/v1/sightings", contributor.Token, payload)
 		if status != http.StatusCreated && status != http.StatusOK {
-			t.Fatalf("attempt %d: got %d — body: %s", i+1, status, body)
+			t.Fatalf("attempt %d: got %d - body: %s", i+1, status, body)
 		}
 		statuses = append(statuses, status)
 	}
@@ -219,7 +219,7 @@ func TestARejectionWithoutAReasonIsRefused(t *testing.T) {
 	status, body := h.do(http.MethodPost, "/v1/sightings/"+id.String()+"/verification",
 		researcher.Token, map[string]any{"decision": "rejected"})
 	if status != http.StatusUnprocessableEntity {
-		t.Fatalf("got %d, want 422 — body: %s", status, body)
+		t.Fatalf("got %d, want 422 - body: %s", status, body)
 	}
 	if got := h.statusOf(id); got == "rejected" {
 		t.Error("the sighting was rejected despite the refused request")
@@ -263,7 +263,7 @@ func TestRejectedSightingsAreExcludedFromMapTrendsAndExport(t *testing.T) {
 	status, points := h.do(http.MethodGet,
 		"/v1/map/points?zoom=14&bbox=73.5,4.5,73.7,4.7", researcher.Token, nil)
 	if status != http.StatusOK {
-		t.Fatalf("map: %d — %s", status, points)
+		t.Fatalf("map: %d - %s", status, points)
 	}
 	if strings.Contains(string(points), dropped.String()) {
 		t.Error("a rejected sighting appears in the map response (FR11)")
@@ -423,7 +423,7 @@ func TestANegativeOffsetIsClampedRatherThanReturningAServerError(t *testing.T) {
 	} {
 		status, body := h.do(http.MethodGet, path, researcher.Token, nil)
 		if status != http.StatusOK {
-			t.Errorf("GET %s: got %d, want 200 — body: %s", path, status, body)
+			t.Errorf("GET %s: got %d, want 200 - body: %s", path, status, body)
 		}
 	}
 }

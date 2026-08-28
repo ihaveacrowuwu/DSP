@@ -124,7 +124,7 @@ def main() -> int:
         )
         print(
             "Either an implementation moved, or it was rewritten in a shape this check "
-            "does not recognise. Both are worth a human look — an unreadable formula is "
+            "does not recognise. Both are worth a human look - an unreadable formula is "
             "an unchecked formula.",
             file=sys.stderr,
         )

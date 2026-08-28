@@ -21,7 +21,7 @@ The gap is **not** any of the usual suspects, all of which were checked:
 - **Not a CPU quota.** `cpu.max` is `max 100000`, and the container sees all 10 cores.
 - **Not a different runtime.** onnxruntime 1.20.1 in both, the same pinned version.
 - **Not contention.** The host figure was re-measured with the whole compose stack
-  running — Postgres, the API, the dashboard, the worker — and came back at 401.5 ms.
+  running - Postgres, the API, the dashboard, the worker - and came back at 401.5 ms.
 - **Not the service's preprocessing.** The raw graph, benchmarked *inside* the container
   with the same session options, is 821.5 ms. The Python tiling and resizing account for
   the ~40 ms difference between that and the HTTP figure, not the 2×.
@@ -48,8 +48,8 @@ changes made:
 
 **The honest statement for the project:** NFR2 is met on the target CPU and missed when
 the service is run through Docker Desktop's macOS VM. The overhead is a property of the
-development environment, not of the system — a Linux host running the same container has
-no such VM in the path — but the project's demo runs on this laptop, so the caveat is
+development environment, not of the system - a Linux host running the same container has
+no such VM in the path - but the project's demo runs on this laptop, so the caveat is
 real and belongs in the evaluation chapter rather than in a footnote.
 
 The patch lattice was **not** reduced. It is pinned across Vue, Compose and UIKit by
@@ -61,7 +61,7 @@ recorded above for whoever disagrees.
 ## 2. INT8 quantisation: a 4.2× speedup, rejected
 
 The obvious way to buy back 2× without touching the lattice. Static quantisation
-(`QuantFormat.QDQ`, per-channel weights, calibrated on **256 training images** — never
+(`QuantFormat.QDQ`, per-channel weights, calibrated on **256 training images** - never
 val, never test), via [`ml/training/scripts/quantize.py`](../../../ml/training/scripts/quantize.py).
 
 It worked, on latency:
@@ -70,9 +70,9 @@ It worked, on latency:
 |---|---|---|
 | Artefact | 16.0 MB | **4.9 MB** |
 | Host p50, 25 patches | 408 ms | **98 ms** |
-| Speedup | — | **4.17×** |
+| Speedup | - | **4.17×** |
 
-98 ms on the host implies roughly 200 ms in the container — comfortably inside NFR2 with
+98 ms on the host implies roughly 200 ms in the container - comfortably inside NFR2 with
 the 5×5 lattice intact. On latency alone this was the answer.
 
 ### Why it was turned down
@@ -104,7 +104,7 @@ bleached one, which is the class the entire system exists to catch. In product t
 quantised model goes from finding about five bleaching events in six to about two in
 three.
 
-Leaving the classifier `Gemm` and the stem convolution in float — the standard remedy —
+Leaving the classifier `Gemm` and the stem convolution in float - the standard remedy -
 recovered some of it and not enough:
 
 | Configuration | Recall bleached | F2 bleached | Size |
@@ -117,7 +117,7 @@ Still −12 points of recall. Rejected.
 
 ### The part worth putting in the project
 
-The project already argues that a missed bleaching event costs more than a false alarm —
+The project already argues that a missed bleaching event costs more than a false alarm -
 that is why the selection metric is F2 on the bleached class rather than accuracy, and
 why the training recipe carries class weighting, minority oversampling and a
 `bleached_loss_multiplier`. Quantisation is where that argument stopped being a

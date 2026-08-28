@@ -1,10 +1,10 @@
 # iOS app
 
-Swift and **UIKit** — not SwiftUI, which is a project requirement rather than a preference —
+Swift and **UIKit** - not SwiftUI, which is a project requirement rather than a preference -
 with the iOS 26 Liquid Glass design language. The contributor half of Muraka: capture a reef
 sighting, queue it, and watch the server's verdict arrive.
 
-Read [`../mobile-shared/`](../mobile-shared/) first — the API contract, the offline sync
+Read [`../mobile-shared/`](../mobile-shared/) first - the API contract, the offline sync
 protocol and the shared design tokens are settled.
 
 ## Running it
@@ -22,12 +22,12 @@ your Mac's LAN address there. Cleartext HTTP lives in `Config/Info-Debug.plist` 
 release plist has no App Transport Security exception at all, and `make mobile-lint` fails if
 one ever appears (NFR4).
 
-**`Muraka.xcodeproj` is generated and gitignored.** `project.yml` is the source of truth — run
+**`Muraka.xcodeproj` is generated and gitignored.** `project.yml` is the source of truth - run
 `xcodegen generate` after changing it, and never hand-edit the project file.
 
 ## What it does
 
-The same six screens as the Android app, with the same words for the same states — that
+The same six screens as the Android app, with the same words for the same states - that
 vocabulary is a checked contract, not a coincidence (`scripts/check_status_vocabulary.py`).
 
 ## How it is put together
@@ -49,9 +49,9 @@ Features/     one folder per screen
 
 Two files carry most of the design:
 
-- **[`Data/Sync/SyncEngine.swift`](Muraka/Data/Sync/SyncEngine.swift)** — ask the server what
+- **[`Data/Sync/SyncEngine.swift`](Muraka/Data/Sync/SyncEngine.swift)** - ask the server what
   it has, send only what is missing, read it back, and only then delete anything local.
-- **[`Core/DesignSystem/GlassSurface.swift`](Muraka/Core/DesignSystem/GlassSurface.swift)** —
+- **[`Core/DesignSystem/GlassSurface.swift`](Muraka/Core/DesignSystem/GlassSurface.swift)** -
   **the only place in the app that calls a Liquid Glass API.**
 
 ## Liquid Glass
@@ -90,12 +90,12 @@ Or from the repository root: `make ios-build`, `make test-ios`, `make mobile-lin
 | `DurabilityPragmaTests` | WAL and `synchronous = FULL`, read back from a real file |
 | `APIClientIntegrationTests` | the client against the **running** API, not a stub |
 | `AppConfigurationTests` | the build configuration the app depends on |
-| `SignInFlowUITests` | sign in, every tab, a sighting, search and filtering, the appearance toggle, the patch-grid toggle — and that no screen claims delivery |
+| `SignInFlowUITests` | sign in, every tab, a sighting, search and filtering, the appearance toggle, the patch-grid toggle - and that no screen claims delivery |
 | `SignInFlowUITests` (layout) | that the last row clears the floating tab bar, which the safe area alone does not guarantee |
 
 The integration and UI suites skip rather than fail when the stack is not running, because a
 red suite on a machine with no Docker tells nobody anything.
 
 `RFC3339Tests` exists because of a real bug: Go emits nine fractional digits and PostgreSQL
-six, while `ISO8601FormatStyle` accepts exactly three — so every timestamp failed to decode,
+six, while `ISO8601FormatStyle` accepts exactly three - so every timestamp failed to decode,
 and it presented as "signing in does not work".

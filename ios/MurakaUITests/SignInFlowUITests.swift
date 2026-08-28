@@ -314,7 +314,7 @@ final class SignInFlowUITests: XCTestCase {
         XCTAssertTrue(last.exists, "the list should still have rows after scrolling")
         XCTAssertTrue(
             last.isHittable,
-            "the last row is under the floating tab bar — the bottom content inset is too small"
+            "the last row is under the floating tab bar - the bottom content inset is too small"
         )
 
         let tabBar = app.tabBars.firstMatch
@@ -341,7 +341,7 @@ final class SignInFlowUITests: XCTestCase {
         app.searchFields.firstMatch.tap()
         XCTAssertFalse(
             app.buttons["newSighting"].exists,
-            "UIKit is expected to take the navigation row during search — if this passes, "
+            "UIKit is expected to take the navigation row during search - if this passes, "
                 + "the scope bar may no longer be needed"
         )
 
@@ -381,7 +381,7 @@ final class SignInFlowUITests: XCTestCase {
         for claim in ["Syn" + "ced", "Uploa" + "ded", "Backed " + "up"] {
             XCTAssertFalse(
                 app.staticTexts[claim].exists,
-                "the client must never assert \(claim) — see mobile-shared/sync-protocol.md"
+                "the client must never assert \(claim) - see mobile-shared/sync-protocol.md"
             )
         }
     }
@@ -406,7 +406,7 @@ final class SignInFlowUITests: XCTestCase {
         }.resume()
         _ = semaphore.wait(timeout: .now() + 5)
 
-        try XCTSkipUnless(reachable, "the Muraka stack is not running — start it with `make up`")
+        try XCTSkipUnless(reachable, "the Muraka stack is not running - start it with `make up`")
     }
 
     private func attach(name: String) {

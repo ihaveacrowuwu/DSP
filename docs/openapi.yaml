@@ -214,7 +214,7 @@ paths:
               schema: { $ref: '#/components/schemas/Sighting' }
         '200':
           description: |
-            Already stored — this was a replay. The body is the existing
+            Already stored - this was a replay. The body is the existing
             sighting. Clients should treat this exactly like `201` and mark the
             queue item synced.
           content:
@@ -291,8 +291,8 @@ paths:
         One call per photo. Idempotent on `photoId`.
 
         The server decodes the image to confirm it really is a JPEG or PNG, then
-        re-encodes it as JPEG. That strips EXIF — including any GPS the
-        contributor did not intend to share — after capture time and position
+        re-encodes it as JPEG. That strips EXIF - including any GPS the
+        contributor did not intend to share - after capture time and position
         have been read out. Attaching a photo enqueues it for classification.
       parameters:
         - { $ref: '#/components/parameters/idPath' }
@@ -326,7 +326,7 @@ paths:
                   height: { type: integer }
                   bytes: { type: integer }
                   queued: { type: boolean }
-        '200': { description: Already stored — a replay. }
+        '200': { description: Already stored - a replay. }
         '403': { description: The sighting belongs to another contributor. }
         '413': { description: The image exceeds the size limit. }
         '422': { $ref: '#/components/responses/ValidationFailed' }
@@ -426,7 +426,7 @@ paths:
         - { $ref: '#/components/parameters/bbox' }
         - name: zoom
           in: query
-          description: Map zoom level, 1–20. Decides whether results are clustered.
+          description: Map zoom level, 1-20. Decides whether results are clustered.
           schema: { type: integer, default: 8, minimum: 1, maximum: 20 }
         - { $ref: '#/components/parameters/from' }
         - { $ref: '#/components/parameters/to' }
@@ -794,10 +794,10 @@ components:
       type: string
       enum: [pending_photos, processing, awaiting_verification, verified, rejected]
       description: |
-        `pending_photos` — metadata stored, no photo yet.
-        `processing` — a photo is queued or being classified.
-        `awaiting_verification` — every photo has a prediction; needs an expert.
-        `verified` / `rejected` — an expert has decided.
+        `pending_photos` - metadata stored, no photo yet.
+        `processing` - a photo is queued or being classified.
+        `awaiting_verification` - every photo has a prediction; needs an expert.
+        `verified` / `rejected` - an expert has decided.
 
     User:
       type: object
@@ -891,7 +891,7 @@ components:
           description: |
             Effective condition: the expert label when one exists, otherwise the
             model's. Absent until analysis completes. Always pair this with
-            `verified` in the interface — never show a model label as fact.
+            `verified` in the interface - never show a model label as fact.
         severity:
           type: number
           minimum: 0

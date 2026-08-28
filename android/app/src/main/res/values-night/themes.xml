@@ -2,7 +2,7 @@
 <resources>
     <!-- The dark counterpart of Theme.Muraka.
          A qualified style REPLACES its unqualified namesake rather than merging with it, so
-         the items below are not inherited from values/themes.xml — they have to be restated,
+         the items below are not inherited from values/themes.xml - they have to be restated,
          and they have to be kept in step with it. (An earlier version of this file was an
          empty `<style/>`, which silently dropped the transparent system bars in dark mode.)
 

@@ -1,4 +1,4 @@
--- 0001_init.sql — Muraka core schema
+-- 0001_init.sql - Muraka core schema
 -- See docs/05-data-model.md. All timestamps UTC. IDs are UUIDs (v7 from clients).
 
 CREATE EXTENSION IF NOT EXISTS postgis;

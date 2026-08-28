@@ -6,9 +6,9 @@ that will otherwise cost an afternoon.
 
 Companion documents, all authoritative in their own area:
 
-- [`../docs/openapi.yaml`](../docs/openapi.yaml) — endpoints and schemas
-- [`sync-protocol.md`](sync-protocol.md) — the offline queue, retries, token refresh
-- [`api-examples.http`](api-examples.http) — runnable calls in the order a client makes them
+- [`../docs/openapi.yaml`](../docs/openapi.yaml) - endpoints and schemas
+- [`sync-protocol.md`](sync-protocol.md) - the offline queue, retries, token refresh
+- [`api-examples.http`](api-examples.http) - runnable calls in the order a client makes them
 
 Every fact below was read out of the Go implementation, not from the spec, so where
 this and the spec ever disagree, trust this and fix the spec.
@@ -16,13 +16,13 @@ this and the spec ever disagree, trust this and fix the spec.
 ## What a contributor may call
 
 The mobile apps sign in as **contributors**. Anything outside this list returns
-`403 forbidden` — do not build a feature against it.
+`403 forbidden` - do not build a feature against it.
 
 | Method | Path | Notes |
 |---|---|---|
 | POST | `/v1/auth/register` | New accounts are always contributors |
 | POST | `/v1/auth/login` | |
-| POST | `/v1/auth/refresh` | Refresh tokens are **single-use** — store the new one |
+| POST | `/v1/auth/refresh` | Refresh tokens are **single-use** - store the new one |
 | POST | `/v1/auth/logout` | |
 | GET | `/v1/me` | Profile plus contribution totals |
 | DELETE | `/v1/me` | Anonymises; see below |
@@ -39,7 +39,7 @@ Researcher-only (`403` for contributors): `/v1/verifications/queue`,
 `/v1/sightings/{id}/verification`, `/v1/map/points`, `/v1/trends`,
 `/v1/export/sightings.csv`. Admin-only: everything under `/v1/admin/`.
 
-`GET /v1/sightings` needs no contributor filter parameter — the API scopes it by the
+`GET /v1/sightings` needs no contributor filter parameter - the API scopes it by the
 caller's role. Do not pass a contributor id; a contributor cannot query anyone else.
 
 ## Enums
@@ -55,7 +55,7 @@ Send and compare these exact strings. They are the wire format in both direction
 | `decision` (verification) | `confirmed`, `corrected`, `rejected` |
 | `rejectReason` | `blurry`, `not_coral`, `duplicate`, `spam`, `other` |
 
-Both apps must show the **same words** for the same status — see the table further
+Both apps must show the **same words** for the same status - see the table further
 down. A sighting that reads "Analysing" on Android and "Processing" on iOS is a bug
 in the family, not a platform difference.
 
@@ -68,8 +68,8 @@ A `422` carries `fields`, a map of field name to message, and is **never retryab
 | `id` | Required, must parse as a UUID. UUIDv7 recommended so the queue sorts by creation |
 | `lat` / `lon` | Required, valid WGS84 |
 | `locationSource` | Required, `gps` or `manual_pin` |
-| `capturedAt` | Required, RFC3339, **must not be in the future** — check the device clock before queueing |
-| `depthM` | Optional, 0–200 metres |
+| `capturedAt` | Required, RFC3339, **must not be in the future** - check the device clock before queueing |
+| `depthM` | Optional, 0-200 metres |
 | `selfAssessedCondition` | Optional, `healthy` or `bleached` |
 | `note` | Optional |
 | `email` | Valid email address |
@@ -80,18 +80,18 @@ A `422` carries `fields`, a map of field name to message, and is **never retryab
 Two limits the client is **solely** responsible for, because the server does not
 enforce them today:
 
-- **1–5 photos per sighting (FR2).** The API accepts more. Cap it in the app.
+- **1-5 photos per sighting (FR2).** The API accepts more. Cap it in the app.
 - **Note length.** Unbounded server-side. Pick a sane limit and enforce it in the UI.
 
 The server strips EXIF when it re-encodes, so anything worth keeping must be sent as
 a field. It reads capture time and GPS out of EXIF first, but the JSON fields are
-what the record is built from — send them explicitly.
+what the record is built from - send them explicitly.
 
 ## Error catalogue
 
 Group by what the client should *do*, not by code.
 
-**Terminal — do not retry, surface something useful**
+**Terminal - do not retry, surface something useful**
 
 | Status | `error` | Meaning |
 |---|---|---|
@@ -100,29 +100,29 @@ Group by what the client should *do*, not by code.
 | 409 | `email_taken` | Registration only |
 | 413 | `upload_too_large` | Downscale locally and upload under a new photo id |
 | 422 | `photo_count` | Reported per-photo problems |
-| 400 | `invalid_json`, `invalid_id`, `invalid_version` | A malformed request — a client bug, not a transient failure |
+| 400 | `invalid_json`, `invalid_id`, `invalid_version` | A malformed request - a client bug, not a transient failure |
 | 403 | `forbidden` | Wrong role. Should never happen in the apps; treat as a bug |
 | 403 | `account_disabled` | Suspended by an admin. Sign the user out with an explanation |
 | 401 | `invalid_credentials` | Wrong email or password |
 | 404 | `not_found` | Sighting or photo does not exist, or is not yours |
 
-**Recoverable — refresh once, then retry**
+**Recoverable - refresh once, then retry**
 
 | Status | `error` | Meaning |
 |---|---|---|
 | 401 | `unauthorized`, `invalid_token` | Access token expired or rejected. Refresh once; if the refresh fails, return to sign-in **without clearing the queue** |
 
-**Transient — retry with backoff, the outcome is unknown**
+**Transient - retry with backoff, the outcome is unknown**
 
 | Status | `error` | Meaning |
 |---|---|---|
 | 500 | `internal_error` | |
 | 503 | `not_ready`, `ml_service` | Stack still starting, or the classifier is unreachable. Ingest still succeeded |
-| — | timeout, offline, connection reset | Retry. Safe, because the id makes the write idempotent |
+| - | timeout, offline, connection reset | Retry. Safe, because the id makes the write idempotent |
 
 Retrying a transient failure can never duplicate anything: both writes are keyed on
 a client-generated UUID, and a replay answers `200` instead of `201`. Treat those two
-identically — that is the entire point of the design.
+identically - that is the entire point of the design.
 
 ## The sighting state machine
 
@@ -145,7 +145,7 @@ Two consequences worth designing around:
 - **`rejected` sightings vanish from research views** (FR11) but remain the
   contributor's own record. Show them, with the reason if present.
 
-Contributor-facing wording — the same strings on both platforms, and note the
+Contributor-facing wording - the same strings on both platforms, and note the
 `Source` column: only the first two may be stated on the client's own authority. See
 [`sync-protocol.md`](sync-protocol.md#source-of-truth) for why that line matters.
 
@@ -153,7 +153,7 @@ Contributor-facing wording — the same strings on both platforms, and note the
 |---|---|---|
 | Outbox | queued, not yet sent | Waiting to upload |
 | Outbox | request in flight | Uploading |
-| — | accepted, not yet read back | Checking… |
+| - | accepted, not yet read back | Checking… |
 | Server | `pending_photos` | Photos pending |
 | Server | `processing` | Analysing |
 | Server | `awaiting_verification` | Awaiting expert review |
@@ -168,7 +168,7 @@ still checking.
 > The two documents disagreed while the apps were being built: this table said "Verified" and
 > [`sync-protocol.md`](sync-protocol.md#reading-state-back) said "Verified by an expert". The
 > longer form won and both now say it, because it carries the provenance distinction NFR13
-> asks for **in the word itself** — so the status survives a greyscale screenshot with no chip
+> asks for **in the word itself** - so the status survives a greyscale screenshot with no chip
 > beside it. `Could not upload` was added for a queue item that has exhausted its retries; it
 > is client-assertable, because it is a fact about our own queue rather than a claim about the
 > server.
@@ -187,7 +187,7 @@ The client never has to guess whether a write landed, because the ids are its ow
 Photo rows are keyed on the client-supplied `photoId` (the server upserts with
 `ON CONFLICT (id) DO NOTHING`), so diffing local photo ids against `photos[].id`
 gives the exact set still missing. Re-uploading one the server already has is
-harmless — it answers `200` and changes nothing — but there is no need to guess.
+harmless - it answers `200` and changes nothing - but there is no need to guess.
 
 The full algorithm, the outbox state machine and the rules for when local data may be
 deleted are in [`sync-protocol.md`](sync-protocol.md#reconciliation--how-the-outbox-and-the-database-agree).
@@ -202,11 +202,11 @@ deleted are in [`sync-protocol.md`](sync-protocol.md#reconciliation--how-the-out
   "patches": [ { "row": 0, "col": 0, "label": "healthy", "confidence": 0.88 }, ... ] }
 ```
 
-- `label` / `confidence` — the whole-photo call and how sure the model is
-- `severity` — bleached **extent**, 0–1. This is the number to lead with, not the label
-- `modelVersion` — show it. It is provenance, and `fake-0.0.0` means no real model is
+- `label` / `confidence` - the whole-photo call and how sure the model is
+- `severity` - bleached **extent**, 0-1. This is the number to lead with, not the label
+- `modelVersion` - show it. It is provenance, and `fake-0.0.0` means no real model is
   loaded yet
-- `patches` — `patchGrid × patchGrid` cells for the overlay. Geometry and the two
+- `patches` - `patchGrid × patchGrid` cells for the overlay. Geometry and the two
   opacity formulas are in [`design-tokens.json`](design-tokens.json)
 
 `prediction` is absent until classification finishes. Absent is not an error.
@@ -237,13 +237,13 @@ are looking at, and the distinction must be visible without colour (NFR13).
 8. **Access tokens last 15 minutes.** Assume expiry mid-session; the 401→refresh→retry
    path is a normal code path, not an edge case.
 9. **`GET /v1/me` is the only source of contribution totals.** Do not count local
-   rows — a client-side tally drifts the moment anything is rejected, anonymised or
+   rows - a client-side tally drifts the moment anything is rejected, anonymised or
    verified, and the number the contributor sees would then disagree with the
    dashboard.
 
 ## Checking your work against the running system
 
-`scripts/smoke_test.py` exercises the whole contributor path against a live stack —
+`scripts/smoke_test.py` exercises the whole contributor path against a live stack -
 register, login, create, replay for idempotency, upload, poll for the prediction,
 then verify as a researcher. If a client behaves differently from that script, the
 script is right.

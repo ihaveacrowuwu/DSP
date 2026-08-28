@@ -141,7 +141,7 @@ enum SightingFilterMenu {
 
         return switch (filter.from, filter.to) {
         case (nil, nil): "Any date"
-        case let (from?, to?): "\(formatter.string(from: from)) – \(formatter.string(from: to))"
+        case let (from?, to?): "\(formatter.string(from: from)) - \(formatter.string(from: to))"
         case let (from?, nil): "From \(formatter.string(from: from))"
         case let (nil, to?): "Until \(formatter.string(from: to))"
         }

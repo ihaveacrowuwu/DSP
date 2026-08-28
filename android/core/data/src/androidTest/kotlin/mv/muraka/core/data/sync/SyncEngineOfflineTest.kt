@@ -91,7 +91,7 @@ class SyncEngineOfflineTest {
         // every test below pass or fail for a reason that has nothing to do with what it
         // is testing.
         val session = tokens.current()
-        check(session != null) { "the test session did not store — SessionTokenStore returned null" }
+        check(session != null) { "the test session did not store - SessionTokenStore returned null" }
         check(session.userId == userId) { "stored session belongs to ${session.userId}" }
 
         photos = PhotoStore(context, TestDispatchers)

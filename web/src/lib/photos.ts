@@ -43,7 +43,7 @@ export function dimensions(width: number, height: number): string {
 export function lowResolutionNote(width: number, height: number): string {
   return (
     `Enlarged to fill the frame. There is no more detail here than ` +
-    `${dimensions(width, height)} holds — judge accordingly, and reject the ` +
+    `${dimensions(width, height)} holds - judge accordingly, and reject the ` +
     `photograph if you cannot.`
   )
 }
@@ -51,4 +51,4 @@ export function lowResolutionNote(width: number, height: number): string {
 /** The same point as a hover label, for the queue's single caption line. */
 export const LOW_RESOLUTION_TIP =
   'Enlarged to the standard frame size. There is no more detail here than the ' +
-  'original pixels hold — judge accordingly, and flag it if you cannot.'
+  'original pixels hold - judge accordingly, and flag it if you cannot.'

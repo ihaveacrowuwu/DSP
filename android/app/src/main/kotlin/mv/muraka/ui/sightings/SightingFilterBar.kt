@@ -278,7 +278,7 @@ private fun dateRangeLabel(filter: SightingFilter): String {
 
     return when {
         from == null && to == null -> "Any date"
-        from != null && to != null -> "${from.toLocalDate()} – ${to.toLocalDate()}"
+        from != null && to != null -> "${from.toLocalDate()} - ${to.toLocalDate()}"
         from != null -> "From ${from.toLocalDate()}"
         else -> "Until ${to?.toLocalDate()}"
     }

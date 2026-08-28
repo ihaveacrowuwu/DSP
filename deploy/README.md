@@ -12,7 +12,7 @@ make seed N=2000        # demo data, either way
 
 NFR4 requires TLS in the deployed/demo configuration. It is not the base stack because
 **both mobile apps talk to the development stack over cleartext HTTP**, through a
-debug-only exception scoped to localhost — Android's `usesCleartextTraffic` and iOS's
+debug-only exception scoped to localhost - Android's `usesCleartextTraffic` and iOS's
 `NSAppTransportSecurity`, neither of which exists in either app's release build. Making
 the base stack HTTPS-only would mean installing a self-signed certificate into the
 Android emulator's and the iOS simulator's trust stores before either app could sign in.
@@ -35,7 +35,7 @@ issues a certificate locally instead:
 A browser will show a warning the first time. **That warning is the honest consequence
 of the key-free constraint, not a defect**, and the project says so rather than hiding it
 behind a screenshot taken after clicking through. The certificate carries
-`subjectAltName` for `localhost`, `muraka.local`, `127.0.0.1` and `::1` — a certificate
+`subjectAltName` for `localhost`, `muraka.local`, `127.0.0.1` and `::1` - a certificate
 with only a `commonName` is rejected outright by browsers and by Go's TLS stack, not
 merely warned about.
 
@@ -48,7 +48,7 @@ The proxy serves the dashboard and the API from `https://localhost:8443`, so the
 makes same-origin requests and CORS is not involved at all. That also means the overlay
 has to **rebuild the dashboard**: Vite inlines `VITE_API_BASE_URL` at build time, so a
 dashboard built for `http://localhost:8090` and served over HTTPS would load perfectly
-and then have every request blocked as mixed content — a failure that looks like an empty
+and then have every request blocked as mixed content - a failure that looks like an empty
 page rather than an error.
 
 ## Two settings that are load-bearing, and were verified rather than trusted
@@ -56,7 +56,7 @@ page rather than an error.
 | Setting | Why |
 |---|---|
 | `client_max_body_size 12m` | nginx defaults to **1 MB**. Without this, every photograph above that becomes a 413 the API never sees, so the API's own limit and its NFR5 validation both look broken. Verified: with the line removed, a 6.5 MB upload went from 201 to 413. |
-| It must match the API, not a guess | The first version said `8m`, which was assumed rather than read — the API's `MaxUploadBytes` default is **12 MiB**. A 9.5 MiB upload succeeds now and would have been rejected by the proxy alone. `scripts/check_tls_config.py` now compares the two numbers so they cannot drift. |
+| It must match the API, not a guess | The first version said `8m`, which was assumed rather than read - the API's `MaxUploadBytes` default is **12 MiB**. A 9.5 MiB upload succeeds now and would have been rejected by the proxy alone. `scripts/check_tls_config.py` now compares the two numbers so they cannot drift. |
 
 HSTS is deliberately **not** set. With a self-signed certificate it would teach the
 browser to refuse the plain-HTTP development stack on the same host.

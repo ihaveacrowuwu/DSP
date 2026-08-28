@@ -231,7 +231,7 @@ final class SignInViewController: UIViewController {
         // the one message that tells a contributor to stop retrying and wait, and this is the
         // only screen where being offline is genuinely a problem.
         case .offline:
-            "No connection. Signing in is the only thing Muraka needs the network for — "
+            "No connection. Signing in is the only thing Muraka needs the network for - "
                 + "everything else works offline."
         case .invalidCredentials, .emailTaken, .accountDisabled, .validation:
             error.message

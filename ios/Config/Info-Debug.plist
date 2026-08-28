@@ -38,7 +38,7 @@
     <string>$(MURAKA_API_BASE_URL)</string>
 
     <!-- Permission strings say WHY, and are shown at the moment of capture rather than
-         on launch — mobile-shared/README.md non-negotiable 6. -->
+         on launch - mobile-shared/README.md non-negotiable 6. -->
     <key>NSCameraUsageDescription</key>
     <string>Muraka uses the camera to photograph the reef you are recording. Photographs stay on your device until you have a connection.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
@@ -48,7 +48,7 @@
 
     <!-- Drains the outbox in the background so a sighting captured offline uploads
          without the contributor reopening the app. There is no push infrastructure in
-         this project by design (constraint 4) — this is the OS waking us, not a server. -->
+         this project by design (constraint 4) - this is the OS waking us, not a server. -->
     <key>BGTaskSchedulerPermittedIdentifiers</key>
     <array>
         <string>mv.muraka.sync.drain</string>

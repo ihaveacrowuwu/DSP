@@ -68,7 +68,7 @@ def export(model: torch.nn.Module, config, *, output: Path | None = None, model_
         if difference > tolerance:
             raise ParityError(
                 f"ONNX logits differ from PyTorch by {difference:.3e}, tolerance {tolerance:.1e}. "
-                "The exported graph is not the model that was evaluated — do not ship it."
+                "The exported graph is not the model that was evaluated - do not ship it."
             )
     return destination
 

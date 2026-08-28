@@ -5,7 +5,7 @@
 // different types, which produces forty lines of unassignable-Plugin errors. The
 // reference just augments Vite's UserConfig in place.
 //
-// Without either, `vue-tsc --noEmit` rejects the config outright — which is how
+// Without either, `vue-tsc --noEmit` rejects the config outright - which is how
 // `make test-web` caught this while `npm test` was perfectly happy.
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
@@ -21,7 +21,7 @@ export default defineConfig({
      * Two projects, because the suite genuinely needs two environments.
      *
      * The component tests mount small presentational components and assert on
-     * classes, text and inline styles, so they need a DOM — happy-dom rather than
+     * classes, text and inline styles, so they need a DOM - happy-dom rather than
      * jsdom, which is faster and sufficient; nothing here renders MapLibre, which
      * would need a WebGL context no headless DOM provides.
      *
@@ -59,7 +59,7 @@ export default defineConfig({
     port: 5180,
     /*
      * Fail rather than drift. Without this Vite quietly takes the next free port
-     * when 5180 is busy — and 5180 is exactly where the docker `web` container
+     * when 5180 is busy - and 5180 is exactly where the docker `web` container
      * serves the last static BUILD. The result is a dev server running on a port
      * nobody opened while the browser shows a stale bundle that never hot-reloads.
      * An explicit "port is in use" is far better than that: stop the container

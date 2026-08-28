@@ -123,13 +123,13 @@ def call(
         except json.JSONDecodeError:
             return err.code, raw.decode(errors="replace")
     except urllib.error.URLError as err:
-        raise Failure(f"cannot reach {API}: {err.reason} — is the stack up?") from err
+        raise Failure(f"cannot reach {API}: {err.reason} - is the stack up?") from err
 
 
 def login(email: str, password: str) -> str:
     status, body = call("POST", "/v1/auth/login", body={"email": email, "password": password})
     if status != 200 or not isinstance(body, dict):
-        raise Failure(f"login as {email} failed with {status}: {body} — run `make seed`")
+        raise Failure(f"login as {email} failed with {status}: {body} - run `make seed`")
     return body["accessToken"]
 
 
@@ -265,7 +265,7 @@ def check_nfr1_and_nfr2() -> list[dict]:
             "requirement": "NFR1",
             "claim": f"an ML label is readable within {NFR1_SECONDS:.0f}s of sync",
             "passed": False,
-            "detail": "no label appeared before the deadline — is the worker running?",
+            "detail": "no label appeared before the deadline - is the worker running?",
         }]
 
     results = [{
@@ -293,7 +293,7 @@ def check_nfr1_and_nfr2() -> list[dict]:
             "threshold_ms": NFR2_MS,
             # The service ships in fake mode until the training track produces a model,
             # so this figure says nothing about the real one. Stated, not buried.
-            "caveat": "measured against the service's fake mode — no trained model yet",
+            "caveat": "measured against the service's fake mode - no trained model yet",
         })
     return results
 
@@ -336,7 +336,7 @@ def check_nfr3() -> dict:
         "sightings_in_database": total,
         # A fast query against 200 rows is not evidence for a requirement about 10,000.
         "caveat": None if total >= 10_000 else (
-            f"only {total} sightings present — seed 10,000 with `make seed N=10000` "
+            f"only {total} sightings present - seed 10,000 with `make seed N=10000` "
             "before quoting this as NFR3 evidence"
         ),
     }
@@ -386,10 +386,10 @@ def check_auth_overhead() -> dict:
 # ---------------------------------------------------------------- runner
 
 CHECKS = {
-    "nfr11": ("NFR11 — concurrent submissions", lambda: [check_nfr11()]),
-    "nfr1": ("NFR1/NFR2 — sync to label, inference cost", check_nfr1_and_nfr2),
-    "nfr3": ("NFR3 — map at scale", lambda: [check_nfr3()]),
-    "auth": ("D45 — authenticated request overhead", lambda: [check_auth_overhead()]),
+    "nfr11": ("NFR11 - concurrent submissions", lambda: [check_nfr11()]),
+    "nfr1": ("NFR1/NFR2 - sync to label, inference cost", check_nfr1_and_nfr2),
+    "nfr3": ("NFR3 - map at scale", lambda: [check_nfr3()]),
+    "auth": ("D45 - authenticated request overhead", lambda: [check_auth_overhead()]),
 }
 
 
