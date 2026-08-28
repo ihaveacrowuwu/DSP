@@ -282,9 +282,24 @@ onMounted(() => {
     void loadBasemap(instance)
     void loadData()
   }
+
+  // A map that fails to initialise must say so. Without this the failure is
+  // entirely silent — no console output, no banner, just an empty map — which
+  // is indistinguishable from "there are no sightings here" and cost real time
+  // to diagnose once already.
+  instance.on('error', (event) => {
+    const detail = (event as unknown as { error?: Error }).error
+    console.error('[reef-map] maplibre error:', detail?.message ?? event)
+    error.value = 'The map could not be initialised.'
+  })
+
   // `loaded()` covers the case where the style — which is local, so it resolves
   // synchronously — finished before this handler was attached. Without it the
   // data layers would never be added and the map would sit empty.
+  //
+  // Note for anyone debugging an empty map: MapLibre draws on requestAnimationFrame,
+  // which browsers suspend in a background tab, so `load` does not fire until the
+  // tab is visible. An empty map in a hidden tab is the browser, not this code.
   if (instance.loaded()) {
     start()
   } else {

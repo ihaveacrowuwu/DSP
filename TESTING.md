@@ -39,14 +39,14 @@ one shaped like a Go, Python or Swift test method — as a build failure.
 | Suite | Tests | Command | Needs |
 |---|---:|---|---|
 | Go unit | 40 | `make test-go` | nothing |
-| Go integration | 26 | `make test-go` | PostgreSQL+PostGIS; skips without it |
+| Go integration | 28 | `make test-go` | PostgreSQL+PostGIS; skips without it |
 | ML service (pytest) | 15 | `make test-ml` | creates a venv on first run |
 | Dashboard (Vitest) | 84 | `make test-web` | `npm install` |
 | ML training | 41 | `make test-train` | `ml/training/requirements.txt` |
 | Android unit (JVM) | 47 | `cd android && ./gradlew testDebugUnitTest` | nothing |
 | Android instrumented | 20 | `cd android && ./gradlew connectedDebugAndroidTest` | an emulator |
 | iOS (XCTest + XCUITest) | 9 | `make test-ios` | a simulator; skips without the stack |
-| **Total automated** | **282** | `make test && make mobile` | |
+| **Total automated** | **284** | `make test && make mobile` | |
 | End-to-end smoke | 33 checks | `make smoke` | the running stack |
 | Performance | 4 checks | `make perf` | the stack, seeded to 10,000 |
 | Config checks | 5 + matrix | `make lint` | nothing |
@@ -193,7 +193,7 @@ is the argument for having written them:
 ```
 backend/internal/{auth,httpapi,storage,store}/*_test.go   40 Go unit tests
 backend/internal/httpapi/{harness,rbac,admin,data_integrity}_test.go
-                                                          26 Go integration tests
+                                                          28 Go integration tests
 ml/service/tests/test_inference.py                        15 pytest
 web/src/lib/{mapStyle,photos,dates}.test.ts               46 Vitest (logic)
 web/src/components/*.dom.test.ts                          38 Vitest (components)

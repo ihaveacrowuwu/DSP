@@ -9,7 +9,7 @@ contributors capture geotagged reef photographs in offline-first mobile apps, a
 model grades each photograph patch by patch, and marine researchers confirm or
 correct every result before it counts as data.
 
-📚 **Project definition and academic documents: [`docs/00-INDEX.md`](docs/00-INDEX.md)**
+📚 Design rationale, requirements and the ML specification are in [`docs/`](docs/00-INDEX.md).
 
 ## Architecture
 
@@ -33,11 +33,11 @@ notification strategy and ML stack.
 | Component | Stack | Status |
 |---|---|---|
 | API + worker | Go 1.26, chi, pgx | Working |
-| ML service | Python 3.12, FastAPI, ONNX Runtime | Working (fake mode; model pending) |
+| ML service | Python 3.12, FastAPI, ONNX Runtime | Working — serving a trained model |
 | Dashboard | Vue 3, TypeScript, MapLibre | Working |
 | Database | PostgreSQL 16 + PostGIS | Working |
-| Android app | Kotlin, Jetpack Compose, Material 3 | Not started — see `mobile-shared/` |
-| iOS app | Swift, UIKit, Liquid Glass | Not started — see `mobile-shared/` |
+| Android app | Kotlin, Jetpack Compose, Material 3 | Working — all six screens, offline outbox |
+| iOS app | Swift, UIKit, Liquid Glass | Working — all six screens, offline outbox |
 
 ## Getting started
 
@@ -118,7 +118,7 @@ backend/         Go API, worker, seed loader
 ml/              service/ (inference) and training/ (M1 Pro recipes)
 web/             Vue dashboard
 mobile-shared/   API contract notes, sync protocol, design tokens for the apps
-android/  ios/   placeholders for the native apps
+android/  ios/   the two native contributor apps
 deploy/          docker compose stack
 docs/            proposal, requirements, design, ML spec, OpenAPI
 scripts/         smoke_test.py
@@ -139,15 +139,25 @@ survives.
 
 ## Measured behaviour
 
-Recorded on the development machine with 10,001 seeded sightings, as evidence for
-the project's success criteria.
+Measured on the development machine (Apple M1 Pro) against 10,312 seeded sightings.
+Every figure here comes from a harness or a timed request, not from memory — three
+earlier numbers in this table were recalled rather than measured and turned out to
+be wrong.
 
 | Measure | Result |
 |---|---|
-| Sync to visible model label | ~1.5 s (target: ≤ 30 s) |
-| National map viewport, 10k sightings | 22 ms, 2.7 KB, 28 clusters (target: < 2 s) |
-| Trends over 10k sightings | 17 ms |
-| Verification queue page | 19 ms |
+| Sync to visible model label | **0.89 s** (target: ≤ 30 s) |
+| National map viewport, 10,312 sightings | **56 ms** worst of 5 (target: < 2 s) |
+| 50 concurrent submissions | **0 errors, 0 lost**, 919/s |
+| Map points endpoint | 42 ms |
+| Trends endpoint | 30 ms |
+| Verification queue page | 32 ms |
+| Classifier, held-out test split | 0.8575 accuracy, 0.8548 macro-F1, **0.9543 recall on bleached** |
+| CPU inference, one 5×5 patch lattice | **405 ms** native (target: ≤ 500 ms) |
+
+⚠️ That last figure is met on the processor and **missed inside Docker on macOS**,
+where the same model takes ~822 ms — Docker Desktop runs containers in a virtual
+machine, which roughly doubles it. A Linux host has no such penalty.
 
 ## Constraints worth knowing before changing anything
 
@@ -159,4 +169,7 @@ the project's success criteria.
 4. **A model label is never presented as fact.** Model output and expert verdicts
    are visually distinct everywhere they appear.
 
-Reference material not owned by this project is not tracked.
+Reference material not owned by this project is ignored
+rather than tracked.
+
+be committed.

@@ -235,7 +235,13 @@ func (s *Store) ListSightings(ctx context.Context, f SightingFilter) ([]domain.S
 	if limit <= 0 || limit > 200 {
 		limit = 50
 	}
-	listArgs := append(append([]any{}, args...), limit, f.Offset)
+	// PostgreSQL rejects a negative OFFSET outright, so an unclamped value from
+	// the query string reaches the driver and surfaces as a 500.
+	offset := f.Offset
+	if offset < 0 {
+		offset = 0
+	}
+	listArgs := append(append([]any{}, args...), limit, offset)
 	listSQL := effectiveLabelCTE + sightingSelect + whereSQL +
 		fmt.Sprintf(" ORDER BY s.captured_at DESC, s.id DESC LIMIT $%d OFFSET $%d",
 			len(args)+1, len(args)+2)

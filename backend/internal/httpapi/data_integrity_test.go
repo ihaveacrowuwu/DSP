@@ -402,3 +402,43 @@ func TestAnInvalidRejectReasonSaysSoRatherThanClaimingItIsMissing(t *testing.T) 
 		t.Errorf("the error does not say what the valid values are: %s", body)
 	}
 }
+
+// ---------------------------------------------------------------- pagination bounds
+
+// TestANegativeOffsetIsClampedRatherThanReturningAServerError covers a defect found
+// by probing the running API rather than by reading code. `limit` was defended in
+// both stores — 0, -5, 99999 and "abc" all fall back to the default — but `offset`
+// was passed through untouched, and PostgreSQL rejects a negative OFFSET outright
+// ("OFFSET must not be negative", SQLSTATE 2201X). The driver error surfaced as a
+// bare 500 on two endpoints that a dashboard paginating backwards past zero could
+// reach on its own. Clamping matches how limit already behaves.
+func TestANegativeOffsetIsClampedRatherThanReturningAServerError(t *testing.T) {
+	h := newHarness(t)
+	researcher := h.signUp(domain.RoleResearcher)
+
+	for _, path := range []string{
+		"/v1/sightings?offset=-1",
+		"/v1/sightings?offset=-999999&limit=5",
+		"/v1/verifications/queue?offset=-1",
+	} {
+		status, body := h.do(http.MethodGet, path, researcher.Token, nil)
+		if status != http.StatusOK {
+			t.Errorf("GET %s: got %d, want 200 — body: %s", path, status, body)
+		}
+	}
+}
+
+// TestALargeOffsetReturnsAnEmptyPageNotAnError is the other end of the same range:
+// paging past the last row is a normal thing for a client to do and must not fault.
+func TestALargeOffsetReturnsAnEmptyPageNotAnError(t *testing.T) {
+	h := newHarness(t)
+	researcher := h.signUp(domain.RoleResearcher)
+
+	var page struct {
+		Items []json.RawMessage `json:"items"`
+	}
+	h.mustJSON(http.MethodGet, "/v1/sightings?offset=100000", researcher.Token, nil, http.StatusOK, &page)
+	if len(page.Items) != 0 {
+		t.Errorf("offset past the end returned %d items, want 0", len(page.Items))
+	}
+}

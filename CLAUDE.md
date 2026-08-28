@@ -163,7 +163,7 @@ the header of `web/src/lib/mapStyle.ts`.
 the honest picture: of 32 tracked requirements (NFR8 withdrawn, D70), **20** have full automated evidence, 10 are
 partly covered and **2 have none**. Read it before planning work — it is also the
 to-do list, and its counts are tallied by `scripts/testing_matrix.py` rather than
-maintained by hand. 282 automated tests across six suites, all passing, plus 33
+maintained by hand. 284 automated tests across six suites, all passing, plus 33
 end-to-end smoke checks and 4 measured performance checks.
 
 Known gaps, in the order they hurt the project: **no domain-gap evidence** (the model is

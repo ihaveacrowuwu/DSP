@@ -14,6 +14,12 @@ func (s *Store) VerificationQueue(ctx context.Context, limit, offset int) ([]dom
 	if limit <= 0 || limit > 100 {
 		limit = 25
 	}
+	// PostgreSQL rejects a negative OFFSET outright, so an unclamped value from
+	// the query string reaches the driver and surfaces as a 500. Clamping matches
+	// how limit above is already defended.
+	if offset < 0 {
+		offset = 0
+	}
 
 	var total int
 	if err := s.pool.QueryRow(ctx,

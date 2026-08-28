@@ -1,6 +1,14 @@
 # Reference material not owned by this project.
-/PROJECT INFO FILES
+# Matched with a trailing wildcard so a rename cannot reopen the hole.
+#
+#
+# rename cannot reopen the hole.
+/PROJECT INFO FILES*/
 /coralsense-main
+
+# Word and Office lock files. `~$name.docx` appears whenever a document is open
+# and is never worth committing; one was already tracked.
+~$*
 
 # Build outputs
 /backend/data/
