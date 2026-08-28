@@ -86,3 +86,7 @@ deploy/tls/certs/
 
 # Training run outputs: checkpoints, metrics, error galleries.
 /ml/training/runs/
+
+# The assembled report is a build output of scripts/build_report_docx.py.
+# The chapters are the source; committing the .docx would create a second copy to drift.
+/docs/report/Muraka-report.docx
