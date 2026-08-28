@@ -44,7 +44,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let delegate = UIApplication.shared.delegate as? AppDelegate else { return }
         let style = delegate.container.appearanceStore.preference.interfaceStyle
 
-        // Animated, because an instant inversion of the whole screen is jarring — and
+        // Animated, because an instant inversion of the whole screen is jarring - and
         // because UIKit will cross-fade this for free if asked.
         UIView.animate(withDuration: 0.25) { [weak self] in
             self?.window?.overrideUserInterfaceStyle = style

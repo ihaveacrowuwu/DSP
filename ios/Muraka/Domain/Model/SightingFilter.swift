@@ -20,11 +20,11 @@ enum SightingSort: CaseIterable, Sendable {
 /// Applied **locally**, to the merged list, and that is the whole design: a contributor on a
 /// boat can search and filter everything the device knows about, with no network at all. The
 /// API does support `from`/`to`/`condition` query parameters, and using them would have been
-/// the obvious thing — but then filtering would stop working the moment the signal did, on a
+/// the obvious thing - but then filtering would stop working the moment the signal did, on a
 /// screen whose entire purpose is to work offline (NFR7).
 ///
 /// Deliberately the same fields and the same semantics as `SightingFilter.kt` on Android,
-/// written from the same reasoning rather than translated — a contributor with both phones
+/// written from the same reasoning rather than translated - a contributor with both phones
 /// must get the same results from the same search.
 struct SightingFilter: Equatable, Sendable {
     /// Free text. Matches the site name, the note and the coordinate.
@@ -41,7 +41,7 @@ struct SightingFilter: Equatable, Sendable {
     var locationSource: LocationSource?
     var sort: SightingSort = .newestFirst
 
-    /// Whether anything is actually being filtered — sort order alone does not count.
+    /// Whether anything is actually being filtered - sort order alone does not count.
     var isActive: Bool {
         !query.trimmingCharacters(in: .whitespaces).isEmpty
             || from != nil
@@ -92,7 +92,7 @@ struct SightingFilter: Equatable, Sendable {
         }
     }
 
-    // ── The individual criteria ─────────────────────────────────────────────
+    // -- The individual criteria ---------------------------------------------
 
     /// Free text over the site name, the note and the coordinate.
     ///
@@ -124,7 +124,7 @@ struct SightingFilter: Equatable, Sendable {
         return true
     }
 
-    /// The **effective** condition — an expert's label where one exists, otherwise the
+    /// The **effective** condition - an expert's label where one exists, otherwise the
     /// model's. A sighting with no assessment yet matches no condition filter, because it
     /// genuinely is neither rather than being both.
     private func matchesCondition(_ sighting: ContributorSighting) -> Bool {

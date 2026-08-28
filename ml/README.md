@@ -140,15 +140,14 @@ Neither crashes, so neither would be noticed.
 
 ### Picking this up next session — the exact next steps
 
-Everything below the dataset is done. **The gate is open: Q6 was resolved on 2026-08-24
-(D63 in `docs/08`) — the NOAA dataset is cleared for use**, with a citation and the as-is
+Everything below the dataset is done. **The gate is open: Q6 was resolved on 2026-08-24 — the NOAA dataset is cleared for use**, with a citation and the as-is
 disclaimer owed in the project's data section. The terms as read are recorded in
-`docs/08-scope-risks-decisions.md` under Q6: no explicit licence tag, the standard NOAA as-is disclaimer, a requested
+the decision log under Q6: no explicit licence tag, the standard NOAA as-is disclaimer, a requested
 citation, and the dataset's own facts (224 px, `CORAL`/`CORAL_BL`, 7,292 training images)
 matching `configs/baseline.yaml` exactly. **Nothing has been downloaded.**
 
 The steps, in order (the prep for steps 1–2 is planned in
-`docs/plans/ml-prep-before-mac.md`):
+the ML prep notes):
 
 ```bash
 # 1. Get the corpus (768 MB) into ml/datasets/noaa. The script downloads it anonymously,
@@ -199,14 +198,13 @@ graph rather than in the weights.
 6. ~~**Check CPU latency** for a 25-patch batch. If it is slow, drop to
    MobileNetV3-Large before touching accuracy.~~ **Done** — 406 ms per photograph at
    `ONNX_THREADS=4`, so EfficientNet-B0 stays. `scripts/bench_backbones.py` also closed the
-   "compare a modern backbone" question (D65): ConvNeXt-Tiny is 1,486 ms and
+   "compare a modern backbone" question: ConvNeXt-Tiny is 1,486 ms and
    EfficientNetV2-S 862 ms, both far outside the budget rather than marginally over.
-7. **Then the domain-gap work** (D60 in `docs/08`): pull the **Central Indian
+7. **Then the domain-gap work**: pull the **Central Indian
    Ocean** region of the Seaview Survey dataset — that region only, the whole thing
    is 1.5 TB across 22 regional partitions — and record the survey IDs and a
    manifest hash in `configs/baseline.yaml`, which already has the fields waiting
-   under `evaluation.cross_domain_sets`. The eSpace page (read 2026-08-24, docs/08
-   Q6) describes the region as "Indian Ocean (Maldives, Chagos Archipelago)": confirm
+   under `evaluation.cross_domain_sets`. The eSpace page describes the region as "Indian Ocean (Maldives, Chagos Archipelago)": confirm
    the partition's real name at download, select Maldivian transects via the shipped
    CSV metadata rather than by folder name, and take only the photo-quadrats,
    annotations and tabular files — never the raw 360° triplets, which are the bulk

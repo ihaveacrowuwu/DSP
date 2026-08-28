@@ -41,7 +41,7 @@ func TestReplayingASubmissionCreatesExactlyOneRow(t *testing.T) {
 		"depthM":         6.5,
 	}
 
-	// Eight attempts, which is also the mobile outbox's give-up threshold — the
+	// Eight attempts, which is also the mobile outbox's give-up threshold - the
 	// realistic worst case is a client that retried its whole backoff curve.
 	statuses := make([]int, 0, 8)
 	for i := 0; i < 8; i++ {
@@ -62,7 +62,7 @@ func TestReplayingASubmissionCreatesExactlyOneRow(t *testing.T) {
 	}
 
 	// The protocol tells clients to treat 201 and 200 identically, so this is not a
-	// requirement — but the first attempt creating and the rest not is the behaviour
+	// requirement - but the first attempt creating and the rest not is the behaviour
 	// the mobile reconciliation logic was written against, and worth pinning.
 	if statuses[0] != http.StatusCreated {
 		t.Errorf("first attempt returned %d, expected 201", statuses[0])
@@ -166,7 +166,7 @@ func TestCreatingASiteBackfillsSightingsAlreadyInside(t *testing.T) {
 
 // TestRejectingASightingIsRecordedWithItsReasonAndAuthor covers the half of FR6 that
 // had no evidence: the smoke test confirms and corrects, but never rejects, and
-// nothing asserted that the audit trail records *who* decided *what* — which is the
+// nothing asserted that the audit trail records *who* decided *what* - which is the
 // reason FR6 says "audit-logged".
 func TestRejectingASightingIsRecordedWithItsReasonAndAuthor(t *testing.T) {
 	h := newHarness(t)
@@ -176,7 +176,7 @@ func TestRejectingASightingIsRecordedWithItsReasonAndAuthor(t *testing.T) {
 	id := h.newSighting(contributor, 4.4, 73.4)
 	h.gradeSighting(id, "healthy", 0.55, 0.1)
 
-	// `rejectReason` is an enum — blurry, not_coral, duplicate, spam, other — not free
+	// `rejectReason` is an enum - blurry, not_coral, duplicate, spam, other - not free
 	// text. Sending a sentence is a 422.
 	reason := "blurry"
 	h.mustJSON(http.MethodPost, "/v1/sightings/"+id.String()+"/verification", researcher.Token,
@@ -206,7 +206,7 @@ func TestRejectingASightingIsRecordedWithItsReasonAndAuthor(t *testing.T) {
 	}
 }
 
-// TestARejectionWithoutAReasonIsRefused — a rejection with no reason is unauditable,
+// TestARejectionWithoutAReasonIsRefused - a rejection with no reason is unauditable,
 // which defeats the point of recording it.
 func TestARejectionWithoutAReasonIsRefused(t *testing.T) {
 	h := newHarness(t)
@@ -269,7 +269,7 @@ func TestRejectedSightingsAreExcludedFromMapTrendsAndExport(t *testing.T) {
 		t.Error("a rejected sighting appears in the map response (FR11)")
 	}
 
-	// Trends is aggregated, so the id is not visible — count instead, which is the
+	// Trends is aggregated, so the id is not visible - count instead, which is the
 	// only observable that can carry a rejected row.
 	before := h.trendTotal(researcher.Token)
 	extra := h.newSighting(contributor, 4.63, 73.63)
@@ -407,7 +407,7 @@ func TestAnInvalidRejectReasonSaysSoRatherThanClaimingItIsMissing(t *testing.T) 
 
 // TestANegativeOffsetIsClampedRatherThanReturningAServerError covers a defect found
 // by probing the running API rather than by reading code. `limit` was defended in
-// both stores — 0, -5, 99999 and "abc" all fall back to the default — but `offset`
+// both stores - 0, -5, 99999 and "abc" all fall back to the default - but `offset`
 // was passed through untouched, and PostgreSQL rejects a negative OFFSET outright
 // ("OFFSET must not be negative", SQLSTATE 2201X). The driver error surfaced as a
 // bare 500 on two endpoints that a dashboard paginating backwards past zero could

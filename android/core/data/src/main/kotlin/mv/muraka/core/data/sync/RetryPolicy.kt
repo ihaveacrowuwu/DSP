@@ -4,7 +4,7 @@ import kotlin.math.pow
 import kotlin.random.Random
 
 /**
- * Exponential backoff with jitter, capped — `min(2^attempts, 300) seconds ± 20%`, from
+ * Exponential backoff with jitter, capped - `min(2^attempts, 300) seconds +/- 20%`, from
  * `mobile-shared/sync-protocol.md`.
  *
  * The jitter matters more than it looks. Without it, a boat full of divers whose phones

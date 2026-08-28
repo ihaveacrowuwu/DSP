@@ -26,7 +26,7 @@ import javax.inject.Singleton
  * The queue, as the sync screen sees it.
  *
  * Everything here is about making pending work **visible**. A silent queue is how data
- * goes missing unnoticed, and the two escape hatches — retry, and retry smaller — exist
+ * goes missing unnoticed, and the two escape hatches - retry, and retry smaller - exist
  * because `sync-protocol.md` requires a stranded sighting to have a way out rather than
  * sitting in a permanent failure the contributor cannot act on.
  */
@@ -55,7 +55,7 @@ class OutboxRepositoryImpl @Inject constructor(
                     state = row.outboxState,
                     photosTotal = mine.size,
                     // "Sent" here means the server acknowledged the upload call. It is
-                    // NOT a claim that the photograph is safe — that only follows the
+                    // NOT a claim that the photograph is safe - that only follows the
                     // read-back, which is what deletes the row entirely.
                     photosSent = mine.count { it.state != OutboxState.QUEUED.wire },
                     attempts = row.attempts,
@@ -81,7 +81,7 @@ class OutboxRepositoryImpl @Inject constructor(
      * The way out of a `413`.
      *
      * Each oversized photograph is re-encoded smaller and queued under a **new** photo id,
-     * because the old id may already be half-known to the server — reusing it would ask
+     * because the old id may already be half-known to the server - reusing it would ask
      * the server to reconcile two different images under one key. The old row and its file
      * go only once the replacement is durably written.
      */

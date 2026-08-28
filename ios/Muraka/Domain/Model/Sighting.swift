@@ -36,9 +36,9 @@ struct Sighting: Identifiable, Equatable, Sendable {
     let createdAt: Date
     var photoCount: Int = 0
     /// Expert label where one exists, otherwise the model's. Never render without
-    /// ``verified`` beside it — that is the NFR13 failure.
+    /// ``verified`` beside it - that is the NFR13 failure.
     var condition: Condition?
-    /// Worst bleached extent across the sighting's photographs, 0–1.
+    /// Worst bleached extent across the sighting's photographs, 0-1.
     var severity: Double?
     var confidence: Double?
     /// True only when an expert confirmed or corrected.
@@ -57,7 +57,7 @@ struct Patch: Equatable, Sendable {
 ///
 /// ``severity`` is the number to lead with, not ``label``: "62% bleached" tells a
 /// contributor something "bleached" does not. ``modelVersion`` is provenance and must be
-/// shown — `fake-0.0.0` means no trained model is loaded yet (D19).
+/// shown - `fake-0.0.0` means no trained model is loaded yet (D19).
 struct Prediction: Equatable, Sendable {
     let id: String
     let photoID: String
@@ -75,7 +75,7 @@ struct Prediction: Equatable, Sendable {
 struct Photo: Identifiable, Equatable, Sendable {
     let id: String
     let sightingID: String
-    /// Relative path to the bytes. Requires the bearer token — not a public URL.
+    /// Relative path to the bytes. Requires the bearer token - not a public URL.
     let url: String
     let width: Int
     let height: Int

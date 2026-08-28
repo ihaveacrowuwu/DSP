@@ -45,7 +45,7 @@ import javax.inject.Singleton
  *
  * Step 1 is what makes the whole thing safe. The client never has to guess whether a
  * write landed, because the ids are its own: `404` means the server has nothing, and
- * `200` carries `photos[]`, whose ids are also the client's — so the difference is the
+ * `200` carries `photos[]`, whose ids are also the client's - so the difference is the
  * exact set still missing, not an estimate. No bookkeeping column could be more
  * trustworthy, because it is the database answering.
  *
@@ -68,7 +68,7 @@ class SyncEngineImpl @Inject constructor(
     /**
      * One drain at a time.
      *
-     * Connectivity returning and the periodic task firing together is not a rare race —
+     * Connectivity returning and the periodic task firing together is not a rare race
      * it is the *ordinary* case when a boat comes back into range, and two concurrent
      * drains would upload the same photograph twice. Harmless, because of the ids, but it
      * doubles a diver's tethering allowance for nothing.
@@ -87,7 +87,7 @@ class SyncEngineImpl @Inject constructor(
     }
 
     private suspend fun drainLocked(): SyncOutcome {
-        // No session means nothing may be uploaded. Rows are left exactly as they are —
+        // No session means nothing may be uploaded. Rows are left exactly as they are
         // they belong to their owner and wait for that account to sign back in.
         val userId = tokens.current()?.userId ?: return SyncOutcome()
 
@@ -139,7 +139,7 @@ class SyncEngineImpl @Inject constructor(
     private suspend fun pendingCount(userId: String): Int =
         outbox.dueForSync(userId, now = Long.MAX_VALUE, limit = Int.MAX_VALUE).size
 
-    // ── One row ─────────────────────────────────────────────────────────────
+    // -- One row -------------------------------------------------------------
 
     private sealed interface RowOutcome {
         data class Confirmed(val photosUploaded: Int) : RowOutcome
@@ -159,7 +159,7 @@ class SyncEngineImpl @Inject constructor(
         }
 
         // Upload only what the server does not already hold. Re-sending a photograph it
-        // has is harmless — it answers 200 — but it wastes a diver's tethering allowance.
+        // has is harmless - it answers 200 - but it wastes a diver's tethering allowance.
         var uploaded = 0
         for (photo in localPhotos.filterNot { it.id in alreadyHeld }) {
             when (val sent = uploadPhoto(row.id, photo)) {
@@ -201,7 +201,7 @@ class SyncEngineImpl @Inject constructor(
         }
 
         // Nothing server-side, in either branch: send the metadata. `201` and `200` are
-        // treated identically — the client never has to know which it was.
+        // treated identically - the client never has to know which it was.
         if (held.isEmpty()) {
             when (val created = createMetadata(row)) {
                 is Step.Failed -> return Known.Failed(created.error)
@@ -215,7 +215,7 @@ class SyncEngineImpl @Inject constructor(
      * The read-back, and the only place local data may be deleted.
      *
      * Uploading is not finishing: until the database itself lists every photo id, the row
-     * stays and the contributor is told "Checking…" rather than something reassuring.
+     * stays and the contributor is told "Checking..." rather than something reassuring.
      */
     private suspend fun confirmOrKeep(
         row: SightingQueueEntity,
@@ -243,7 +243,7 @@ class SyncEngineImpl @Inject constructor(
         return RowOutcome.Confirmed(uploaded)
     }
 
-    // ── Steps ───────────────────────────────────────────────────────────────
+    // -- Steps ---------------------------------------------------------------
 
     private sealed interface Step {
         data object Ok : Step
@@ -262,7 +262,7 @@ class SyncEngineImpl @Inject constructor(
      *
      * `GET /v1/sightings/{id}` answers both questions at once, because the ids are the
      * client's own: `404` means nothing was ever stored, and `200` carries the photo ids
-     * the server actually holds — so the difference is the exact set still missing.
+     * the server actually holds - so the difference is the exact set still missing.
      */
     private suspend fun fetchServerState(id: String): Fetch {
         val response = runCatching { api.sighting(id) }
@@ -298,14 +298,14 @@ class SyncEngineImpl @Inject constructor(
             .getOrElse { return Step.Failed(ErrorMapper.from(it)) }
 
         // 201 created and 200 replay are treated identically. The client never has to know
-        // which it was — that is the entire point of the client generating the id.
+        // which it was - that is the entire point of the client generating the id.
         return if (response.isSuccessful) Step.Ok else Step.Failed(ErrorMapper.from(response))
     }
 
     private suspend fun uploadPhoto(sightingId: String, photo: PhotoQueueEntity): Step {
         val file = photos.fileFor(photo.id)
         if (!file.exists()) {
-            // The bytes are gone and cannot be recovered — a wiped app directory, or a
+            // The bytes are gone and cannot be recovered - a wiped app directory, or a
             // file that never finished being written. Honest failure beats a silent skip
             // that would leave the sighting permanently one photograph short.
             outbox.recordPhotoAttempt(photo.id, OutboxState.FAILED.wire, "the photograph's file is missing")
@@ -342,7 +342,7 @@ class SyncEngineImpl @Inject constructor(
         return Step.Failed(error)
     }
 
-    // ── Failure handling ────────────────────────────────────────────────────
+    // -- Failure handling ----------------------------------------------------
 
     private suspend fun handleFailure(row: SightingQueueEntity, error: ApiError, photosUploaded: Int = 0): RowOutcome {
         val now = System.currentTimeMillis()
@@ -350,7 +350,7 @@ class SyncEngineImpl @Inject constructor(
         return when {
             error is ApiError.Unauthorized -> {
                 // The authenticator already tried a refresh and it failed. Leave the row
-                // untouched — the queue survives sign-out, and its attempt counter must
+                // untouched - the queue survives sign-out, and its attempt counter must
                 // not be spent on an expired session.
                 outbox.setSightingState(row.id, row.state)
                 RowOutcome.SessionEnded
@@ -398,7 +398,7 @@ class SyncEngineImpl @Inject constructor(
     private fun stateFor(error: ApiError): OutboxState =
         if (error.outcomeIsUnknown) OutboxState.IN_DOUBT else OutboxState.QUEUED
 
-    // ── Cache ───────────────────────────────────────────────────────────────
+    // -- Cache ---------------------------------------------------------------
 
     private suspend fun cacheDetail(userId: String, detail: SightingDetailDto) {
         val readAt = Instant.now()

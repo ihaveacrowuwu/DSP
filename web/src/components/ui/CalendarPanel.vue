@@ -6,7 +6,7 @@
  * the only thing this system actually asks a calendar to do.
  *
  * It renders one month at a time as six fixed rows, so paging never resizes the
- * panel, and it knows nothing about how the range is stored — the parent owns the
+ * panel, and it knows nothing about how the range is stored - the parent owns the
  * start and end and this emits the day that was chosen.
  */
 import { computed, nextTick, ref, watch } from 'vue'
@@ -113,7 +113,7 @@ function reveal(iso: string) {
  */
 const frameRef = ref<HTMLElement | null>(null)
 
-/** The day cell in the month currently on screen — the last grid in the frame. */
+/** The day cell in the month currently on screen - the last grid in the frame. */
 function cellFor(iso: string): HTMLButtonElement | null {
   const grids = frameRef.value?.querySelectorAll<HTMLElement>('[data-month-grid]') ?? []
   const live = grids[grids.length - 1]
@@ -231,7 +231,7 @@ defineExpose({
 .calendar {
   display: grid;
   gap: 0.5rem;
-  /* Seven 2rem columns plus gaps and padding — fixed so the panel never resizes
+  /* Seven 2rem columns plus gaps and padding - fixed so the panel never resizes
      between a month with five rows and one with six. */
   width: 17.5rem;
 }

@@ -89,7 +89,7 @@ watch(page, load)
  *
  * Three things are deliberately not navigation: a click on a real control, a
  * modified click (the browser owns those), and a click that ends a text
- * selection — coordinates and site names in this table are there to be copied.
+ * selection - coordinates and site names in this table are there to be copied.
  */
 function openRecord(sighting: Sighting, event: MouseEvent) {
   if (event.defaultPrevented) return

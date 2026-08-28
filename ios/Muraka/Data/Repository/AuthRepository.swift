@@ -27,7 +27,7 @@ final class AuthRepository: Sendable {
         guard let stored = await tokens.current() else { return .signedOut }
         guard let profile = try? await cachedProfile(userID: stored.userID) else {
             // Tokens but no cached profile: only reachable if the container was cleared
-            // while offline. The app stays usable — NFR7 — on a stub that the next
+            // while offline. The app stays usable - NFR7 - on a stub that the next
             // successful `/v1/me` replaces.
             return .signedIn(User(
                 id: stored.userID,
@@ -54,7 +54,7 @@ final class AuthRepository: Sendable {
     /// Revokes the refresh token and forgets the session.
     ///
     /// **Keeps the outbox.** Queued rows belong to the account that captured them and wait
-    /// for that account to sign back in — two people share a boat and a phone more often than
+    /// for that account to sign back in - two people share a boat and a phone more often than
     /// you would think, and uploading one diver's sighting under another's name is corrupt
     /// data and an ethics problem, not a cosmetic bug.
     func signOut() async {
@@ -96,7 +96,7 @@ final class AuthRepository: Sendable {
         await tokens.clear()
     }
 
-    // ── Internals ───────────────────────────────────────────────────────────
+    // -- Internals -----------------------------------------------------------
 
     /// Stores the session and reads the profile back.
     ///
@@ -111,13 +111,13 @@ final class AuthRepository: Sendable {
             userID: session.user.id
         ))
         // Without this the app signs in, fails to persist, and returns to the sign-in screen
-        // with no explanation — which reads to the contributor as a wrong password.
+        // with no explanation - which reads to the contributor as a wrong password.
         guard stored else {
             throw ApiError.unexpected(detail: "the session could not be stored in the Keychain")
         }
 
         // Totals come from `/v1/me` and nowhere else. If it cannot be reached the session is
-        // still good — the contributor gets an account with no totals yet rather than a
+        // still good - the contributor gets an account with no totals yet rather than a
         // failed sign-in.
         if let me = try? await api.me() {
             try await cache(me: me, userID: session.user.id)

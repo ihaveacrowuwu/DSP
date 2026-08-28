@@ -1,24 +1,15 @@
 import Foundation
 import os
 
-/// UUIDv7 — a time-ordered UUID, generated on the device at capture time.
+/// UUIDv7, a time-ordered UUID generated on the device at capture time.
 ///
-/// This is the single rule that makes the whole offline protocol simple: because the client
-/// owns the id, the server can upsert on it, so a retry after a timeout, after a killed
-/// process, or after a lost response creates nothing new. The client never has to ask "did
-/// that one get through?" — it can just send again.
+/// Client-owned ids let the server upsert, so any retry is idempotent and the client never
+/// has to ask whether a write landed. `Foundation.UUID()` is v4 and unordered, so v7 is
+/// written out here: it keeps index locality good and makes the outbox chronological.
 ///
-/// `Foundation.UUID()` is v4 and unordered, so this is written out. v7 is time-ordered,
-/// which keeps PostgreSQL's index locality good and makes the outbox naturally
-/// chronological — the queue sorts by id.
-///
-/// Layout (RFC 9562 §5.7): 48-bit millisecond timestamp, 4-bit version, 12-bit `rand_a`,
-/// 2-bit variant, 62-bit `rand_b`.
-///
-/// `rand_a` is used as a **monotonic counter** within a millisecond (RFC 9562 "method 1")
-/// rather than as random bits. Without that, five photographs captured in the same
-/// millisecond get ids in random order, and the researcher's queue then shows them in an
-/// order that is not the order they were taken.
+/// Layout (RFC 9562 section 5.7): 48-bit millisecond timestamp, 4-bit version, 12-bit `rand_a`,
+/// 2-bit variant, 62-bit `rand_b`. `rand_a` is a monotonic counter within a millisecond
+/// (RFC 9562 method 1), so photographs captured in the same millisecond keep capture order.
 enum UUIDv7 {
     /// The counter state, behind a lock so the type stays `Sendable` without `@unchecked`.
     private struct Counter {

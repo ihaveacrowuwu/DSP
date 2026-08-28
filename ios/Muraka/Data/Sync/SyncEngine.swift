@@ -16,29 +16,22 @@ struct SyncOutcome: Sendable, Equatable {
     var shouldRetry: Bool { (offline || stillPending > 0) && !needsSignIn }
 }
 
-/// The drain loop.
+/// The drain loop. Implements `mobile-shared/sync-protocol.md`.
 ///
-/// The algorithm is `mobile-shared/sync-protocol.md`, and the shape of it is:
+/// For each pending row, oldest capture first:
+///   1. ask what the server already has (GET /v1/sightings/{id})
+///   2. send only what is missing (metadata, then the missing photos)
+///   3. read the sighting back
+///   4. only then delete anything local
 ///
-/// ```
-/// for each row the contributor still owes, oldest capture first:
-///     1. work out what the SERVER already has  (GET /v1/sightings/{id})
-///     2. send only what is missing             (metadata, then the missing photos)
-///     3. read the sighting back                (GET again)
-///     4. only then delete anything local
-/// ```
+/// Step 1 avoids guessing whether a write landed: ids are client-generated, so `404` means
+/// the server has nothing and `200` carries `photos[]` with the client's own ids, giving the
+/// exact set still missing.
 ///
-/// Step 1 is what makes it safe. The client never has to guess whether a write landed,
-/// because the ids are its own: `404` means the server has nothing, and `200` carries
-/// `photos[]`, whose ids are also the client's — so the difference is the exact set still
-/// missing, not an estimate. No bookkeeping column could be more trustworthy, because it is
-/// the database answering.
+/// Step 4 is where data is lost if it is wrong. Nothing local is deleted because an upload
+/// call returned, or on a response that could not be parsed.
 ///
-/// Step 4 is where data is lost if you get it wrong. Nothing local is deleted on the strength
-/// of an upload call returning, and nothing is deleted on a response that could not be parsed.
-///
-/// This is deliberately the same algorithm as `SyncEngineImpl.kt`, written from the protocol
-/// document rather than translated from the Kotlin — which is what the document asks for.
+/// SyncEngineImpl.kt implements the same algorithm from the same document.
 actor SyncEngine {
     private let api: APIClient
     private let outbox: OutboxStore
@@ -51,7 +44,7 @@ actor SyncEngine {
 
     /// One drain at a time. Connectivity returning and a background task firing together is
     /// the ordinary case when a boat comes back into range, not a rare race, and two
-    /// concurrent drains would upload the same photograph twice — harmless because of the
+    /// concurrent drains would upload the same photograph twice - harmless because of the
     /// ids, but it doubles a diver's tethering allowance for nothing.
     private var draining = false
 
@@ -72,7 +65,7 @@ actor SyncEngine {
         draining = true
         defer { draining = false }
 
-        // No session means nothing may be uploaded. Rows are left exactly as they are —
+        // No session means nothing may be uploaded. Rows are left exactly as they are
         // they belong to their owner and wait for that account to sign back in.
         guard let userID = await tokens.currentUserID() else { return SyncOutcome() }
 
@@ -110,7 +103,7 @@ actor SyncEngine {
         return outcome
     }
 
-    // ── One row ─────────────────────────────────────────────────────────────
+    // -- One row -------------------------------------------------------------
 
     private enum RowOutcome {
         case confirmed(photosUploaded: Int)
@@ -132,7 +125,7 @@ actor SyncEngine {
         }
 
         // Upload only what the server does not already hold. Re-sending a photograph it has
-        // is harmless — it answers 200 — but it wastes a diver's tethering allowance.
+        // is harmless - it answers 200 - but it wastes a diver's tethering allowance.
         var uploaded = 0
         for photo in localPhotos where !alreadyHeld.contains(photo.id) {
             do {
@@ -162,7 +155,7 @@ actor SyncEngine {
         }
 
         // Nothing server-side, in either branch: send the metadata. `201` and `200` are
-        // treated identically — the client never has to know which it was.
+        // treated identically - the client never has to know which it was.
         if held.isEmpty {
             _ = try await api.createSighting(CreateSightingRequest(
                 id: row.id,
@@ -184,7 +177,7 @@ actor SyncEngine {
     /// The read-back, and the only place local data may be deleted.
     ///
     /// Uploading is not finishing: until the database itself lists every photo id, the row
-    /// stays and the contributor is told "Checking…" rather than something reassuring.
+    /// stays and the contributor is told "Checking..." rather than something reassuring.
     private func confirmOrKeep(
         row: SightingQueueRecord,
         localPhotos: [PhotoQueueRecord],
@@ -219,7 +212,7 @@ actor SyncEngine {
     private func upload(photo: PhotoQueueRecord, to sightingID: String) async throws {
         let url = await photos.fileURL(for: photo.id)
         guard let data = try? Data(contentsOf: url) else {
-            // The bytes are gone and cannot be recovered — a wiped container, or a file that
+            // The bytes are gone and cannot be recovered - a wiped container, or a file that
             // never finished being written. Honest failure beats a silent skip that would
             // leave the sighting permanently one photograph short.
             try? await outbox.recordPhotoAttempt(
@@ -272,7 +265,7 @@ actor SyncEngine {
         return body
     }
 
-    // ── Failure handling ────────────────────────────────────────────────────
+    // -- Failure handling ----------------------------------------------------
 
     private func handleFailure(
         row: SightingQueueRecord,
@@ -281,7 +274,7 @@ actor SyncEngine {
     ) async -> RowOutcome {
         switch error {
         case .unauthorized:
-            // The refresh already ran and failed. Leave the row untouched — the queue
+            // The refresh already ran and failed. Leave the row untouched - the queue
             // survives sign-out, and its attempt counter must not be spent on a dead session.
             try? await outbox.setSightingState(id: row.id, state: row.outboxState)
             return .sessionEnded

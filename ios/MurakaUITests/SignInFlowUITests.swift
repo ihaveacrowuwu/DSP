@@ -3,7 +3,7 @@ import XCTest
 /// End-to-end through the real app against the local stack.
 ///
 /// This is the only test in the project that exercises the actual networking, the Keychain
-/// and the outbox together, so it is also where the screenshots for the project come from —
+/// and the outbox together, so it is also where the screenshots for the project come from
 /// captured from a real run rather than staged by hand.
 ///
 /// Requires the stack to be up (`make up && make seed`). It skips rather than fails when it
@@ -11,7 +11,7 @@ import XCTest
 @MainActor
 final class SignInFlowUITests: XCTestCase {
     // `XCUIApplication` is main-actor isolated under Swift 6 strict concurrency, which is
-    // why the whole class is `@MainActor` — the alternative is an implicitly unwrapped
+    // why the whole class is `@MainActor` - the alternative is an implicitly unwrapped
     // optional assigned in setUp, which is the idiom SwiftLint is right to flag.
     private let app = XCUIApplication()
 
@@ -22,7 +22,7 @@ final class SignInFlowUITests: XCTestCase {
         continueAfterFailure = false
         // Prefilled rather than typed: XCUITest cannot reliably type into a secure field
         // without a software keyboard, and the simulator does not always present one. The
-        // flag is debug-only and only fills the fields — the test still taps Sign in, so
+        // flag is debug-only and only fills the fields - the test still taps Sign in, so
         // the real request, the real Keychain write and the real list fetch all run.
         app.launchArguments += [
             "-MurakaUITestCredentials", Self.credentials,
@@ -62,7 +62,7 @@ final class SignInFlowUITests: XCTestCase {
         attach(name: "04-config")
 
         // Back to the list and into a sighting, which renders the lattice and the
-        // provenance chip — the two things NFR13 turns on.
+        // provenance chip - the two things NFR13 turns on.
         app.tabBars.buttons["tab.sightings"].tap()
         let firstCell = app.tables.cells.element(boundBy: 0)
         XCTAssertTrue(firstCell.waitForExistence(timeout: 10), "the seeded history should have rows")
@@ -84,7 +84,7 @@ final class SignInFlowUITests: XCTestCase {
         let unfiltered = cells.count
         XCTAssertGreaterThan(unfiltered, 1, "the seeded history should have several rows")
 
-        // ── Search ───────────────────────────────────────────────────────────
+        // -- Search -----------------------------------------------------------
         let search = app.searchFields.firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: 5), "the search field should be in the navigation bar")
         search.tap()
@@ -92,13 +92,13 @@ final class SignInFlowUITests: XCTestCase {
         search.typeText("Verified")
         attach(name: "06-search")
 
-        // Narrowed, and not to nothing — some seeded sightings are verified.
+        // Narrowed, and not to nothing - some seeded sightings are verified.
         let searched = cells.count
         XCTAssertLessThan(searched, unfiltered, "searching should narrow the list")
         XCTAssertGreaterThan(searched, 0, "the seed includes verified sightings")
 
         // Clearing restores everything, which is the property a contributor actually relies
-        // on — a filter you cannot get out of is worse than no filter.
+        // on - a filter you cannot get out of is worse than no filter.
         if app.buttons["Clear text"].exists {
             app.buttons["Clear text"].tap()
         } else {
@@ -108,7 +108,7 @@ final class SignInFlowUITests: XCTestCase {
         // over and the filter button is genuinely not in the hierarchy while it does.
         //
         // iOS 26 labels that button "Close"; earlier versions labelled it "Cancel". Both are
-        // checked rather than assumed — the element tree said "Close", which is the only
+        // checked rather than assumed - the element tree said "Close", which is the only
         // reason this works.
         for label in ["Close", "Cancel"] where app.buttons[label].exists {
             app.buttons[label].tap()
@@ -116,7 +116,7 @@ final class SignInFlowUITests: XCTestCase {
         }
         XCTAssertEqual(cells.count, unfiltered, "clearing the search should restore every row")
 
-        // ── The filter menu ──────────────────────────────────────────────────
+        // -- The filter menu --------------------------------------------------
         // Not scoped to `navigationBars`: with a stacked search bar the button is not
         // necessarily a descendant of it.
         let filterButton = app.buttons["filters"]
@@ -148,7 +148,7 @@ final class SignInFlowUITests: XCTestCase {
 
         XCTAssertLessThan(cells.count, unfiltered, "filtering by condition should narrow the list")
 
-        // ── Clearing from the menu ───────────────────────────────────────────
+        // -- Clearing from the menu -------------------------------------------
         activeFilter.tap()
         app.buttons["Clear all filters"].tap()
         XCTAssertEqual(
@@ -163,7 +163,7 @@ final class SignInFlowUITests: XCTestCase {
     ///
     /// NFR14 asks for both appearances to be correct, not merely to render. This drives the
     /// appearance control on the Profile screen rather than the simulator's own setting,
-    /// which makes the test self-contained and — more usefully — means it tests the toggle
+    /// which makes the test self-contained and - more usefully - means it tests the toggle
     /// the contributor actually has.
     ///
     /// It leaves the device's own setting alone, so a dark screenshot here is proof the
@@ -182,7 +182,7 @@ final class SignInFlowUITests: XCTestCase {
         XCTAssertTrue(appearance.waitForExistence(timeout: 5), "the appearance control should be visible")
         appearance.buttons["Dark"].tap()
 
-        // The caption is the assertion that the choice registered — a highlighted segment
+        // The caption is the assertion that the choice registered - a highlighted segment
         // alone could be a control that looks selected and does nothing.
         XCTAssertTrue(
             app.staticTexts["Always dark, whatever your device is set to."].waitForExistence(timeout: 5),
@@ -207,7 +207,7 @@ final class SignInFlowUITests: XCTestCase {
         sleep(4)
         attach(name: "14-dark-sighting-detail")
 
-        // ── And back ─────────────────────────────────────────────────────────
+        // -- And back ---------------------------------------------------------
         // A setting you cannot undo is worse than no setting, so the return trip is part of
         // the test rather than assumed.
         app.navigationBars.buttons.element(boundBy: 0).tap()
@@ -247,7 +247,7 @@ final class SignInFlowUITests: XCTestCase {
 
     /// The patch-grid overlay can be turned off, and the choice is remembered.
     ///
-    /// The lattice is an annotation, and an annotation you cannot remove is an obstruction —
+    /// The lattice is an annotation, and an annotation you cannot remove is an obstruction
     /// turning it off is how a contributor checks the model's reading against the reef rather
     /// than against the model's own drawing of it.
     func testThePatchGridCanBeTurnedOffAndStaysOff() throws {
@@ -326,8 +326,8 @@ final class SignInFlowUITests: XCTestCase {
         )
     }
 
-    /// Activating search removes both navigation-bar items — UIKit substitutes its own Close
-    /// button and owns that row — so the filter menu is unreachable while typing. The scope
+    /// Activating search removes both navigation-bar items - UIKit substitutes its own Close
+    /// button and owns that row - so the filter menu is unreachable while typing. The scope
     /// bar is the affordance that survives, and this checks it genuinely filters rather than
     /// merely appearing.
     func testTheScopeBarFiltersWhileSearchIsActive() throws {
@@ -386,7 +386,7 @@ final class SignInFlowUITests: XCTestCase {
         }
     }
 
-    // ── Helpers ─────────────────────────────────────────────────────────────
+    // -- Helpers -------------------------------------------------------------
 
     private func signIn() {
         guard app.textFields["Email"].waitForExistence(timeout: 10) else { return }

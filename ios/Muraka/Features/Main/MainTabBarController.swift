@@ -2,8 +2,8 @@ import UIKit
 
 /// The signed-in app.
 ///
-/// Three tabs and a capture action. The feature set is deliberately small — review, maps and
-/// administration live in the dashboard, not on the phone — and keeping it that way is what
+/// Three tabs and a capture action. The feature set is deliberately small - review, maps and
+/// administration live in the dashboard, not on the phone - and keeping it that way is what
 /// makes the capture flow fit in under 60 seconds and 8 taps (NFR6).
 ///
 /// The badge on the Sync tab is not decoration: `sync-protocol.md` asks for pending work to be

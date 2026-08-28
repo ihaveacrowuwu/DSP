@@ -5,7 +5,7 @@
  * throws inside the renderer and quietly never appears, which on a map made
  * mostly of layers is the worst possible failure mode: the page looks like it
  * loaded. Nothing short of running the style spec's own validator catches that,
- * so that is what happens here — and because the radius expressions encode a
+ * so that is what happens here - and because the radius expressions encode a
  * design decision ("a lone sighting is a small dot at national zoom"), they are
  * evaluated too, at the zooms that decision was made about.
  *
@@ -59,7 +59,7 @@ function fullStyle(hasRaster = false): StyleSpecification {
 /**
  * The property definitions the renderer compiles paint values against. Spelling
  * them out is what makes `createPropertyExpression` behave exactly as MapLibre
- * does — including rejecting an expression that reads a feature property in a
+ * does - including rejecting an expression that reads a feature property in a
  * zoom-only slot.
  */
 function propertySpec(type: 'number' | 'color'): StylePropertySpecification {

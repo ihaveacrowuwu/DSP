@@ -37,7 +37,7 @@ services:
       PATCH_OVERLAP: "0"
       BLEACHED_LABEL_THRESHOLD: "0.35"
       # 4, not the service's own default of 2, and measured rather than guessed: at 2
-      # threads a 25-patch lattice runs 477 ms p50 and has been seen at 544 ms p95 —
+      # threads a 25-patch lattice runs 477 ms p50 and has been seen at 544 ms p95
       # a NFR2 breach at the tail on an otherwise idle machine. 4 gives 402/411.
       # Above 4 the curve flattens, and those cores are wanted by Postgres, the API
       # and the worker. Evidence: nfr2-backbone-comparison.json, D64.

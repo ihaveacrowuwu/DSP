@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Static checks on the demo TLS configuration — NFR4's "config inspection" half.
+"""Static checks on the demo TLS configuration - NFR4's "config inspection" half.
 
 NFR4 requires argon2id password hashing, TLS in the deployed/demo configuration, and
 access tokens expiring within 15 minutes. The hashing and the token TTL are covered by
 the Go test suite. TLS is a *configuration*, and a configuration is exactly the kind of
-thing that is correct on the day it is written and quietly wrong six months later — so
+thing that is correct on the day it is written and quietly wrong six months later - so
 the parts that can be checked without running anything are checked here.
 
 Run directly, or through `make lint`:
@@ -48,7 +48,7 @@ def main() -> int:
     overlay = read("deploy/docker-compose.tls.yml")
     generator = read("deploy/tls/generate.sh")
 
-    # ── TLS versions ────────────────────────────────────────────────────────
+    # -- TLS versions --------------------------------------------------------
     protocols = re.search(r"^\s*ssl_protocols\s+([^;]+);", nginx, re.M)
     if not protocols:
         fail("deploy/tls/nginx.conf sets no ssl_protocols")
@@ -62,10 +62,10 @@ def main() -> int:
         else:
             ok(f"ssl_protocols = {' '.join(enabled)}")
 
-    # ── Upload body limit ───────────────────────────────────────────────────
+    # -- Upload body limit ---------------------------------------------------
     # The reason this is checked rather than trusted: nginx defaults to 1 MB, and the
     # API accepts 8 MB. Without an explicit limit the proxy returns 413 before the API
-    # sees the request, so photo uploads fail in the demo and nowhere else — and the
+    # sees the request, so photo uploads fail in the demo and nowhere else - and the
     # API's own validation looks broken. Confirmed by removing the line: a 6.5 MB
     # upload went from 201 to 413.
     limit = re.search(r"^\s*client_max_body_size\s+(\d+)([kKmMgG])?;", nginx, re.M)
@@ -82,7 +82,7 @@ def main() -> int:
         else:
             ok(f"client_max_body_size = {size} bytes, API limit = {api_limit or 'unknown'}")
 
-    # ── One origin, so the dashboard is not blocked as mixed content ─────────
+    # -- One origin, so the dashboard is not blocked as mixed content ---------
     # Vite inlines the API base URL at build time. A dashboard built against
     # http://localhost:8090 and served over HTTPS loads fine and then silently fails
     # every request, which is a worse failure than not loading at all.
@@ -97,7 +97,7 @@ def main() -> int:
     if re.search(r"CORS_ORIGINS:\s*http://", overlay):
         fail("the TLS overlay allows a cleartext CORS origin")
 
-    # ── The certificate must never be committed ─────────────────────────────
+    # -- The certificate must never be committed -----------------------------
     gitignore = read(".gitignore")
     if "deploy/tls/certs" not in gitignore:
         fail("deploy/tls/certs/ is not gitignored — the private key could be committed")
@@ -113,14 +113,14 @@ def main() -> int:
         if tracked.returncode == 0:
             fail(f"{stray.relative_to(ROOT)} is TRACKED BY GIT — it is a private key")
 
-    # ── The certificate needs a SAN, not just a commonName ──────────────────
+    # -- The certificate needs a SAN, not just a commonName ------------------
     if generator and "subjectAltName" not in generator:
         fail("deploy/tls/generate.sh creates a certificate with no subjectAltName; "
              "browsers and Go's TLS stack reject those outright")
     elif generator:
         ok("the generated certificate carries subjectAltName")
 
-    # ── Report ──────────────────────────────────────────────────────────────
+    # -- Report --------------------------------------------------------------
     for note in notes:
         print(f"  ok    {note}")
     for problem in failures:

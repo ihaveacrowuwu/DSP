@@ -16,7 +16,7 @@ run:
 
 data:
   # HuggingFace dataset id. Free download, no API key.
-  # VERIFY LICENCE TERMS BEFORE FIRST USE — this is the project's open question Q6.
+  # VERIFY LICENCE TERMS BEFORE FIRST USE - this is the project's open question Q6.
   source: NMFS-OSI/NOAA-PIFSC-ESD-CORAL-Bleaching-Dataset
   # The dataset ships its own splits; use them rather than re-splitting, so results
   # stay comparable with published numbers.
@@ -106,30 +106,30 @@ evaluation:
   # samples, while contributors send wide Maldivian reef scenes. Measuring that
   # gap honestly is a key report section, not a failure.
   #
-  # Two sets, in priority order (D60 in docs/08). Seaview is the one that matters:
+  # Two sets, in priority order. Seaview is the one that matters:
   # it is Maldivian reef scenes, so it separates the content gap (tissue crop ->
   # full scene) from the geographic gap (Hawaii -> Maldives). The Kaggle set is
   # generic web photos and conflates the two, so it is now only a secondary
   # comparison point.
   #
-  # Seaview carries NO healthy/bleached labels — its label set is hard coral /
+  # Seaview carries NO healthy/bleached labels - its label set is hard coral /
   # algae / soft coral / other invertebrate / other. It is therefore an evaluation
   # and hand-labelling corpus ONLY. Never add it to a training split.
   cross_domain_sets:
     - name: seaview-central-indian-ocean
       # UQ eSpace UQ:734799, DOI 10.14264/uql.2019.930, CC-BY 3.0, keyless.
       # Licence confirmed on the publisher's page by a human read, 2026-08-24
-      # (docs/08 Q6): Open Access, no terms beyond CC-BY.
+      # Open Access, no terms beyond CC-BY.
       # 1.45 TB in total across 22 ISO-coded regional partitions. Quadrats are
-      # standardised downward-facing ~1 m² frames — describe them as such in the
-      # domain-gap analysis, not as oblique reef scenes. The raw 360° triplets
+      # standardised downward-facing ~1 m2 frames - describe them as such in the
+      # domain-gap analysis, not as oblique reef scenes. The raw 360 deg triplets
       # D60 warned about are not published, so there is nothing to avoid.
-      # Under /ml/datasets/, which .gitignore already excludes — imagery this
+      # Under /ml/datasets/, which .gitignore already excludes - imagery this
       # large must never be stageable.
       # Scoped 2026-08-27 without downloading (D69). The data is NOT on the eSpace
       # page, which 403s; it is a keyless HTTP index at data.qld.edu.au/public/Q1281/.
       # Maldives is its own ISO-coded partition, so the planned CSV filtering to
-      # exclude Chagos (IND_CHA) is unnecessary — the filename prefix separates them.
+      # exclude Chagos (IND_CHA) is unnecessary - the filename prefix separates them.
       # Take annotated-images/IND_MDV.zip (2.55 GB) + tabular-data.zip (358 MB), NOT
       # the 124.8 GB of full-resolution quadrats.
       local_path: ../datasets/seaview/ind-mdv
@@ -151,7 +151,7 @@ evaluation:
 
   # Image-level evaluation set (~100 full reef photos), hand-labelled once from
   # the Seaview Maldivian quadrats before any model output is seen on them.
-  # Prior work never measured image level at all — this is a report section.
+  # Prior work never measured image level at all - this is a report section.
   image_level_set:
     # Images live under the gitignored dataset tree; the label file is small and
     # IS committed, because it is report evidence and the only part that took

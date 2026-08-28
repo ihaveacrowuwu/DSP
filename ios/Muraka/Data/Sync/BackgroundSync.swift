@@ -27,7 +27,7 @@ final class BackgroundSync {
 
     /// Registers the handler.
     ///
-    /// **Must be called before `application(_:didFinishLaunchingWithOptions:)` returns** —
+    /// **Must be called before `application(_:didFinishLaunchingWithOptions:)` returns**
     /// the system raises an exception otherwise, and it is the one piece of setup that
     /// genuinely has to happen that early.
     func registerTaskHandler() {

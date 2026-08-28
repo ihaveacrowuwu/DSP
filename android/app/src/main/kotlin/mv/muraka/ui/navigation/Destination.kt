@@ -36,7 +36,7 @@ sealed interface Destination {
      * The queue.
      *
      * A top-level destination rather than something buried in a menu, because
-     * `sync-protocol.md` asks for pending work to be permanently visible — a silent queue
+     * `sync-protocol.md` asks for pending work to be permanently visible - a silent queue
      * is how reef data goes missing unnoticed.
      */
     data object Sync : Tab {
@@ -49,7 +49,7 @@ sealed interface Destination {
      * The account and the app's settings.
      *
      * Named "Config" at the user's request. Note that both platforms conventionally call this
-     * "Settings" — Apple's HIG and Material both use that word — so if a design review ever
+     * "Settings" - Apple's HIG and Material both use that word - so if a design review ever
      * flags it, this is the one label to change and it changes here.
      */
     data object Config : Tab {

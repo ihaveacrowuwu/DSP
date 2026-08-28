@@ -5,8 +5,8 @@ import Security
 ///
 /// Two rules from `sync-protocol.md` are load-bearing here, and both are easy to get wrong:
 ///
-/// 1. **Persist the new refresh token immediately.** Refresh tokens are single-use — the old
-///    one is dead the moment the server answers — so both tokens are written as one encoded
+/// 1. **Persist the new refresh token immediately.** Refresh tokens are single-use - the old
+///    one is dead the moment the server answers - so both tokens are written as one encoded
 ///    blob under one Keychain item, which makes the write atomic. Storing them as two items
 ///    leaves a window where a crash loses the new refresh token and signs the contributor
 ///    out for no reason.
@@ -45,8 +45,8 @@ actor TokenStore {
     /// Writes both tokens as one item, so the pair can never be half-updated.
     ///
     /// Returns whether it worked, and callers must act on that. A silent failure here is
-    /// indistinguishable from a wrong password from the contributor's side — the app simply
-    /// returns to sign-in — and it cost an afternoon to find exactly once.
+    /// indistinguishable from a wrong password from the contributor's side - the app simply
+    /// returns to sign-in - and it cost an afternoon to find exactly once.
     @discardableResult
     func save(_ session: StoredSession) -> Bool {
         guard let data = try? encoder.encode(session) else { return false }

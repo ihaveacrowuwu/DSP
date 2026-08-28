@@ -4,15 +4,15 @@ package mv.muraka.core.model
  * The wire vocabulary, exactly as the Go API speaks it.
  *
  * Every enum here carries its `wire` string rather than relying on `name.lowercase()`,
- * because two of them would not survive that (`MANUAL_PIN` → `manual_pin`,
- * `PENDING_PHOTOS` → `pending_photos`) and a silent mismatch would be a 422 the client
+ * because two of them would not survive that (`MANUAL_PIN` -> `manual_pin`,
+ * `PENDING_PHOTOS` -> `pending_photos`) and a silent mismatch would be a 422 the client
  * cannot retry. [fromWire] returns null for an unknown value rather than throwing: a
  * server that grows a new status must not crash an installed app.
  *
  * Read alongside `mobile-shared/integration.md`, which lists the same values.
  */
 
-/** What the reef looks like. Binary by design — see D3 in `docs/08`. */
+/** What the reef looks like. Binary by design. */
 enum class Condition(val wire: String) {
     HEALTHY("healthy"),
     BLEACHED("bleached"),
@@ -63,7 +63,7 @@ enum class VerificationDecision(val wire: String) {
     }
 }
 
-/** Why a photograph was rejected. Shown to the contributor — it is their own record. */
+/** Why a photograph was rejected. Shown to the contributor - it is their own record. */
 enum class RejectReason(val wire: String) {
     BLURRY("blurry"),
     NOT_CORAL("not_coral"),

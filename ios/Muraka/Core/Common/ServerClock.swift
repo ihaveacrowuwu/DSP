@@ -3,7 +3,7 @@ import os
 
 /// Translates device time into server time.
 ///
-/// A sighting whose `capturedAt` is in the future is rejected `422`, which is terminal — so
+/// A sighting whose `capturedAt` is in the future is rejected `422`, which is terminal - so
 /// a phone with a wrong clock loses the sighting it just captured. The server tolerates 24
 /// hours of skew, but a device left in the wrong time zone, or one whose clock was never set
 /// after a flat battery, can be further out than that.
@@ -14,7 +14,7 @@ import os
 /// **The correction is a shift, not a clamp.** If the device clock reads 24 hours fast, a
 /// photograph taken one real hour ago is stamped `deviceNow - 1h`, which is 23 hours in the
 /// server's future. Clamping that to server-now would record it as having been taken right
-/// now — an hour late, and wrong. Shifting it by the learned offset recovers the moment it
+/// now - an hour late, and wrong. Shifting it by the learned offset recovers the moment it
 /// was actually taken. The clamp survives only as a final guard.
 ///
 /// The offset is deliberately **not** persisted: a stale offset from last week is worse than
@@ -40,7 +40,7 @@ final class ServerClock: Sendable {
     /// future.
     ///
     /// Before the first response the offset is unknown and the instant passes through
-    /// unchanged — correct, because the server's own 24-hour tolerance covers ordinary skew
+    /// unchanged - correct, because the server's own 24-hour tolerance covers ordinary skew
     /// and there is nothing better to go on.
     func toServerTime(_ deviceInstant: Date, deviceNow: Date = Date()) -> Date {
         let shift = offset.withLock { $0 } ?? 0

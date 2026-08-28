@@ -19,14 +19,14 @@ import androidx.compose.ui.platform.LocalContext
  *
  * Material 3 governs everything the contributor touches: components, the shape scale,
  * tonal elevation, the motion tokens, the type ramp. Where M3 and the dashboard's
- * appearance disagree, M3 wins — that is a recorded project decision, not a default.
+ * appearance disagree, M3 wins - that is a recorded project decision, not a default.
  *
  * **Dynamic colour is preferred**, and applies to chrome only. `MaterialTheme.colorScheme`
  * is the wallpaper's; `MurakaTheme.reef` is the reef's, and nothing connects the two.
  */
 object MurakaTheme {
     /**
-     * The data colours — condition, severity, signals.
+     * The data colours - condition, severity, signals.
      *
      * Read these for anything that means something about a reef. Read
      * `MaterialTheme.colorScheme` for anything that is merely interface.
@@ -73,7 +73,7 @@ fun MurakaTheme(
 
 /**
  * The fallback scheme below Android 12, seeded from the one accent the three clients
- * share — reef teal.
+ * share - reef teal.
  *
  * Hand-written rather than generated so the below-12 appearance is reviewable in the
  * report next to the dynamic one.

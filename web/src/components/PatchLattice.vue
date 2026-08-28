@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /**
- * The patch lattice — this interface's signature element, and the whole of its
+ * The patch lattice - this interface's signature element, and the whole of its
  * argument about machine learning.
  *
  * The model does not judge a photograph as a whole: it tiles it into a grid and
  * judges each cell. Drawing that lattice is drawing the model's actual reasoning,
- * which is why it appears at two sizes — as an overlay on the photograph, and as
+ * which is why it appears at two sizes - as an overlay on the photograph, and as
  * a thumbnail glyph in list rows where it works like a sparkline. You read a
  * sighting's bleaching pattern without opening it.
  *
@@ -109,7 +109,7 @@ function cellStyle(cell: (typeof cells.value)[number]): Record<string, string> {
   position: absolute;
   inset: 0;
   gap: 1px;
-  /* Blend so the coral photograph stays readable through the judgements — the
+  /* Blend so the coral photograph stays readable through the judgements - the
      point is to annotate the image, not to replace it with a chart. */
   mix-blend-mode: hard-light;
 }

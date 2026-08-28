@@ -8,7 +8,7 @@ import (
 	"muraka/backend/internal/domain"
 )
 
-// FR10 — "An administrator shall be able to manage user roles and ban users, manage
+// FR10 - "An administrator shall be able to manage user roles and ban users, manage
 // atoll/site reference data, and register/activate ML model versions." Reaching the
 // endpoint is covered by the RBAC matrix; this covers the endpoints doing what they say.
 //
@@ -114,7 +114,7 @@ func TestBanningAUserStopsTheirExistingSession(t *testing.T) {
 	}
 }
 
-// TestAnAdminCannotBanThemselves — locking the last administrator out of the system is
+// TestAnAdminCannotBanThemselves - locking the last administrator out of the system is
 // unrecoverable without database access.
 func TestAnAdminCannotBanThemselves(t *testing.T) {
 	h := newHarness(t)
@@ -143,7 +143,7 @@ func TestActivatingAModelVersionLeavesExactlyOneActive(t *testing.T) {
 		t.Fatalf("register a model version: %v", err)
 	}
 
-	// 204 per docs/openapi.yaml — these mutations return no body.
+	// 204 per docs/openapi.yaml - these mutations return no body.
 	h.mustJSON(http.MethodPost, "/v1/admin/models/test-1.0.0/activate", admin.Token, nil,
 		http.StatusNoContent, nil)
 
@@ -166,7 +166,7 @@ func TestActivatingAModelVersionLeavesExactlyOneActive(t *testing.T) {
 	}
 }
 
-// TestActivatingAnUnknownModelVersionIs404 — a typo must not silently deactivate the
+// TestActivatingAnUnknownModelVersionIs404 - a typo must not silently deactivate the
 // model that is currently serving.
 func TestActivatingAnUnknownModelVersionIs404(t *testing.T) {
 	h := newHarness(t)
@@ -187,7 +187,7 @@ func TestActivatingAnUnknownModelVersionIs404(t *testing.T) {
 	}
 }
 
-// TestAtollsAreUpsertedRatherThanDuplicated — FR10's reference-data half. The endpoint
+// TestAtollsAreUpsertedRatherThanDuplicated - FR10's reference-data half. The endpoint
 // is named "upsert", and the table has a unique constraint on both name and code, so
 // re-posting the same atoll must update rather than 409 or duplicate.
 func TestAtollsAreUpsertedRatherThanDuplicated(t *testing.T) {

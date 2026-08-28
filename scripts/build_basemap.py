@@ -27,7 +27,7 @@ Four source layers are used, each answering a different question:
                            recognisable.
   ne_10m_bathymetry_J_1000 the 1000 m isobath, inverted the same way, giving the
                            slope that skirts the atoll chain. Three tones of
-                           water — abyss, slope, platform — is what makes the
+                           water - abyss, slope, platform - is what makes the
                            ocean read as depth rather than one flat colour.
 
                            Both isobaths are inverted rather than filled as
@@ -83,7 +83,7 @@ LAYERS = [
 # Natural Earth carries no Maldivian atoll names, so these come from the one
 # table in the repository that already had them: `atolls` in
 # backend/cmd/seed/main.go, copied verbatim including the coordinates. Keeping
-# the two identical matters — the seeder scatters synthetic sightings around
+# the two identical matters - the seeder scatters synthetic sightings around
 # these centroids, so any drift here would put a label next to the cluster it is
 # supposed to name rather than over it. If that table changes, change this one.
 #

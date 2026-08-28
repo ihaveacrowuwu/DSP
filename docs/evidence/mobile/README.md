@@ -60,13 +60,13 @@ widget.
 removes both bar-button items and substitutes UIKit's own Close button, so the filter menu is
 unreachable while typing — the scope bar is what keeps condition available. Android needs no
 equivalent: its filter chips sit in the content, so searching never hides them. Both report the
-same **"6 of 50"**. See D40 in `docs/08`.
+same **"6 of 50"**.
 
 **Where the primary action sits is deliberately different.** `android-sightings.png` has a
 bottom-right FAB; `ios-my-sightings.png` has a `+` in the navigation bar. Both are what their
 platform's users reach for, and the divergence is the point — an assessor comparing the two
 screenshots is looking at rule 3 of `mobile-shared/README.md` being followed, not at
-inconsistency. See D38 in `docs/08`.
+inconsistency.
 
 **The grid toggle.** Compare `*-detail.png` with `*-detail-grid-off.png`. The lattice is an
 annotation, and an annotation that cannot be removed is an obstruction — turning it off is how

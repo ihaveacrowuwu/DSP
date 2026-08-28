@@ -4,7 +4,7 @@
  * said, which model version said it, and every expert decision since.
  *
  * Nothing is ever overwritten in this system, so the review history is an audit
- * trail rather than a status field — it is presented as a timeline for exactly
+ * trail rather than a status field - it is presented as a timeline for exactly
  * that reason. A record whose condition was corrected still shows what the model
  * originally claimed, because that disagreement is the interesting part.
  */
@@ -322,14 +322,14 @@ onUnmounted(() => {
  *
  * The panel keeps its place at every width the two-column body survives, and the
  * frame gives up size to make room. This was flex-wrap first, which let the panel
- * drop below the photograph when it no longer fit — and at 1366px, the commonest
+ * drop below the photograph when it no longer fit - and at 1366px, the commonest
  * laptop width, it did: the numbers landed under a 700px-tall frame, off screen,
  * which is the layout this change exists to remove.
  *
  * So the tracks are explicit. Track one is capped, never flexible, so the frame
  * cannot grow past its upscale ceiling; track two has a floor of 17rem, which is
  * what a MetricBar needs before its label starts eliding. When the column cannot
- * satisfy both, grid honours the floor and the frame shrinks — still one size for
+ * satisfy both, grid honours the floor and the frame shrinks - still one size for
  * every photograph, which was always the point.
  *
  * `align-items: start` keeps the panel the height of its own content. A card
@@ -346,13 +346,13 @@ onUnmounted(() => {
  *
  * This used to be capped against each image's own pixel width, on the principle
  * that upscaling a 224 px dataset crop adds no detail. True, but it made the frame
- * vary from 22rem to the full column depending on the source — so the same reef
+ * vary from 22rem to the full column depending on the source - so the same reef
  * could not be compared with itself, and the small ones were too small to judge,
  * which is the whole job on this page. The frame is furniture: fixed, with the
  * panel beside it saying when a photograph has less detail than it fills.
  *
  * The size itself comes from the grid track above: 80vh so a square frame is
- * never taller than the screen, and 44rem as the upscale ceiling — past roughly
+ * never taller than the screen, and 44rem as the upscale ceiling - past roughly
  * 3x a 224 px crop, softness is all that is being added, and stopping there is
  * also what leaves room for the panel beside it. */
 .frame {

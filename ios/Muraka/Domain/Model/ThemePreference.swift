@@ -2,7 +2,7 @@ import UIKit
 
 /// Which appearance the contributor has asked for.
 ///
-/// ``system`` is the default and is what NFR14 is really about — an app that follows the
+/// ``system`` is the default and is what NFR14 is really about - an app that follows the
 /// device is the correct behaviour, and most people never change it. The other two exist
 /// because "follows the device" is not the same as "the contributor can choose", and on a
 /// boat in bright sun the choice is a practical one rather than a taste.
@@ -56,7 +56,7 @@ enum ThemePreference: String, CaseIterable, Sendable {
 /// signing out silently reset it.
 ///
 /// `@MainActor` rather than `Sendable`: `UserDefaults` is not `Sendable`, and this is only
-/// ever touched while applying or changing an appearance — both of which are main-actor work
+/// ever touched while applying or changing an appearance - both of which are main-actor work
 /// by definition. Isolating it is the honest answer; `@unchecked Sendable` would have been
 /// the quick one.
 @MainActor
@@ -102,7 +102,7 @@ extension Notification.Name {
     /// Posted when the appearance choice changes.
     ///
     /// The scene owns the window, and the window is the only thing that can apply an
-    /// interface style to the whole app — including screens the profile controller cannot
+    /// interface style to the whole app - including screens the profile controller cannot
     /// reach. A notification is how a leaf controller reaches it without holding a reference
     /// to the window it happens to be in.
     static let murakaThemePreferenceChanged = Notification.Name("mv.muraka.themePreferenceChanged")

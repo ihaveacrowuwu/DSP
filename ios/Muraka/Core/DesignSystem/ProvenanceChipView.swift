@@ -6,9 +6,9 @@ import UIKit
 /// never be mistaken for an expert verdict.** The distinction is carried three ways over, so
 /// that losing any one of them still leaves it legible:
 ///
-/// 1. **Shape** — a dashed outline for the model, a solid filled surface for an expert.
-/// 2. **A marker** — hollow for the model, filled for an expert.
-/// 3. **A word** — literally "model" or "expert".
+/// 1. **Shape** - a dashed outline for the model, a solid filled surface for an expert.
+/// 2. **A marker** - hollow for the model, filled for an expert.
+/// 3. **A word** - literally "model" or "expert".
 ///
 /// That redundancy is the requirement. It survives greyscale, it survives colour blindness,
 /// and it survives a screenshot pasted into the project at 60% scale.
@@ -84,7 +84,7 @@ final class ProvenanceChipView: UIView {
     override func traitCollectionDidChange(_ previous: UITraitCollection?) {
         super.traitCollectionDidChange(previous)
         // CALayer colours do not resolve dynamically, so they have to be reapplied when the
-        // appearance changes — the classic reason a dark-mode border stays light.
+        // appearance changes - the classic reason a dark-mode border stays light.
         let accent = isVerified ? ReefPalette.verified : UIColor.secondaryLabel
         border.strokeColor = accent.resolvedColor(with: traitCollection).cgColor
         markerView.layer.borderColor = accent.resolvedColor(with: traitCollection).cgColor

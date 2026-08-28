@@ -8,7 +8,7 @@ import java.time.Instant
  *
  * Used for two different things, and the difference matters: the age of a *sighting*, and
  * the age of what the app *knows* about it. The second is what lets the interface say
- * "checked 20 minutes ago" instead of presenting a stale status as current — which the
+ * "checked 20 minutes ago" instead of presenting a stale status as current - which the
  * sync protocol requires it to do rather than merely permits.
  */
 fun Instant.relativeAge(now: Instant = Instant.now()): String {

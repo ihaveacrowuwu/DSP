@@ -21,7 +21,7 @@ quietly marks itself done is worth less than one with a gap in it.
 | Expired refresh token returns to sign-in without losing the queue | ✅ automated | `signingOutLeavesTheQueueUntouchedRatherThanUploadingOrDiscardingIt` |
 | Model labels and expert verdicts distinguishable without colour | ✅ automated | the dashboard's NFR13 tests, incl. `is distinguishable with every colour class stripped`; both apps carry it in shape and word |
 | Capture flow under 60 seconds and 8 taps | ◐ **taps counted, time not measured** | see below |
-| Light and dark appearance both correct | ✅ automated | `testTheAppearanceToggleDarkensEveryScreen`, `testTheAppearanceChoiceIsRemembered`; Android night resources via `aapt2 dump` (D33) |
+| Light and dark appearance both correct | ✅ automated | `testTheAppearanceToggleDarkensEveryScreen`, `testTheAppearanceChoiceIsRemembered`; Android night resources via `aapt2 dump` |
 | Account deletion explains anonymisation | ✅ automated (server) | `TestDeletingAnAccountKeepsTheScienceAndDropsThePerson`; the UI copy is a screenshot, not a test |
 
 ## The offline items are automated, not just walked once

@@ -1,71 +1,27 @@
 /**
- * usePillMotion — the sliding "jelly pill" that marks the active item in a list
- * of tabs or nav links, and the clipped highlight that travels with it.
+ * usePillMotion - slides a "jelly pill" behind the active item in a tab or nav
+ * list, and optionally clips a highlight to it.
  *
- * The pill is a single element behind the items rather than a background on the
- * active item, which is what lets the highlight travel: it measures the active
- * item, positions itself over it, and deforms while it moves.
+ * The pill is one element behind the items, not a background on the active item.
+ * It measures the active item, moves over it, and stretches on launch / squashes
+ * on arrival. Deformation scales with distance travelled and is damped by the
+ * pill's own size.
  *
- * Two things make it read as a soft body instead of a moving rectangle:
+ * Movement animates `top`/`left`, not `transform`, because the squash keyframes
+ * own `transform`.
  *
- *   1. It stretches along the travel axis on launch and squashes on arrival.
- *      Magnitudes scale with how far it actually travelled, so a hop to the
- *      neighbouring item barely deforms while an end-to-end jump wobbles.
- *   2. Deformation is damped by the pill's own size. A tall pill stretching by
- *      the same ratio as a short one looks rubbery, so larger pills deform less.
- *
- * The travel itself is a transition on `top`/`left`, not a transform, because the
- * keyframes need exclusive ownership of `transform` for the squash. That costs
- * layout on the pill alone — it is absolutely positioned, so nothing else
- * reflows — and buys deformation a transform-only approach cannot express.
- *
- * ─── THE SPOTLIGHT ───────────────────────────────────────────────────────────
- *
- * Pass `pillRef` and `spotlightRef` and the pill also drives a highlight: a
- * duplicate of the items, drawn in the active colours, clipped to the pill. That
- * clip is what makes the active state *travel* — without it the newly active item
- * would light up the instant the route changed, while the pill was still in
- * flight, and the two would disagree for a third of a second.
- *
- * The clip follows the pill's PAINTED rect (getBoundingClientRect), never its
- * layout rect. During the squash the pill's painted box is up to a third taller
- * than its layout box, so a clip built from `offset`/`size` would sit still while
- * the pill stretched through it — the highlight would spill past the pill's edges
- * on every move. Reading the painted rect each frame is the only way the two stay
- * welded together.
- *
- * ─── WHY THE KEYFRAME IS RESTARTED BY HAND ───────────────────────────────────
- *
- * Re-applying the same animation class does NOT replay the animation. Two moves
- * in the same direction want the same class, so a framework-driven `:class` sees
- * no change, no animation starts, and no `animationend` ever arrives. Anything
- * waiting on that event waits forever — which is how an earlier version of this
- * file deadlocked and froze the pill in place.
- *
- * So the jelly class is written imperatively: remove, force a style flush, add.
- * That is the one sequence a browser cannot coalesce, and it works whether or not
- * the direction changed. The class must NOT also be bound in the template, or the
- * next render would patch away what was set here.
- *
- * Placement is never gated behind the animation either. Position is layout and has
- * to stay correct at all times; only the deformation variables are held steady
- * while a keyframe is reading them, since rewriting those mid-flight visibly pops
- * the pill. And a safety timer clears the moving flag even if an animation event
- * is lost entirely, so no single missed event can wedge the pill again.
- *
- * ─── SPOTLIGHT CONSEQUENCES, both load-bearing ───────────────────────────────
- *
- *   - Ancestor transforms have to be divided back out. `getBoundingClientRect`
- *     reports post-transform viewport pixels, but `clip-path` resolves in the
- *     element's own coordinates, so the rail's hover scale would otherwise offset
- *     the clip. The pill's own transforms must stay in — those are precisely what
- *     the clip is meant to follow.
- *   - Nothing may move or resize an item under the pill. The base copy and the
- *     highlight copy are stacked, the overlay is pointer-events:none so `:hover`
- *     only ever reaches the base, and two near-identical glyph sets disagreeing
- *     by a fraction of a pixel is what a crawling, shimmering highlight is. The
- *     consumer's CSS has to freeze hover on the active item and on every item
- *     while the pill is travelling; see AppSidebar.
+ * Constraints, all load-bearing:
+ * - The spotlight clip uses the pill's painted rect (getBoundingClientRect), not
+ *   its layout rect, so it stays welded to the pill during the squash. Ancestor
+ *   transforms are divided out; the pill's own transforms are kept.
+ * - The jelly class is applied imperatively (remove, flush, add) because
+ *   re-applying the same class does not replay a CSS animation, and nothing then
+ *   fires `animationend`. Do not also bind this class in the template.
+ * - Position updates are never gated on the animation; only the deformation
+ *   variables are held steady mid-keyframe. A safety timer clears the moving flag
+ *   if an animation event is lost.
+ * - Nothing may move or resize an item under the pill. The consumer's CSS must
+ *   freeze hover on the active item and while the pill travels; see AppSidebar.
  */
 import { onBeforeUnmount, onMounted, ref, watch, type CSSProperties, type Ref } from 'vue'
 
@@ -146,7 +102,7 @@ export function usePillMotion({
 
   /**
    * The deformation variables from the last actual move. Kept so a re-measure that
-   * is not a move — a container resize, the rail expanding — can rewrite placement
+   * is not a move - a container resize, the rail expanding - can rewrite placement
    * without disturbing magnitudes a running keyframe is reading.
    */
   let deform: Record<string, string> = {
@@ -259,7 +215,7 @@ export function usePillMotion({
   /**
    * Restart the squash. Remove, flush, add: reading a layout property between the
    * two commits the removal, which is what lets the same animation replay. Setting
-   * the class through a template binding cannot do this — an unchanged value is not
+   * the class through a template binding cannot do this - an unchanged value is not
    * a change, so the animation silently never runs.
    */
   function playJelly(name: string) {
@@ -271,8 +227,8 @@ export function usePillMotion({
     el.classList.add(name)
     moving.value = true
 
-    // Belt and braces. animationend is the normal release, but a lost event — a
-    // backgrounded tab, an interrupted animation — must not be able to leave the
+    // Belt and braces. animationend is the normal release, but a lost event - a
+    // backgrounded tab, an interrupted animation - must not be able to leave the
     // flag set, because consumers freeze hover behaviour on it.
     window.clearTimeout(safetyTimer)
     safetyTimer = window.setTimeout(stopJelly, 900)
@@ -308,7 +264,7 @@ export function usePillMotion({
 
     // Deformation is rewritten only when the pill actually moved. A resize or an
     // expand re-measures for placement, and rewriting these then would change the
-    // magnitudes a running keyframe is reading mid-squash — a visible pop.
+    // magnitudes a running keyframe is reading mid-squash - a visible pop.
     if (changed) {
       deform = {
         '--pill-travel-dur': `${(0.2 + 0.16 * intensity).toFixed(2)}s`,
@@ -371,7 +327,7 @@ export function usePillMotion({
   watch(activeId, () => measure(), { flush: 'post' })
 
   // The preference can flip mid-animation, in which case the keyframe is
-  // suppressed and its animationend never arrives — which would leave the
+  // suppressed and its animationend never arrives - which would leave the
   // measurement gate closed forever.
   const motionQuery =
     typeof window === 'undefined' ? null : window.matchMedia('(prefers-reduced-motion: reduce)')

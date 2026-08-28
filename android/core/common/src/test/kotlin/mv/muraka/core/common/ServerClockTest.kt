@@ -8,10 +8,10 @@ import java.time.Instant
 
 /**
  * Scenario 13 of `mobile-shared/sync-protocol.md`: "set the device clock a day ahead,
- * capture → the sighting still submits successfully rather than failing 422".
+ * capture -> the sighting still submits successfully rather than failing 422".
  *
  * The stronger property tested alongside it is that the correction *preserves* when the
- * photograph was taken. Merely avoiding the 422 is easy — clamping everything to now does
+ * photograph was taken. Merely avoiding the 422 is easy - clamping everything to now does
  * that, and quietly falsifies the capture time of every queued sighting.
  */
 class ServerClockTest {
@@ -43,7 +43,7 @@ class ServerClockTest {
         val clock = calibrated()
 
         // Photographed one real hour ago. The fast device stamped it 2026-08-22T09:00Z,
-        // which is still 23 hours in the server's future — so it cannot be sent as-is,
+        // which is still 23 hours in the server's future - so it cannot be sent as-is,
         // and clamping it to server-now would claim it was taken this minute.
         val stampedByFastDevice = fastDeviceNow.minusSeconds(3_600)
 

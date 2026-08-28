@@ -60,7 +60,7 @@ import java.util.Locale
 /**
  * Capturing a sighting.
  *
- * Everything is arranged around NFR6 — under 60 seconds and at most 8 taps:
+ * Everything is arranged around NFR6 - under 60 seconds and at most 8 taps:
  *
  * ```
  * 1  the FAB              2  "Take a photograph"    3  the shutter
@@ -80,7 +80,7 @@ fun CaptureScreen(viewModel: CaptureViewModel, onDone: () -> Unit, modifier: Mod
     var showCamera by remember { mutableStateOf(false) }
     var showPinEntry by remember { mutableStateOf(false) }
 
-    // Permission is requested in context, at the moment of capture, never on launch —
+    // Permission is requested in context, at the moment of capture, never on launch
     // mobile-shared/README.md non-negotiable 6.
     val locationPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
@@ -280,7 +280,7 @@ private fun PhotoStrip(
  * Position is required; GPS is not.
  *
  * A diver under cloud, or on a hull that blocks the sky, may have no fix at all. Dropping
- * a pin records `manual_pin`, which researchers filter on — so the two are shown as
+ * a pin records `manual_pin`, which researchers filter on - so the two are shown as
  * genuinely different things rather than one silently standing in for the other.
  */
 @Composable
@@ -335,7 +335,7 @@ private fun PositionSection(state: CaptureUiState, onRetryFix: () -> Unit, onDro
  * The diver's own impression.
  *
  * Recorded for comparison with the model and never mixed into the authoritative
- * condition — which is why it is optional and visually quiet.
+ * condition - which is why it is optional and visually quiet.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -360,7 +360,7 @@ private fun SelfAssessment(selected: Condition?, onSelect: (Condition?) -> Unit)
  * Entering a coordinate by hand.
  *
  * A map picker would be nicer, but the dashboard owns the map and this app deliberately
- * does not carry one — a basemap is 67 KB of geometry and a MapLibre-equivalent
+ * does not carry one - a basemap is 67 KB of geometry and a MapLibre-equivalent
  * dependency for a screen used only when GPS has failed. Typed coordinates keep the
  * fallback available with no new dependency, and the researcher sees `manual_pin` either
  * way.

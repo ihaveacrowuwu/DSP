@@ -46,12 +46,12 @@ final class SignInViewController: UIViewController {
     /// Fills the form from a **debug-only** launch argument.
     ///
     /// It exists because XCUITest cannot reliably type into a `isSecureTextEntry` field
-    /// without a software keyboard, and the simulator does not always present one — so the
+    /// without a software keyboard, and the simulator does not always present one - so the
     /// UI test would be flaky for reasons that have nothing to do with the app. Everything
     /// the test actually cares about happens after sign-in.
     ///
     /// Compiled out of release builds entirely, so a shipped binary cannot be prefilled, and
-    /// it only ever fills the fields — it never signs in by itself.
+    /// it only ever fills the fields - it never signs in by itself.
     private func prefillForUITestsIfRequested() {
         #if DEBUG
             let arguments = ProcessInfo.processInfo.arguments
@@ -96,7 +96,7 @@ final class SignInViewController: UIViewController {
         configure(passwordField, placeholder: "Password", content: .password, secure: true)
 
         // Each field is presented inside a glass container, because UIKit has no glass
-        // border style — see GlassSurface.wrapTextField. The containers are what the stack
+        // border style - see GlassSurface.wrapTextField. The containers are what the stack
         // lays out; `nameField` etc. are still what the code reads and writes.
         nameFieldContainer = GlassSurface.wrapTextField(nameField)
         emailFieldContainer = GlassSurface.wrapTextField(emailField)
@@ -133,7 +133,7 @@ final class SignInViewController: UIViewController {
             scrollView.leadingAnchor.constraint(equalTo: guide.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
             // Pinned to the keyboard rather than to the safe area, so the submit button
-            // stays reachable when the keyboard is up — the single most common way a
+            // stays reachable when the keyboard is up - the single most common way a
             // sign-in form ends up unusable. `keyboardLayoutGuide` collapses to the safe
             // area when no keyboard is shown, so this is correct in both states.
             scrollView.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor),

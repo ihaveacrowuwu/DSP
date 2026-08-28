@@ -24,7 +24,7 @@ object CaptureLimits {
     /**
      * Longest edge, in pixels, that uploads are downscaled to.
      *
-     * The server analyses at 224 px per grid cell, so a 5×5 grid gains nothing above
+     * The server analyses at 224 px per grid cell, so a 5x5 grid gains nothing above
      * roughly 1600 px. Below the 12 MiB cap by a wide margin, and far kinder to a resort
      * Wi-Fi connection than a 12-megapixel original.
      */
@@ -56,7 +56,7 @@ data class PhotoDraft(
 
 /**
  * Everything needed to queue a sighting. Built by the capture screen, handed to the
- * repository, and never seen again — the outbox row is what survives.
+ * repository, and never seen again - the outbox row is what survives.
  *
  * [capturedAt] is **device** time. It is translated into server time by `ServerClock` at
  * upload, once an offset is known; correcting it here would be guessing, because a
@@ -94,7 +94,7 @@ data class SightingDraft(
  * exists, the outbox's where it does not, and never a blend that implies more certainty
  * than either provides.
  *
- * [server] is null until the server has answered about this id even once — which is the
+ * [server] is null until the server has answered about this id even once - which is the
  * normal state of a sighting captured on a boat. [serverReadAt] is what lets the UI say
  * "as of 20 minutes ago" instead of presenting a stale truth as a current one.
  */

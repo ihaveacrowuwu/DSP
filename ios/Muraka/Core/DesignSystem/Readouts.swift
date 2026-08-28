@@ -4,7 +4,7 @@ import UIKit
 ///
 /// Every number in this app goes through here: coordinates, depths, severities, counts, model
 /// versions. It is the cheapest piece of family resemblance the three clients have and the
-/// strongest — columns line up, and the interface reads like an instrument.
+/// strongest - columns line up, and the interface reads like an instrument.
 ///
 /// The font is `monospacedSystemFont` at the size the text style asks for, so it still scales
 /// with Dynamic Type. A fixed point size here would be a bug, not a design.
@@ -55,7 +55,7 @@ final class ReadoutView: UIStackView {
 
 /// The contributor-facing status of a sighting.
 ///
-/// The vocabulary is ``SightingDisplayStatus`` and nothing else — there is no "Synced",
+/// The vocabulary is ``SightingDisplayStatus`` and nothing else - there is no "Synced",
 /// because a local flag claiming the upload worked is a claim rather than a fact. The colour
 /// is decoration; the **word** is the information, which is what makes this legible in a
 /// greyscale screenshot.

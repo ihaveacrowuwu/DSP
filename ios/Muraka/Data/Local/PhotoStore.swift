@@ -11,14 +11,14 @@ import UniformTypeIdentifiers
 /// 1. **Copy at capture time.** A `PHPicker` asset can be deleted, and its identifier
 ///    invalidated, long before the outbox drains. What is queued has to be bytes we own.
 /// 2. **Write to a temporary name, then rename atomically.** A half-written file that looks
-///    complete is indistinguishable from a real one at upload time — the upload succeeds and
+///    complete is indistinguishable from a real one at upload time - the upload succeeds and
 ///    the researcher gets a truncated image.
-/// 3. **Downscale before uploading.** The server analyses at 224 px per grid cell, so a 5×5
+/// 3. **Downscale before uploading.** The server analyses at 224 px per grid cell, so a 5x5
 ///    grid gains nothing above roughly 1600 px. That is far under the 12 MiB cap and much
 ///    kinder to a resort Wi-Fi connection than a 12-megapixel original.
 ///
 /// Orientation is baked into the pixels rather than left as an EXIF tag, because the server
-/// strips EXIF when it re-encodes — a photograph relying on the tag would reach the
+/// strips EXIF when it re-encodes - a photograph relying on the tag would reach the
 /// researcher sideways, and the patch lattice with it.
 actor PhotoStore {
     private let directory: URL
@@ -44,7 +44,7 @@ actor PhotoStore {
 
     /// Stores an image, downscaled and correctly oriented.
     ///
-    /// Returns nil if the data could not be decoded — an ordinary outcome for a corrupt file
+    /// Returns nil if the data could not be decoded - an ordinary outcome for a corrupt file
     /// from an action camera, not something worth crashing over.
     @discardableResult
     func store(photoID: String, data: Data) -> URL? {
@@ -52,7 +52,7 @@ actor PhotoStore {
         return writeAtomically(photoID: photoID, image: image)
     }
 
-    /// Stores an already-decoded image — the camera path.
+    /// Stores an already-decoded image - the camera path.
     @discardableResult
     func store(photoID: String, image: UIImage) -> URL? {
         writeAtomically(photoID: photoID, image: scaleToLongestEdge(image, CaptureLimits.uploadMaxEdge))
@@ -72,7 +72,7 @@ actor PhotoStore {
 
     /// Deletes a photograph's bytes.
     ///
-    /// Called **only** once the server's own `photos[]` lists the id — not when an upload
+    /// Called **only** once the server's own `photos[]` lists the id - not when an upload
     /// call returns, and not when a local flag is set.
     func delete(photoID: String) {
         try? FileManager.default.removeItem(at: fileURL(for: photoID))
@@ -87,7 +87,7 @@ actor PhotoStore {
         for file in files { try? FileManager.default.removeItem(at: file) }
     }
 
-    // ── Internals ───────────────────────────────────────────────────────────
+    // -- Internals -----------------------------------------------------------
 
     private func writeAtomically(
         photoID: String,

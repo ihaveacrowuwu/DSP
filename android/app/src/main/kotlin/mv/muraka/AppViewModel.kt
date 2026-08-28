@@ -26,7 +26,7 @@ import javax.inject.Inject
  * Application-level state: who is signed in, and how much is still owed to the server.
  *
  * It also owns two of the five sync triggers. Connectivity returning is here rather than
- * in a screen because it must fire whichever screen the contributor happens to be on —
+ * in a screen because it must fire whichever screen the contributor happens to be on
  * and, more to the point, whether or not they are looking.
  */
 @HiltViewModel
@@ -46,7 +46,7 @@ class AppViewModel @Inject constructor(
      * How many sightings are still undelivered.
      *
      * Shown as a badge that never goes away while work is outstanding. This is the one
-     * count in the app that comes from local rows — legitimately, because it counts what
+     * count in the app that comes from local rows - legitimately, because it counts what
      * has *not* reached the server. Contribution totals are a different question and come
      * from `GET /v1/me` (D21).
      */
@@ -57,7 +57,7 @@ class AppViewModel @Inject constructor(
      * The contributor's chosen appearance.
      *
      * Held here rather than on the profile screen because it themes the **whole** app,
-     * including the sign-in screen — which the profile screen cannot reach.
+     * including the sign-in screen - which the profile screen cannot reach.
      */
     val themePreference: StateFlow<ThemePreference> = appearanceRepository.themePreference
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), ThemePreference.DEFAULT)
@@ -72,7 +72,7 @@ class AppViewModel @Inject constructor(
             .onEach { syncScheduler.requestSync() }
             .launchIn(viewModelScope)
 
-        // A refresh that failed for good ends the session. The queue survives it — see
+        // A refresh that failed for good ends the session. The queue survives it - see
         // SessionEvents.RefreshFailed.
         sessionEvents.events
             .onEach { event ->

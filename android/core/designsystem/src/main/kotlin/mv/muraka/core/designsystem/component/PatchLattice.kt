@@ -18,9 +18,9 @@ import mv.muraka.core.model.Condition
 import mv.muraka.core.model.Patch
 
 /**
- * The patch lattice — the model's reasoning, drawn.
+ * The patch lattice - the model's reasoning, drawn.
  *
- * The classifier tiles a photograph into a `patchGrid × patchGrid` grid and judges each
+ * The classifier tiles a photograph into a `patchGrid x patchGrid` grid and judges each
  * cell, so drawing that grid is not decoration: it is the only way a contributor or a
  * researcher can see *where* the model thinks the bleaching is, and disagree with it.
  * It is the element all three clients share.
@@ -31,12 +31,12 @@ import mv.muraka.core.model.Patch
  * how the server tiled it. Stretching the lattice across a non-square frame puts cell
  * (0,0) over pixels the model never saw.
  *
- * **The opacity.** There are two formulas, not one, and the difference is deliberate —
+ * **The opacity.** There are two formulas, not one, and the difference is deliberate
  * see [LatticeMode].
  */
 enum class LatticeMode {
     /**
-     * Drawn on top of a photograph: `0.28 + confidence × 0.42`.
+     * Drawn on top of a photograph: `0.28 + confidence x 0.42`.
      *
      * The range stops well short of solid on purpose. Past roughly 0.7 the cells stop
      * annotating the reef and start replacing it, and a contributor cannot check a
@@ -46,7 +46,7 @@ enum class LatticeMode {
 
     /**
      * The small standalone glyph in a list row, with no photograph behind it:
-     * `0.45 + confidence × 0.55`.
+     * `0.45 + confidence x 0.55`.
      *
      * Nothing is being obscured here, so the full range is available and a hesitant model
      * can look properly hesitant.
@@ -114,7 +114,7 @@ fun PatchLattice(patches: List<Patch>, grid: Int, mode: LatticeMode, modifier: M
                     size = Size((cell - gapPx).coerceAtLeast(0f), (cell - gapPx).coerceAtLeast(0f)),
                     // Hard-light keeps the reef's own texture visible through the tint
                     // instead of flooding it. Where a platform cannot blend cheaply the
-                    // fallback is normal compositing at the SAME opacity — never a
+                    // fallback is normal compositing at the SAME opacity - never a
                     // higher one to compensate, which would defeat the point.
                     blendMode = if (mode == LatticeMode.OVERLAY) BlendMode.Hardlight else BlendMode.SrcOver,
                 )

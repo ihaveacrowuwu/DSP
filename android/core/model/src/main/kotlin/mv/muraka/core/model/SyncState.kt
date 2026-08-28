@@ -4,18 +4,18 @@ package mv.muraka.core.model
  * The life of a row in the outbox.
  *
  * This is a string-valued state machine and **not** a `synced` boolean, because a boolean
- * cannot express *"we sent it and do not know what happened"* — and that is exactly the
+ * cannot express *"we sent it and do not know what happened"* - and that is exactly the
  * state a lost response leaves you in. Collapsing it to `false` re-sends work that already
  * succeeded; collapsing it to `true` tells the contributor their sighting is safe when
  * nobody has confirmed it. The second is the worst failure this system can have, because
  * nobody goes looking for it.
  *
  * ```
- * QUEUED ──▶ SENDING ──▶ IN_DOUBT ──▶ CONFIRMED ──▶ (row dropped, record cached)
- *    ▲          │            │
- *    └──────────┴────────────┘   transient failure: back to QUEUED, with backoff
- *               │
- *               └──▶ FAILED   terminal (422/409/413) — needs the contributor
+ * QUEUED --> SENDING --> IN_DOUBT --> CONFIRMED --> (row dropped, record cached)
+ *   ^           |            |
+ *   +-----------+------------+   transient failure: back to QUEUED, with backoff
+ *               |
+ *               +--> FAILED      terminal (422/409/413), needs the contributor
  * ```
  *
  * [OutboxState] decides what to send next. It is **never** what the contributor is shown:
@@ -30,7 +30,7 @@ enum class OutboxState(val wire: String) {
 
     /**
      * Sent, outcome not durably recorded. Reconciliation asks the server rather than
-     * guessing. Displayed as "Checking…", which is an honest thing to say.
+     * guessing. Displayed as "Checking...", which is an honest thing to say.
      */
     IN_DOUBT("in_doubt"),
 
@@ -52,7 +52,7 @@ enum class OutboxState(val wire: String) {
  * **Only the first two may be stated on the client's own authority.** Everything below
  * that line is the server's answer or nothing at all. There is deliberately no "Synced":
  * a local flag saying the upload worked is a claim, not a fact, and the app either has
- * the server's answer or says it is still checking. See D21 in `docs/08`.
+ * the server's answer or says it is still checking.
  *
  * The [label] strings are a **cross-platform contract**, not chrome. The same sighting
  * must not read "Analysing" on Android and "Processing" on iOS, so these exact strings
@@ -60,7 +60,7 @@ enum class OutboxState(val wire: String) {
  * `scripts/check_status_vocabulary.py` fails the build if the two ever drift.
  *
  * They are not in `strings.xml` because they are shared with another platform rather than
- * localised — localisation is an explicitly C-tier, out-of-scope item in `docs/08`.
+ * localised; localisation is out of scope.
  */
 enum class SightingDisplayStatus(
     val label: String,
@@ -80,7 +80,7 @@ enum class SightingDisplayStatus(
     /**
      * Note the wording: "Verified by an expert", not "Verified".
      *
-     * `sync-protocol.md` and `integration.md` disagreed here — the first said "Verified by
+     * `sync-protocol.md` and `integration.md` disagreed here - the first said "Verified by
      * an expert", the second "Verified". The longer form wins because it carries the
      * provenance distinction NFR13 asks for **in the word itself**, so the status survives
      * a greyscale screenshot with no chip beside it. Both documents now say this.
@@ -98,7 +98,7 @@ enum class SightingDisplayStatus(
         /**
          * The single place outbox state and server status are combined.
          *
-         * [serverStatus] is null when the server has never answered for this sighting —
+         * [serverStatus] is null when the server has never answered for this sighting
          * which is normal offline, and is exactly when the client must NOT invent a
          * status. Note the precedence: an in-flight upload is reported as such even if a
          * stale server status exists, because that is a fact about our own queue; but a

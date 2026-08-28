@@ -33,13 +33,13 @@ import retrofit2.http.Streaming
  * trends, the CSV export and everything under `/v1/admin` belong to the dashboard.
  *
  * Calls return `Response<T>` rather than `T` because the client has to distinguish
- * `201 Created` from `200 OK` — not to behave differently (it must not; treating them
+ * `201 Created` from `200 OK` - not to behave differently (it must not; treating them
  * identically is the entire point of client-generated ids) but because the difference is
  * worth logging when diagnosing a duplicate.
  */
 interface MurakaApi {
 
-    // ── Authentication ──────────────────────────────────────────────────────
+    // -- Authentication ------------------------------------------------------
 
     @POST("v1/auth/register")
     suspend fun register(@Body body: RegisterRequest): Response<SessionDto>
@@ -51,8 +51,8 @@ interface MurakaApi {
      * Single-use: this call revokes the token presented and issues a fresh pair. The new
      * refresh token MUST be persisted or the next refresh fails.
      *
-     * Called through a separate OkHttp client with no authenticator attached — see
-     * [TokenAuthenticator] — so a failing refresh cannot recurse into itself.
+     * Called through a separate OkHttp client with no authenticator attached - see
+     * [TokenAuthenticator] - so a failing refresh cannot recurse into itself.
      */
     @POST("v1/auth/refresh")
     suspend fun refresh(@Body body: RefreshRequest): Response<SessionDto>
@@ -60,7 +60,7 @@ interface MurakaApi {
     @POST("v1/auth/logout")
     suspend fun logout(@Body body: RefreshRequest): Response<Unit>
 
-    // ── Account ─────────────────────────────────────────────────────────────
+    // -- Account -------------------------------------------------------------
 
     /** The only source of contribution totals. Never count local rows. */
     @GET("v1/me")
@@ -70,7 +70,7 @@ interface MurakaApi {
     @DELETE("v1/me")
     suspend fun deleteAccount(): Response<Unit>
 
-    // ── Sightings ───────────────────────────────────────────────────────────
+    // -- Sightings -----------------------------------------------------------
 
     /** `201` on create, `200` on replay. The client treats them identically. */
     @POST("v1/sightings")
@@ -87,7 +87,7 @@ interface MurakaApi {
      * The reconciliation primitive.
      *
      * `404` means the server has nothing under this id, so everything still needs
-     * sending. `200` carries `photos[]`, whose ids are the client's own — so diffing
+     * sending. `200` carries `photos[]`, whose ids are the client's own - so diffing
      * against the local photo ids gives the exact set still missing, not an estimate.
      */
     @GET("v1/sightings/{id}")
@@ -103,7 +103,7 @@ interface MurakaApi {
     ): Response<PhotoUploadResponse>
 
     /**
-     * Photograph bytes. **Requires the bearer token** — this is not a public URL, so it
+     * Photograph bytes. **Requires the bearer token** - this is not a public URL, so it
      * cannot be handed to a stock image loader without an auth header or it renders
      * nothing and returns 401.
      */
@@ -111,7 +111,7 @@ interface MurakaApi {
     @GET("v1/photos/{id}/image")
     suspend fun photoImage(@Path("id") photoId: String): Response<ResponseBody>
 
-    // ── Reference data ──────────────────────────────────────────────────────
+    // -- Reference data ------------------------------------------------------
 
     @GET("v1/atolls")
     suspend fun atolls(): Response<List<AtollDto>>

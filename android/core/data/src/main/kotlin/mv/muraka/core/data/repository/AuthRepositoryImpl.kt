@@ -38,7 +38,7 @@ import javax.inject.Singleton
  * Sessions and the account.
  *
  * The only screen in the app that requires connectivity is the one this backs (NFR7), so
- * everything here is allowed to fail on the network — and everything else in the app is
+ * everything here is allowed to fail on the network - and everything else in the app is
  * not.
  */
 @Singleton
@@ -58,7 +58,7 @@ class AuthRepositoryImpl @Inject constructor(
                 session == null -> SessionState.SignedOut
                 profile != null -> SessionState.SignedIn(profile.user)
                 // Tokens but no cached profile: only reachable if app data was cleared
-                // while offline. The app stays usable — NFR7 — on a stub the next
+                // while offline. The app stays usable - NFR7 - on a stub the next
                 // successful /v1/me replaces.
                 else -> SessionState.SignedIn(stubUser(session.userId))
             }
@@ -112,7 +112,7 @@ class AuthRepositoryImpl @Inject constructor(
         }
 
         // Only after the server confirms. The sightings themselves survive under a
-        // tombstone owner — this deletes what is on the device, not the science.
+        // tombstone owner - this deletes what is on the device, not the science.
         outbox.deleteAllFor(userId)
         cache.deleteAllFor(userId)
         cache.deleteProfileFor(userId)
@@ -121,7 +121,7 @@ class AuthRepositoryImpl @Inject constructor(
         Result.success(Unit)
     }
 
-    // ── Internals ───────────────────────────────────────────────────────────
+    // -- Internals -----------------------------------------------------------
 
     /**
      * Stores the session and reads the profile back.
@@ -141,7 +141,7 @@ class AuthRepositoryImpl @Inject constructor(
         )
 
         // Totals come from /v1/me and nowhere else. If it cannot be reached, the session
-        // is still good — the contributor gets an account with no totals yet rather than
+        // is still good - the contributor gets an account with no totals yet rather than
         // a failed sign-in.
         val me = runCatching { api.me() }.getOrNull()?.body()
         return if (me != null) {

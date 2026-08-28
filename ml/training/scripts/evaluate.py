@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluate a checkpoint on the **test** split — the one that stays closed until the end.
+"""Evaluate a checkpoint on the **test** split - the one that stays closed until the end.
 
 `data.test_split_locked` is a discipline, not a mechanism: nothing stops someone reading
 the test split early. What this script does is make the honest path the easy one, and

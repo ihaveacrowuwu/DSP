@@ -71,7 +71,7 @@ What the fixed frame costs is honesty about resolution, so it is paid back in wo
 the panel prints the source dimensions, and under 600 px on the shorter side adds a
 sentence naming the resolution and saying to reject the photograph if it cannot be
 judged (`lib/photos.ts`). The queue, whose caption is a single line, uses the same
-rule as a hover label instead. See D24 in `docs/08`.
+rule as a hover label instead.
 
 ## Map
 

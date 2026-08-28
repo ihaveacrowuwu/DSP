@@ -5,13 +5,13 @@ the checkpoint but the `.onnx` file. Two things can go wrong between them and ne
 raises an error:
 
 1. **The graph is subtly different.** Opset differences, a fused operator, a changed
-   default — the export succeeds and the logits move. `verify_parity` runs the same fixed
+   default - the export succeeds and the logits move. `verify_parity` runs the same fixed
    inputs through PyTorch and through onnxruntime and requires them to agree to
    `parity_tolerance`. Without it, "the model scored 0.9 in evaluation" is a statement
    about a file nobody serves.
 
 2. **The class order is lost.** The service reads index 0 as `healthy` and refuses to
-   load a model whose declared order disagrees — but only if the order is *declared*. So
+   load a model whose declared order disagrees - but only if the order is *declared*. So
    the labels are written into the ONNX metadata, which is what
    `inference.py` checks against `CLASS_LABELS`.
 
@@ -46,14 +46,14 @@ def export(model: torch.nn.Module, config, *, output: Path | None = None, model_
     # `torch.export`/dynamo path the default and warns about this one; switching would
     # change the emitted graph, and the whole reason `verify_parity` exists is that a
     # changed graph is a changed model. Move when there is a reason to, re-run the parity
-    # check and the CPU latency figure, and record both — not as a drive-by upgrade.
+    # check and the CPU latency figure, and record both - not as a drive-by upgrade.
     torch.onnx.export(
         model,
         example,
         str(destination),
         input_names=["input"],
         output_names=["logits"],
-        # The service sends one batch of `patch_grid²` patches — 25 for a 5×5 grid — so
+        # The service sends one batch of `patch_grid2` patches - 25 for a 5x5 grid - so
         # the batch dimension must be dynamic or serving would need one call per patch.
         dynamic_axes={"input": {0: "batch"}, "logits": {0: "batch"}},
         opset_version=int(settings.get("opset", 17)),
@@ -132,7 +132,7 @@ def read_metadata(onnx_path: Path) -> dict[str, str]:
 # only evidence for NFR2 if it measures the configuration that will actually serve, and
 # thread count moves this number by more than any architecture choice does.
 #
-# This mirrors ONNX_THREADS in deploy/docker-compose.yml — the *deployed* value, which is
+# This mirrors ONNX_THREADS in deploy/docker-compose.yml - the *deployed* value, which is
 # not the same as `Settings.onnx_threads`'s fallback of 2. `test_the_benchmark_measures
 # _the_threads_the_stack_deploys` fails if the two drift apart, because a benchmark that
 # quietly measures a different thread count than the stack runs is how the 381 ms figure
@@ -157,15 +157,15 @@ def _service_session(onnx_path: Path, *, threads: int = SERVICE_INTRA_OP_THREADS
 def cpu_latency(
     onnx_path: Path, config, *, batch: int | None = None, runs: int = 20, threads: int = SERVICE_INTRA_OP_THREADS
 ) -> dict[str, float]:
-    """Per-image CPU latency for one patch batch — NFR2's ≤500 ms per image.
+    """Per-image CPU latency for one patch batch - NFR2's <=500 ms per image.
 
-    The batch defaults to `patch_grid²`, because the service never classifies one patch:
+    The batch defaults to `patch_grid2`, because the service never classifies one patch:
     it sends the whole lattice for a photograph in a single call, and the per-image figure
     the requirement asks about is that call divided by the patches in it.
 
     The session is built the way the service builds it, `ONNX_THREADS` included. An
     earlier version of this function took onnxruntime's defaults, which on an 8-core
-    machine is a different — and faster — configuration than the one that serves; the
+    machine is a different - and faster - configuration than the one that serves; the
     figure it produced was evidence for a deployment nobody runs.
     """
     grid = int(config.raw.get("data", {}).get("patch_grid", 5))

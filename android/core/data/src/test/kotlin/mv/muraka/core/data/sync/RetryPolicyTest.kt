@@ -7,7 +7,7 @@ import org.junit.Test
 import kotlin.random.Random
 
 /**
- * `min(2^attempts, 300) seconds ± 20%`, from `mobile-shared/sync-protocol.md`.
+ * `min(2^attempts, 300) seconds +/- 20%`, from `mobile-shared/sync-protocol.md`.
  *
  * The jitter is tested against a seeded [Random] rather than by sampling, so a failure
  * names a number instead of being flaky one run in fifty.
@@ -31,7 +31,7 @@ class RetryPolicyTest {
     @Test
     fun `the delay is capped at five minutes`() {
         // Without the cap, attempt 8 would be over four minutes and attempt 20 would be
-        // twelve days — a queue that never drains and a contributor who never finds out.
+        // twelve days - a queue that never drains and a contributor who never finds out.
         assertEquals(300_000, RetryPolicy.delayMillis(20, noJitter))
         assertEquals(300_000, RetryPolicy.delayMillis(Int.MAX_VALUE, noJitter))
     }

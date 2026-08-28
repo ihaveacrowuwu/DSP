@@ -7,7 +7,7 @@ import type { Condition, SightingStatus } from '@/lib/api'
 /**
  * NFR13: "ML-only labels shall be visually distinct from expert-verified labels in
  * every interface that shows a condition." Its stated verification method is a UI
- * review checklist — a human looking at screenshots — which is the weakest kind of
+ * review checklist - a human looking at screenshots - which is the weakest kind of
  * evidence for a requirement about a mistake that matters.
  *
  * The mistake is specific: reading a model's guess as a marine biologist's finding.

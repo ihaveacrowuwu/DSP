@@ -45,7 +45,7 @@ import mv.muraka.core.model.ThemePreference
  * The account and the app's settings.
  *
  * Four titled cards in a deliberate order: who you are, what you have contributed, how the
- * app looks, and — kept last and kept apart — the two actions that end something. Grouping
+ * app looks, and - kept last and kept apart - the two actions that end something. Grouping
  * matters more here than anywhere else in the app, because "sign out" and "delete my account"
  * sitting in an undifferentiated column of controls is how somebody taps the wrong one.
  */

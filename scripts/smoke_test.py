@@ -22,7 +22,7 @@ import uuid
 # The demo configuration terminates TLS (NFR4), so this has to be able to talk to
 # https://localhost:8443 as well as the development stack's plain HTTP. The certificate
 # is self-signed because NFR9 rules out a certificate authority, so verification is
-# skipped **only** when explicitly asked for — a script that silently accepted any
+# skipped **only** when explicitly asked for - a script that silently accepted any
 # certificate would be a worse example than one that cannot reach the demo at all.
 API = os.environ.get("MURAKA_API", "http://localhost:8090").rstrip("/")
 

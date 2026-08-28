@@ -1,8 +1,8 @@
 """The training loop, with the reproducibility NFR16 asks for.
 
 "Config-driven, seeded, with metrics logged per run" is a testable claim, and the way it
-is kept true here is that **every** source of randomness is seeded from `run.seed` —
-Python, NumPy, Torch, the DataLoader's shuffle generator and the oversampling sampler —
+is kept true here is that **every** source of randomness is seeded from `run.seed`  -
+Python, NumPy, Torch, the DataLoader's shuffle generator and the oversampling sampler  -
 and every number the run produces lands in `metrics.csv` and `summary.json` beside the
 checkpoint. Two runs of the same config must agree, and `tests/test_reproducibility.py`
 asserts it rather than trusting it.
@@ -84,7 +84,7 @@ class Trainer:
         self.best_epoch = -1
         self.best_state: dict[str, torch.Tensor] | None = None
 
-    # ── the loop ────────────────────────────────────────────────────────────
+    # -- the loop ------------------------------------------------------------
 
     def fit(self) -> list[EpochResult]:
         config = self.config
@@ -175,7 +175,7 @@ class Trainer:
         )
         return total / max(seen, 1), computed
 
-    # ── outputs ─────────────────────────────────────────────────────────────
+    # -- outputs -------------------------------------------------------------
 
     def save(self, extra: dict[str, object] | None = None) -> Path:
         """Write the checkpoint, per-epoch CSV and run summary. Returns the directory."""

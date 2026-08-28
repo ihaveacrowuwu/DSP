@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Operations — the administrator's view of people, models and the inference
+ * Operations - the administrator's view of people, models and the inference
  * pipeline.
  *
  * This screen answers two questions and nothing else: "is it working?" and "who

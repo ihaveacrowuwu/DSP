@@ -69,7 +69,7 @@ class SyncSchedulerImpl @Inject constructor(@param:ApplicationContext private va
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, MIN_BACKOFF)
             .build()
 
-        // KEEP so that calling this on every launch — which is the point — does not reset
+        // KEEP so that calling this on every launch - which is the point - does not reset
         // the period and push the next run an hour away each time the app opens.
         workManager.enqueueUniquePeriodicWork(
             SyncWorker.UNIQUE_PERIODIC,
@@ -86,7 +86,7 @@ class SyncSchedulerImpl @Inject constructor(@param:ApplicationContext private va
         /**
          * WorkManager's own floor is 15 minutes, so anything shorter is silently raised.
          * The periodic task is a safety net for a device that never opens the app rather
-         * than the main path — foreground, connectivity and post-capture triggers do the
+         * than the main path - foreground, connectivity and post-capture triggers do the
          * real work.
          */
         val PERIOD: Duration = Duration.ofMinutes(15)

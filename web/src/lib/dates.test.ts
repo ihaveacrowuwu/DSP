@@ -173,7 +173,7 @@ describe('display', () => {
 
   it('formats a day without shifting it', () => {
     // The locale is the machine's, so the assertion is on the parts rather than the
-    // exact arrangement — what must not happen is the 21st rendering as the 20th.
+    // exact arrangement - what must not happen is the 21st rendering as the 20th.
     const formatted = formatDay('2026-08-21')
     expect(formatted).toContain('21')
     expect(formatted).toContain('2026')

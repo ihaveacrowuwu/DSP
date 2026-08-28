@@ -1,42 +1,16 @@
 /**
- * useHoverIntent — opens a panel on hover only when the pointer means it.
+ * useHoverIntent - opens a panel on hover only when the pointer looks deliberate.
  *
- * A bare `pointerenter` is the wrong trigger for anything that expands. The rail
- * sits along the whole left edge, so every trip from the left of the window to
- * anywhere else crosses it, and each of those trips would throw the rail open and
- * shut again. That reads as the interface twitching at things the user never
- * asked for.
+ * A bare `pointerenter` is wrong for the rail: it spans the whole left edge, so
+ * every crossing would open and close it. Entry needs one of three signals:
+ * the pointer is moving slowly, it stops inside, or the panel is already open.
+ * Speed is an exponential moving average so one jittery event cannot flip it.
  *
- * So entry is gated on three signals, any one of which counts as intent:
- *
- *   1. the pointer is moving slowly — a deliberate approach opens on the first
- *      event, so nothing feels laggy;
- *   2. it comes to a dead stop inside — a flick that ends on the rail still
- *      opens it, caught by a timer because a stopped pointer fires no events;
- *   3. it is already open — once open, staying inside keeps it open, with no
- *      further intent test to fail.
- *
- * A fast transit matches none of these: it stays fast the whole way across and
- * never stops. Speed is an exponential moving average rather than a raw delta, so
- * one jittery event cannot flip the decision either way.
- *
- * ─── THE BAND IS BIGGER THAN THE ELEMENT ─────────────────────────────────────
- *
- * Intent decides whether to open; the BAND decides whether to stay open, and it
- * is deliberately larger than the element's own box.
- *
- * A floating panel does not touch the edge it is docked against — the rail sits
- * 10px off the left of the window — and aiming for something near an edge means
- * routinely overshooting into that gutter. Testing the element's own rect closes
- * the panel the moment you overshoot and miss, which is precisely when you are
- * still trying to hit it. So on any side listed in `dockedEdges` the band runs all
- * the way to the window edge: there is nothing else out there to be aiming at.
- * The remaining sides get a small pad, enough to cover the panel's own inset.
- *
- * Leaving the band closes after a delay, which also covers the pointer clipping a
- * corner or crossing the 1px gap between two children. Leaving the window is
- * treated the same way rather than closing outright, so a hard overshoot past the
- * top of the window and straight back does not lose the panel.
+ * Staying open is decided by a band larger than the element's own box. Sides
+ * listed in `dockedEdges` extend to the window edge, since a panel inset from an
+ * edge is routinely overshot; other sides get a small pad. Leaving the band or
+ * the window closes after a delay, which also covers clipping a corner or
+ * crossing a gap between children.
  */
 import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
 

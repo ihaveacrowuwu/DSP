@@ -13,7 +13,7 @@ import mv.muraka.core.database.entity.CachedSightingEntity
  * Last-known server state.
  *
  * Everything here is written by a read from the server and by nothing else. There is no
- * update method that takes a field — a cached record is replaced **wholesale** on every
+ * update method that takes a field - a cached record is replaced **wholesale** on every
  * refresh, which is why an expert correcting a label, a rejection, and an account
  * anonymisation all reach the app the same way and there is no merge logic to get wrong.
  */

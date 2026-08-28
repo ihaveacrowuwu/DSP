@@ -3,7 +3,7 @@ import UIKit
 /// Builds the filter control for the history screen.
 ///
 /// A `UIMenu` on a navigation bar button, not a custom panel. The menu is what iOS uses for
-/// exactly this — a set of independent toggles behind one control — and it comes with the
+/// exactly this - a set of independent toggles behind one control - and it comes with the
 /// glass treatment, the checkmarks, the keyboard support and the VoiceOver behaviour already
 /// done. A hand-built sheet would start non-compliant on all four.
 ///
@@ -12,7 +12,7 @@ import UIKit
 /// its wording, not the control.
 /// `@MainActor` because every `UIAction` handler is main-actor isolated, and the callbacks
 /// here close over view-controller state. Isolating the builder is the correct answer rather
-/// than making the closures `Sendable` — this is UIKit, it only ever runs on the main actor,
+/// than making the closures `Sendable` - this is UIKit, it only ever runs on the main actor,
 /// and pretending otherwise would be silencing the warning rather than answering it.
 @MainActor
 enum SightingFilterMenu {
@@ -83,7 +83,7 @@ enum SightingFilterMenu {
         return item
     }
 
-    // ── Sections ────────────────────────────────────────────────────────────
+    // -- Sections ------------------------------------------------------------
 
     private static func conditionSection(_ filter: SightingFilter, _ actions: Actions) -> UIMenu {
         let items = Condition.allCases.map { condition in

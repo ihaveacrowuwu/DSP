@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """Fail if the three patch-lattice implementations disagree about opacity.
 
-The lattice is drawn three times — Vue, Jetpack Compose and UIKit — from one
+The lattice is drawn three times - Vue, Jetpack Compose and UIKit - from one
 specification in `mobile-shared/README.md` and `mobile-shared/design-tokens.json`:
 
-    overlay:  0.28 + confidence × 0.42
-    glyph:    0.45 + confidence × 0.55
+    overlay:  0.28 + confidence x 0.42
+    glyph:    0.45 + confidence x 0.55
 
 Three implementations of one formula is three chances to drift, and no toolchain can
 see across them: ktlint does not read Swift, SwiftLint does not read Kotlin, and
 neither reads Vue. This is the same gap `check_status_vocabulary.py` exists to close
 for the contributor-facing status words.
 
-Drift here is not cosmetic. The overlay's range stops short of solid on purpose —
+Drift here is not cosmetic. The overlay's range stops short of solid on purpose  -
 past roughly 0.7 the cells stop annotating the photograph and start replacing it, and
 a researcher who cannot see the coral through the judgement cannot check the
 judgement. That ceiling is the argument for having two formulas rather than one, so a
@@ -59,7 +59,7 @@ SOURCES = [
 
 # The token file is JSON, so it is parsed rather than pattern-matched. The first version
 # of this check regexed it and both patterns matched both variants, which made the spec
-# look unreadable — a reminder that a regex over structured data is a bug waiting for a
+# look unreadable - a reminder that a regex over structured data is a bug waiting for a
 # quiet day.
 SPEC_PATH = "mobile-shared/design-tokens.json"
 FORMULA = re.compile(r"^\s*([\d.]+)\s*\+\s*confidence\s*\*\s*([\d.]+)\s*$")

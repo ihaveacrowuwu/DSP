@@ -23,7 +23,7 @@ data class ConfigUiState(val refreshing: Boolean = false, val message: String? =
  *
  * The totals come from `GET /v1/me` and are never computed from local rows. A client-side
  * tally drifts the moment anything is rejected, verified or anonymised, and the number
- * the contributor sees would then disagree with the dashboard — D21 again.
+ * the contributor sees would then disagree with the dashboard - D21 again.
  */
 @HiltViewModel
 class ConfigViewModel @Inject constructor(
@@ -78,7 +78,7 @@ class ConfigViewModel @Inject constructor(
      * Anonymises the account.
      *
      * NFR15: the app must disclose that sightings survive as scientific record under an
-     * anonymous owner **before** the contributor confirms — which the dialogue in
+     * anonymous owner **before** the contributor confirms - which the dialogue in
      * `ProfileScreen` does, in those words.
      */
     fun deleteAccount() {

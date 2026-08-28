@@ -15,7 +15,7 @@ import (
 // protected route, so this walks the whole matrix.
 //
 // The table is written from the route table in api.go. When a route is added to a
-// guarded group and not added here, that is the gap this test cannot see — so
+// guarded group and not added here, that is the gap this test cannot see - so
 // TestEveryGuardedRouteIsInTheMatrix keeps the two honest about each other.
 type guardedRoute struct {
 	method string
@@ -50,7 +50,7 @@ func adminRoutes() []guardedRoute {
 }
 
 // TestContributorsCannotReachResearcherOrAdminRoutes is the privilege-escalation
-// attempt FR1 names. A contributor presents a valid token — they are authenticated,
+// attempt FR1 names. A contributor presents a valid token - they are authenticated,
 // which is what makes this an authorisation test rather than an authentication one.
 func TestContributorsCannotReachResearcherOrAdminRoutes(t *testing.T) {
 	h := newHarness(t)
@@ -147,7 +147,7 @@ func TestUnauthenticatedRequestsAreRefused(t *testing.T) {
 func TestAGarbageOrForeignTokenIsRefused(t *testing.T) {
 	h := newHarness(t)
 
-	// Signed with a different secret, correct shape, valid base64 — the case a
+	// Signed with a different secret, correct shape, valid base64 - the case a
 	// signature check exists to catch.
 	const foreign = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
 		"eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJyb2xlIjoiYWRtaW4ifQ." +
@@ -186,7 +186,7 @@ func TestAContributorCannotVerifyEvenTheirOwnSighting(t *testing.T) {
 	}
 }
 
-// TestAContributorCannotReadAnotherContributorsSighting — role is not the only axis;
+// TestAContributorCannotReadAnotherContributorsSighting - role is not the only axis;
 // two contributors are peers, and peers must not see each other's records.
 func TestAContributorCannotReadAnotherContributorsSighting(t *testing.T) {
 	h := newHarness(t)
@@ -204,7 +204,7 @@ func TestAContributorCannotReadAnotherContributorsSighting(t *testing.T) {
 // TestReplayingAnotherContributorsIDIsRefused: the submission id is chosen by the
 // client, so it is guessable, and idempotency means a repeated id is *accepted* by
 // design. Together those would let one account overwrite another's sighting if the
-// upsert did not check ownership — which is why UpsertSighting compares the
+// upsert did not check ownership - which is why UpsertSighting compares the
 // contributor before returning.
 func TestReplayingAnotherContributorsIDIsRefused(t *testing.T) {
 	h := newHarness(t)

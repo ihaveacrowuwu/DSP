@@ -7,7 +7,7 @@ import UIKit
 /// between a screen a contributor can read at a glance and a list of facts they have to sort
 /// out for themselves.
 ///
-/// Refreshes on open, which is the read-back that turns "Checking…" into whatever the server
+/// Refreshes on open, which is the read-back that turns "Checking..." into whatever the server
 /// actually says.
 final class SightingDetailViewController: UIViewController {
     private let container: AppContainer
@@ -128,7 +128,7 @@ final class SightingDetailViewController: UIViewController {
         }
     }
 
-    /// Status and how fresh it is — the two things read first, so they sit above the cards.
+    /// Status and how fresh it is - the two things read first, so they sit above the cards.
     private func makeStatusHeader(_ summary: ContributorSighting) -> UIView {
         let row = UIStackView(arrangedSubviews: [StatusPillView(status: summary.displayStatus)])
         row.axis = .horizontal
@@ -152,7 +152,7 @@ final class SightingDetailViewController: UIViewController {
     ///
     /// The toggle exists because the lattice is an annotation, and an annotation you cannot
     /// remove is an obstruction. Turning it off is how a contributor checks the model's
-    /// reading against the reef rather than against the model's own drawing of it — which is
+    /// reading against the reef rather than against the model's own drawing of it - which is
     /// the whole argument for drawing the grid in the first place.
     private func makePhotographCard(photo: Photo, index: Int, total: Int) -> UIView {
         let hasPrediction = photo.prediction != nil
@@ -216,7 +216,7 @@ final class SightingDetailViewController: UIViewController {
     ///
     /// The **fill** carries the state, not the symbol. An outline-versus-filled variant of the
     /// same glyph is what this had first, and at 24pt on a glass button the two were
-    /// indistinguishable — a toggle whose state you cannot read is a button that appears to do
+    /// indistinguishable - a toggle whose state you cannot read is a button that appears to do
     /// nothing. Accent-filled when the grid is on, plain glass when it is off.
     private func applyGridToggleAppearance(to button: UIButton, showing: Bool) {
         button.configuration = GlassSurface.makeButtonConfiguration(showing ? .primary : .secondary)

@@ -1,32 +1,21 @@
 <script setup lang="ts">
 /**
- * The floating navigation rail — the one piece of persistent chrome.
+ * The floating navigation rail, the one piece of persistent chrome.
  *
- * It floats over the content rather than sitting in a layout column, because the
- * map underneath pans and zooms: a rail that took a grid column would crop the
- * map to a rectangle beside it, and the reef would stop at a hard edge. Content
- * runs full-bleed beneath it and is inset by padding instead (see `.page`).
+ * It floats over the content rather than taking a layout column, so the map below
+ * runs full-bleed; content is inset by padding instead (see `.page`). Collapsed it
+ * is a strip of icons, and hover or focus widens it to reveal labels.
  *
- * Collapsed it is a strip of icons; hovering or focusing it widens the rail to
- * reveal labels, so the resting state costs almost no screen and the expanded
- * state needs no click. Nothing else expands out of it — no flyouts, no nested
- * menus. Four destinations do not need a second level of navigation.
+ * Opening is gated on hover intent (useHoverIntent), not pointerenter, because the
+ * rail spans the whole left edge.
  *
- * Opening is gated on hover INTENT rather than on pointerenter (useHoverIntent).
- * The rail spans the whole left edge, so without that gate every trip across the
- * window would throw it open and shut again.
+ * The active marker is a sliding pill (usePillMotion) plus a copy of the nav drawn
+ * in the active colours and clipped to the pill's painted rect.
  *
- * The active marker is a single sliding pill (usePillMotion) plus a copy of the
- * nav drawn in the active colours and clipped to the pill's painted rect. The
- * clip is what makes the highlight travel with the pill instead of snapping to
- * the new route while the pill is still in flight.
- *
- * That construction imposes one rule on everything below: NOTHING may move or
- * resize a nav item. The two copies are stacked and the overlay never receives
- * pointer events, so any hover effect reaches the base copy alone and leaves two
- * glyph sets disagreeing by a fraction of a pixel — which is what a shimmering,
- * crawling highlight is. Hence no hover grow on the active item, and none on any
- * item while the pill is travelling past it (both frozen in CSS below).
+ * That imposes one rule below: nothing may move or resize a nav item. The two
+ * copies are stacked and the overlay takes no pointer events, so any hover effect
+ * would shift only the base copy and make the highlight shimmer. Hover grow is
+ * therefore frozen on the active item, and on all items while the pill travels.
  */
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
@@ -60,8 +49,8 @@ const spotlightRef = ref<HTMLElement | null>(null)
 /**
  * Hover opens the rail only on a deliberate approach, and keeps it open across
  * the whole left strip of the window. The rail floats 10px off the left edge, so
- * without `dockedEdges` an overshoot into that gutter — which is exactly what
- * happens when you reach for the rail and miss — would read as leaving it.
+ * without `dockedEdges` an overshoot into that gutter - which is exactly what
+ * happens when you reach for the rail and miss - would read as leaving it.
  */
 const hover = useHoverIntent({ elementRef: railRef, dockedEdges: ['left'] })
 const open = hover.open
@@ -287,7 +276,7 @@ const isLight = computed(() => theme.resolved() === 'light')
   width: var(--rail-w-open);
 }
 
-/* ── brand ──────────────────────────────────────────────────────────────── */
+/* -- brand ---------------------------------------------------------------- */
 
 .brand {
   display: flex;
@@ -344,7 +333,7 @@ const isLight = computed(() => theme.resolved() === 'light')
   color: var(--ink-4);
 }
 
-/* ── navigation ─────────────────────────────────────────────────────────── */
+/* -- navigation ----------------------------------------------------------- */
 
 .nav-wrap {
   position: relative;
@@ -384,7 +373,7 @@ const isLight = computed(() => theme.resolved() === 'light')
   scale: 0.97;
 }
 
-/* ── the two hover freezes ───────────────────────────────────────────────────
+/* -- the two hover freezes ---------------------------------------------------
    The active item sits under the pill, and the clipped copy on top of it does
    not receive hover. Growing the base copy alone would leave two glyph sets a
    fraction of a pixel apart, which reads as the highlight crawling. */
@@ -466,7 +455,7 @@ const isLight = computed(() => theme.resolved() === 'light')
   color: var(--ink);
 }
 
-/* ── account ────────────────────────────────────────────────────────────── */
+/* -- account -------------------------------------------------------------- */
 
 .account {
   display: grid;
@@ -583,7 +572,7 @@ const isLight = computed(() => theme.resolved() === 'light')
   animation: slide-in var(--dur) var(--ease-spring) both;
 }
 
-/* ── narrow screens ─────────────────────────────────────────────────────────
+/* -- narrow screens ---------------------------------------------------------
    The rail lies down along the bottom edge and stays there: a rail that expands
    on hover is meaningless on a touch screen, so labels show permanently and the
    travelling pill is replaced by a plain active face. */

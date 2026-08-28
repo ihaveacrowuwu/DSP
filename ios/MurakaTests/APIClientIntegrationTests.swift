@@ -6,7 +6,7 @@ import Testing
 ///
 /// Unit tests with a stubbed session prove the client calls itself correctly; only this
 /// proves it agrees with the Go server about the wire format. Every bug worth having found
-/// here — timestamp precision, an enum spelling, a field name — is one that a stub would have
+/// here - timestamp precision, an enum spelling, a field name - is one that a stub would have
 /// happily reproduced.
 ///
 /// Skips rather than fails when the stack is not running: a red suite on a machine with no

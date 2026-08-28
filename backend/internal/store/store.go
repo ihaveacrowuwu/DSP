@@ -1,5 +1,5 @@
 // Package store is the data-access layer: one method per query, plain SQL,
-// pgx for scanning. No ORM — the project's design chapter argues for explicit
+// pgx for scanning. No ORM - the project's design chapter argues for explicit
 // SQL given the spatial queries PostGIS requires.
 package store
 

@@ -3,8 +3,8 @@ package mv.muraka.core.domain
 /**
  * Drains the outbox and reconciles it with the server.
  *
- * A domain interface with its implementation in `:core:data` so that `:core:sync` — which
- * exists only to talk to WorkManager — needs neither Retrofit nor Room on its classpath.
+ * A domain interface with its implementation in `:core:data` so that `:core:sync` - which
+ * exists only to talk to WorkManager - needs neither Retrofit nor Room on its classpath.
  * The practical benefit is that the drain algorithm is testable without WorkManager, and
  * the scheduling is testable without a network.
  */
@@ -13,7 +13,7 @@ interface SyncEngine {
      * One pass over everything the signed-in contributor still owes the server.
      *
      * Safe to call as often as you like: every step is idempotent, and reconciliation is
-     * cheaper than showing a contributor something untrue. Returns rather than throws —
+     * cheaper than showing a contributor something untrue. Returns rather than throws
      * a drain that cannot reach the server has not failed, it has simply found the
      * ordinary state of a phone on a boat.
      */

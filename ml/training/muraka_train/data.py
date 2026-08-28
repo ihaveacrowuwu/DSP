@@ -2,16 +2,16 @@
 
 Two sources, deliberately:
 
-**`folder`** — the real one. `root/<split>/<folder>/*.jpg`, with `data.folder_map`
+**`folder`** - the real one. `root/<split>/<folder>/*.jpg`, with `data.folder_map`
 translating the dataset's own directory names (`CORAL`, `CORAL_BL`) onto this project's
 labels. The mapping lives in the config rather than in code because it belongs to the
 dataset, not to the recipe.
 
-**`synthetic`** — generated, seeded, and the reason the pipeline could be verified end to
+**`synthetic`** - generated, seeded, and the reason the pipeline could be verified end to
 end before the real corpus was downloaded. It is not a stand-in for evaluation and no
 metric from it means anything about coral. What it does prove is that the loop trains,
 the metrics compute, early stopping fires, the ONNX export matches PyTorch and the same
-seed gives the same numbers — which is all of NFR16 except the data.
+seed gives the same numbers - which is all of NFR16 except the data.
 
 The synthetic images are teal-vs-bone with a patch texture, which is learnable but not
 trivially so: a run that reaches 1.00 accuracy in one epoch would mean the task is
@@ -65,7 +65,7 @@ def _synthetic_image(seed: int, label: int, size: int) -> Image.Image:
     """A seeded, learnable image: teal for healthy, bone for bleached, plus noise.
 
     The signal is the channel balance, and the noise is strong enough that a model has
-    to generalise rather than memorise — otherwise a verification run would hit a
+    to generalise rather than memorise - otherwise a verification run would hit a
     perfect score immediately and tell us nothing about the pipeline.
     """
     rng = np.random.default_rng(seed)
@@ -102,7 +102,7 @@ def build_transforms(config) -> tuple[object, object]:
     if aug.get("horizontal_flip"):
         train_steps.append(transforms.RandomHorizontalFlip(float(aug["horizontal_flip"])))
     if aug.get("vertical_flip"):
-        # Reef photographs have no canonical "up" — a vertical flip is as valid a view
+        # Reef photographs have no canonical "up" - a vertical flip is as valid a view
         # as the original, which is not true of most image datasets.
         train_steps.append(transforms.RandomVerticalFlip(float(aug["vertical_flip"])))
     if aug.get("rotation_degrees"):
@@ -156,7 +156,7 @@ def synthetic_split(split: str, count: int, config) -> list[Example]:
     """A seeded synthetic split, imbalanced the way the real one is."""
     rng = np.random.default_rng(config.seed + _stable_hash(split))
     # Roughly 62/38 healthy to bleached, matching the real training split's
-    # 4,541 / 2,751 — so the imbalance handling is exercised rather than bypassed.
+    # 4,541 / 2,751 - so the imbalance handling is exercised rather than bypassed.
     labels = (rng.random(count) > 0.62).astype(int)
     base = _stable_hash(split) * 1_000_003 + config.seed
     return [Example(path=None, label=int(label), synthetic_seed=base + i) for i, label in enumerate(labels)]

@@ -15,8 +15,8 @@ enum CaptureLimits {
 
     /// Longest edge, in points, that uploads are downscaled to.
     ///
-    /// The server analyses at 224 px per grid cell, so a 5×5 grid gains nothing above
-    /// roughly 1600 px — well under the 12 MiB cap and far kinder to resort Wi-Fi.
+    /// The server analyses at 224 px per grid cell, so a 5x5 grid gains nothing above
+    /// roughly 1600 px - well under the 12 MiB cap and far kinder to resort Wi-Fi.
     static let uploadMaxEdge: CGFloat = 1600
     static let uploadJPEGQuality: CGFloat = 0.85
 }
@@ -69,12 +69,12 @@ struct SightingDraft: Sendable {
 
 /// A sighting as the contributor's own history shows it.
 ///
-/// ``server`` is nil until the server has answered about this id even once — the normal
+/// ``server`` is nil until the server has answered about this id even once - the normal
 /// state of a sighting captured on a boat. ``serverReadAt`` is what lets the interface say
 /// "checked 20 minutes ago" instead of presenting a stale truth as a current one.
 struct ContributorSighting: Identifiable, Equatable, Sendable {
     let id: String
-    /// Device capture time — what the contributor recognises.
+    /// Device capture time - what the contributor recognises.
     let capturedAt: Date
     let position: Position
     let locationSource: LocationSource

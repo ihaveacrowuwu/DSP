@@ -14,7 +14,7 @@ import mv.muraka.core.model.Verification
  * The boundary between the app and everything that stores or fetches.
  *
  * These are pure Kotlin interfaces in a module with no Android SDK on its classpath, so a
- * view-model test needs a hand-written fake and nothing else — no Robolectric, no
+ * view-model test needs a hand-written fake and nothing else - no Robolectric, no
  * MockWebServer, no emulator. That is the entire reason the layering exists.
  *
  * Every method returns `Result<T>` whose failure is an `ApiError`, so a caller has to
@@ -35,7 +35,7 @@ interface AuthRepository {
      * Revokes the refresh token and forgets the session.
      *
      * **Keeps the outbox.** Queued rows belong to the account that captured them and wait
-     * for that account to sign back in — two people share a boat and a phone more often
+     * for that account to sign back in - two people share a boat and a phone more often
      * than you would think, and uploading one diver's sighting under another's name is
      * corrupt data and an ethics problem, not a cosmetic bug.
      */
@@ -58,7 +58,7 @@ interface AuthRepository {
 /** Capture, history and detail. */
 interface SightingRepository {
     /**
-     * Queues a sighting. **Local only** — this returns as soon as the row and its photo
+     * Queues a sighting. **Local only** - this returns as soon as the row and its photo
      * files are durably on disk, and never waits for the network. NFR7 is the whole point:
      * the app is fully functional with no connectivity except sign-in.
      */
@@ -76,7 +76,7 @@ interface SightingRepository {
     /** Pulls the list from the server. Failure leaves the cache alone. */
     suspend fun refreshMySightings(): Result<Unit>
 
-    /** Pulls one sighting. This is what turns "Checking…" into a real status. */
+    /** Pulls one sighting. This is what turns "Checking..." into a real status. */
     suspend fun refreshSighting(id: String): Result<Unit>
 
     /** Photo bytes for display, fetched with the bearer token and cached on disk. */
@@ -177,8 +177,8 @@ interface SyncScheduler {
      * Requests a drain.
      *
      * [expedited] is used immediately after a capture, where the contributor is watching
-     * and the work is short. Everything else — app foreground, connectivity returning,
-     * the periodic task — takes the ordinary path.
+     * and the work is short. Everything else - app foreground, connectivity returning,
+     * the periodic task - takes the ordinary path.
      */
     fun requestSync(expedited: Boolean = false)
 

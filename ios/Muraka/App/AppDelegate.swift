@@ -27,7 +27,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     /// Clears the stored session on launch, for a **debug-only** launch argument.
     ///
     /// UI tests have to start from a known state, and the Keychain deliberately outlives an
-    /// app reinstall — which is correct behaviour and exactly what makes a test that assumes
+    /// app reinstall - which is correct behaviour and exactly what makes a test that assumes
     /// a signed-out app fail on its second run.
     ///
     /// The session and the appearance preferences go. The outbox is untouched, because a flag
@@ -37,7 +37,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     /// Appearance is included because leaving it out made a test poison its own next run: the
     /// test that proves the patch grid stays hidden across a relaunch left it hidden, so the
     /// same test then failed its "starts visible" precondition the second time it ran. That is
-    /// display state rather than user data, so resetting it costs nothing — and the test that
+    /// display state rather than user data, so resetting it costs nothing - and the test that
     /// checks the choice *survives* a relaunch drops this argument before relaunching, so it
     /// still exercises the real persistence.
     private func resetSessionForUITestsIfRequested() {

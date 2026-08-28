@@ -1,4 +1,4 @@
-"""Performance harness for the Muraka API — NFR1, NFR2, NFR3 and NFR11.
+"""Performance harness for the Muraka API - NFR1, NFR2, NFR3 and NFR11.
 
 Four of the project's non-functional requirements are numbers, and until now all four
 were carried in prose: "measured ~1.5s", "22ms", "320ms". A remembered figure is not
@@ -9,7 +9,7 @@ and a recorded run that produced it. This is that command.
     python3 scripts/perf_test.py --only nfr11    # one of them
     python3 scripts/perf_test.py --json out.json # machine-readable, for the project
 
-Deliberately standard library only — `concurrent.futures` and `urllib` — because NFR9
+Deliberately standard library only - `concurrent.futures` and `urllib` - because NFR9
 forbids depending on a service that needs an account, and reaching for k6 or Locust
 would mean either a new toolchain dependency or a hosted runner. Fifty concurrent
 submissions do not need a load-testing framework; they need fifty threads.
@@ -23,12 +23,12 @@ What each check measures:
          says 30 seconds; the pipeline is a worker polling a queue, so this is mostly
          a measure of poll interval plus inference.
   NFR2   Inference time per image, read from what the service actually reported rather
-         than timed from outside, so network and queueing are excluded — which is what
-         "inference shall run ≤500ms" means.
+         than timed from outside, so network and queueing are excluded - which is what
+         "inference shall run <=500ms" means.
   NFR3   Map viewport latency at scale. Needs the database seeded to 10,000 sightings
          to be a real test of the requirement; it reports the count it actually found
          so a run against 200 rows cannot be mistaken for a pass.
-  AUTH   Latency of an authenticated request. Not a requirement of its own — it is
+  AUTH   Latency of an authenticated request. Not a requirement of its own - it is
          here because D45 added a primary-key lookup to every authenticated request,
          and that trade was made on the promise of being measured rather than assumed.
 """
@@ -52,7 +52,7 @@ import uuid
 # The demo configuration terminates TLS (NFR4), so this has to be able to talk to
 # https://localhost:8443 as well as the development stack's plain HTTP. The certificate
 # is self-signed because NFR9 rules out a certificate authority, so verification is
-# skipped **only** when explicitly asked for — a script that silently accepted any
+# skipped **only** when explicitly asked for - a script that silently accepted any
 # certificate would be a worse example than one that cannot reach the demo at all.
 API = os.environ.get("MURAKA_API", "http://localhost:8090").rstrip("/")
 
@@ -168,7 +168,7 @@ def check_nfr11() -> dict:
     """50 concurrent submissions, no error and no data loss."""
     token = login(*CONTRIBUTOR)
 
-    # Client-generated ids, exactly as a mobile client does — which is also what makes
+    # Client-generated ids, exactly as a mobile client does - which is also what makes
     # the data-loss half checkable: every id is known before anything is sent.
     ids = [str(uuid.uuid4()) for _ in range(NFR11_CONCURRENCY)]
     captured = dt.datetime.now(dt.UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")

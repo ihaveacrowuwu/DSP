@@ -3,7 +3,7 @@ import Testing
 @testable import Muraka
 
 /// The bug these guard broke every screen in the app at once, and presented as "signing in
-/// does not work" — because the decode failure was the last link in a chain that started at
+/// does not work" - because the decode failure was the last link in a chain that started at
 /// the login form.
 ///
 /// Both producers in this system are represented literally, with real values captured from

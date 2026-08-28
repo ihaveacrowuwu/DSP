@@ -4,7 +4,7 @@ import GRDB
 /// The queue, as the sync screen sees it.
 ///
 /// Everything here is about making pending work **visible**. A silent queue is how data goes
-/// missing unnoticed, and the two escape hatches — retry, and retry smaller — exist because
+/// missing unnoticed, and the two escape hatches - retry, and retry smaller - exist because
 /// `sync-protocol.md` requires a stranded sighting to have a way out rather than sitting in a
 /// failure the contributor can see but not act on.
 final class OutboxRepository: Sendable {
@@ -42,7 +42,7 @@ final class OutboxRepository: Sendable {
                         state: row.outboxState,
                         photosTotal: mine.count,
                         // "Sent" here means the server acknowledged the upload call. It is
-                        // NOT a claim that the photograph is safe — that only follows the
+                        // NOT a claim that the photograph is safe - that only follows the
                         // read-back, which is what deletes the row entirely.
                         photosSent: mine.count { $0.state != OutboxState.queued.rawValue },
                         attempts: row.attempts,
@@ -75,7 +75,7 @@ final class OutboxRepository: Sendable {
     /// The way out of a `413`.
     ///
     /// Each oversized photograph is re-encoded smaller and queued under a **new** photo id,
-    /// because the old id may already be half-known to the server — reusing it would ask the
+    /// because the old id may already be half-known to the server - reusing it would ask the
     /// server to reconcile two different images under one key. The old row and its file go
     /// only once the replacement is durably written.
     func retryWithSmallerPhotos(sightingID: String) async throws {

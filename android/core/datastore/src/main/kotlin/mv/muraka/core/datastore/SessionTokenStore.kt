@@ -29,8 +29,8 @@ data class StoredSession(
  *
  * Two rules from `sync-protocol.md` are load-bearing here, and both are easy to get wrong:
  *
- * 1. **Persist the new refresh token immediately.** Refresh tokens are single-use — the
- *    old one is dead the moment the server answers — so both tokens are written in a
+ * 1. **Persist the new refresh token immediately.** Refresh tokens are single-use - the
+ *    old one is dead the moment the server answers - so both tokens are written in a
  *    single `edit {}`, which DataStore commits atomically. Writing them separately leaves
  *    a window where a crash loses the new refresh token and signs the contributor out for
  *    no reason.

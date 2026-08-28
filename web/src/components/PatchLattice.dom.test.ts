@@ -5,13 +5,13 @@ import PatchLattice from './PatchLattice.vue'
 import type { Patch } from '@/lib/api'
 
 /**
- * The patch lattice is drawn three times in this project — here, in Compose on
- * Android and in UIKit on iOS — from one specification in
+ * The patch lattice is drawn three times in this project - here, in Compose on
+ * Android and in UIKit on iOS - from one specification in
  * `mobile-shared/README.md`:
  *
  *   cell opacity, two different formulas: over a photograph use
- *   `0.28 + confidence × 0.42`, and for the small standalone glyph in a list row use
- *   `0.45 + confidence × 0.55`
+ *   `0.28 + confidence x 0.42`, and for the small standalone glyph in a list row use
+ *   `0.45 + confidence x 0.55`
  *
  * Three implementations of one formula is three chances to drift, and a drifted
  * lattice is not a visual nit: the overlay's ceiling exists so that past roughly 0.7

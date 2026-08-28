@@ -22,7 +22,7 @@ import mv.muraka.core.designsystem.theme.ReefSpacing
  * a small number of labelled things; the same content laid out as one long column of
  * headings and rows reads as a list of facts the reader has to group themselves.
  *
- * The title is optional because the first card on a screen is often self-evident — a
+ * The title is optional because the first card on a screen is often self-evident - a
  * photograph does not need to be labelled "Photograph".
  */
 @Composable
@@ -68,7 +68,7 @@ fun SectionCard(
 /**
  * A row of readouts that share a baseline.
  *
- * Measurements belong in a row, evenly spaced, so the eye can compare them — which is the
+ * Measurements belong in a row, evenly spaced, so the eye can compare them - which is the
  * whole reason they are monospaced in the first place. Stacked one per line they stop being
  * a set of related numbers and become a list.
  */

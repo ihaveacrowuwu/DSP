@@ -118,7 +118,7 @@ struct SightingPageDTO: Codable, Sendable {
     var offset: Int = 0
 }
 
-// ── Requests ────────────────────────────────────────────────────────────────
+// -- Requests ----------------------------------------------------------------
 
 struct RegisterRequest: Encodable, Sendable {
     let email: String
@@ -161,7 +161,7 @@ struct PhotoUploadResponse: Decodable, Sendable {
     var queued: Bool = false
 }
 
-// ── Coding ──────────────────────────────────────────────────────────────────
+// -- Coding ------------------------------------------------------------------
 
 /// RFC 3339 parsing that tolerates however many fractional digits the source felt like.
 ///
@@ -169,13 +169,13 @@ struct PhotoUploadResponse: Decodable, Sendable {
 /// **three** fractional digits, and neither producer in this system emits three:
 ///
 /// ```
-/// 2026-08-20T23:10:01.340152254Z   ← Go's time.Time, RFC3339Nano, nine digits
-/// 2026-08-20T22:12:34.405288Z      ← PostgreSQL, six digits
-/// 2026-08-20T22:12:34Z             ← no fractional part at all
+/// 2026-08-20T23:10:01.340152254Z   <- Go's time.Time, RFC3339Nano, nine digits
+/// 2026-08-20T22:12:34.405288Z      <- PostgreSQL, six digits
+/// 2026-08-20T22:12:34Z             <- no fractional part at all
 /// ```
 ///
 /// Decoding failed on every timestamp the API returned, which presented as "sign-in does not
-/// work" rather than as a date problem — the decode error was the last thing in a chain that
+/// work" rather than as a date problem - the decode error was the last thing in a chain that
 /// started at the login screen. Splitting the fraction off and adding it back as a
 /// `TimeInterval` handles any precision exactly, with no formatter that can be surprised.
 enum RFC3339 {

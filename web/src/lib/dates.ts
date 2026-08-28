@@ -2,9 +2,9 @@
  * Calendar arithmetic for the date picker.
  *
  * Dates are handled as plain `YYYY-MM-DD` strings, never as Date objects with a
- * time component. A sighting captured at 06:00 in Malé belongs to that calendar
+ * time component. A sighting captured at 06:00 in Male belongs to that calendar
  * day everywhere, and passing a Date through `toISOString()` would shift it to
- * the previous day for anyone west of UTC — a filter that silently drops the
+ * the previous day for anyone west of UTC - a filter that silently drops the
  * first day of the range. Where a Date is unavoidable it is constructed at local
  * midday, which no time zone offset can push into an adjacent day.
  */
@@ -69,7 +69,7 @@ export function shiftMonth(year: number, month: number, by: number): { year: num
 /**
  * The grid for one month: whole weeks, Monday first, padded with the neighbouring
  * months' days so every row has seven cells and the grid never reflows between
- * months. Always six rows — a five-row month next to a six-row one would resize
+ * months. Always six rows - a five-row month next to a six-row one would resize
  * the panel as the user pages through it.
  */
 export function monthGrid(year: number, month: number): CalendarCell[] {

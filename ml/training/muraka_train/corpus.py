@@ -14,8 +14,8 @@ download that can go wrong in ways nothing downstream would notice:
 * **Silent corruption.** A truncated image decodes to something; it does not raise.
 
 What answers all three is a manifest: every file's SHA-256, sorted, written to a small
-committed text file. It is the project's provenance evidence — the one line a reader
-needs to know the corpus that produced the numbers is the corpus they downloaded — and
+committed text file. It is the project's provenance evidence - the one line a reader
+needs to know the corpus that produced the numbers is the corpus they downloaded - and
 it costs one pass over 768 MB.
 
 Anonymity is deliberate and not incidental. `snapshot_download` is called with
@@ -32,10 +32,8 @@ from pathlib import Path
 
 REPO_ID = "NMFS-OSI/NOAA-PIFSC-ESD-CORAL-Bleaching-Dataset"
 
-# The dataset card's own figures, read 2026-08-21 and recorded against Q6 in
-# docs/08-scope-risks-decisions.md. These are the assertion, not a guess: they are also
-# what `configs/baseline.yaml` was written against — its stated "4,541 healthy against
-# 2,751 bleached" is this table's train row.
+# The dataset card's published figures. `verify()` asserts the tree on disk matches
+# these exactly; they also match the class balance `configs/baseline.yaml` is sized for.
 EXPECTED_COUNTS: dict[str, dict[str, int]] = {
     "train": {"CORAL": 4541, "CORAL_BL": 2751},
     "val": {"CORAL": 973, "CORAL_BL": 589},
@@ -55,7 +53,7 @@ IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
 # huggingface_hub keeps its own bookkeeping inside the target directory. It is not part
 # of the corpus, it differs between machines, and hashing it would make the manifest
-# machine-specific — which is the opposite of what a manifest is for.
+# machine-specific - which is the opposite of what a manifest is for.
 _IGNORED_PARTS = {".cache", ".huggingface"}
 
 
@@ -78,9 +76,9 @@ class Verification:
 
 
 def backoff_delays(attempts: int, *, base: float = 30.0, cap: float = 900.0) -> list[float]:
-    """Seconds to wait before each retry: 30s, 60s, 120s, … capped at 15 minutes.
+    """Seconds to wait before each retry: 30s, 60s, 120s, ... capped at 15 minutes.
 
-    Anonymous downloads of this corpus **do** get rate limited — 10,419 files is a lot of
+    Anonymous downloads of this corpus **do** get rate limited - 10,419 files is a lot of
     requests from one IP, and HuggingFace answers with a 429 partway through suggesting an
     `HF_TOKEN`. The project forbids one (constraint 2), so waiting is the whole strategy.
     The first delay is deliberately long: a limiter that has just fired is not going to
@@ -104,14 +102,14 @@ def download(
     * **`max_workers=4`**, not the library's 8. Concurrency is what trips the limiter, and
       a download that finishes slowly beats one that 429s at 8% and has to be nursed.
     * **Retries with a long backoff.** `snapshot_download` skips files already on disk, so
-      a retry resumes rather than restarts — the 429 is a pause, not a loss.
+      a retry resumes rather than restarts - the 429 is a pause, not a loss.
     * **Xet disabled.** The rate limit observed on this corpus came from the
       `xet-read-token` endpoint, which does a token exchange *per file*; the plain CDN
       path makes far fewer such calls. Set before the import, because the flag is read at
       module load.
 
     Imported inside the function rather than at module scope so the verification and
-    manifest paths — which are what the tests exercise — need neither the dependency nor a
+    manifest paths - which are what the tests exercise - need neither the dependency nor a
     network.
     """
     import os
@@ -147,7 +145,7 @@ def download(
                 raise
             error = raised
 
-        # Completeness decides whether to retry — NOT whether `snapshot_download`
+        # Completeness decides whether to retry - NOT whether `snapshot_download`
         # returned. When the rate limit reaches the metadata call, the library logs
         # "Returning existing local_dir ... as remote repo cannot be accessed" and
         # returns **successfully** with a partial tree. Trusting that return is how a
@@ -172,8 +170,8 @@ def download(
         f"the download was rate limited and did not finish after {len(delays)} attempts. "
         "Every file already fetched is kept, so re-running resumes rather than restarts — "
         "wait a while and run the same command again. Do NOT set HF_TOKEN to work around "
-        "this: the project forbids API-key services (constraint 2 in CLAUDE.md), and the "
-        "corpus is public. Last error: "
+        "this: the corpus is public and the project does not use API-key services. "
+        "Last error: "
         f"{last_error}"
     ) from last_error
 
@@ -181,7 +179,7 @@ def download(
 def verify(root: Path, *, expected: dict[str, dict[str, int]] | None = None) -> Verification:
     """Count the images per split and class and require the card's numbers.
 
-    Raises `CorpusError` on the first disagreement, with the full table in the message —
+    Raises `CorpusError` on the first disagreement, with the full table in the message  -
     a partial download and a re-cut split look identical from a single number.
     """
     root = Path(root)
@@ -213,7 +211,7 @@ def verify(root: Path, *, expected: dict[str, dict[str, int]] | None = None) -> 
         raise CorpusError(
             "the corpus on disk is not the one the recipe was written against:\n  "
             + "\n  ".join(problems)
-            + "\n\nThe expected figures come from the dataset card (docs/08, Q6) and match "
+            + "\n\nThe expected figures come from the dataset card and match "
             "configs/baseline.yaml. A corpus that differs would train a model whose numbers "
             "cannot be reproduced from the published dataset, so the fetch stops here."
         )

@@ -47,7 +47,7 @@ class SightingFilterTest {
     @Test
     fun `text search matches the coordinate as it is displayed`() {
         // A contributor answering "the one at 4.1755, 73.50" has nothing else to search for,
-        // and the list shows four decimals — so four decimals is what must match.
+        // and the list shows four decimals - so four decimals is what must match.
         val filter = SightingFilter(query = "4.1755")
         assertTrue(filter.matches(healthy(lat = 4.17552, lon = 73.5093)))
         assertFalse(filter.matches(healthy(lat = 6.79221, lon = 73.1944)))
@@ -93,7 +93,7 @@ class SightingFilterTest {
 
     @Test
     fun `an unassessed sighting matches no condition filter`() {
-        // It is genuinely neither, rather than being both — a queued sighting the model has
+        // It is genuinely neither, rather than being both - a queued sighting the model has
         // not seen must not appear under "Healthy".
         assertFalse(SightingFilter(condition = Condition.HEALTHY).matches(queued()))
         assertFalse(SightingFilter(condition = Condition.BLEACHED).matches(queued()))
@@ -166,7 +166,7 @@ class SightingFilterTest {
         assertEquals(SightingSort.OLDEST_FIRST, filter.sort)
     }
 
-    // ── Fixtures ────────────────────────────────────────────────────────────
+    // -- Fixtures ------------------------------------------------------------
 
     private fun healthy(
         siteName: String? = "Manta Point",

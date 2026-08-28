@@ -3,7 +3,7 @@ import Foundation
 /// Wire types to domain types.
 ///
 /// This is the boundary the architecture rule protects: a `SightingDTO` must never appear
-/// above `Data/`. The mapping is deliberately total — an unknown enum value falls back to a
+/// above `Data/`. The mapping is deliberately total - an unknown enum value falls back to a
 /// sane default rather than throwing, so a server that grows a sixth status shows an
 /// installed app something odd rather than crashing it.
 

@@ -3,13 +3,13 @@ import UIKit
 /// The account and the app's settings.
 ///
 /// Four titled cards in a deliberate order: who you are, what you have contributed, how the
-/// app looks, and — kept last and kept apart — the two actions that end something. Grouping
+/// app looks, and - kept last and kept apart - the two actions that end something. Grouping
 /// matters more here than anywhere else in the app, because "sign out" and "delete my
 /// account" sitting in an undifferentiated column of controls is how somebody taps the wrong
 /// one.
 ///
-/// Named "Config" at the user's request. Both platforms conventionally call this "Settings" —
-/// Apple's HIG and Material both use that word — so if a design review flags it, the title
+/// Named "Config" at the user's request. Both platforms conventionally call this "Settings"
+/// Apple's HIG and Material both use that word - so if a design review flags it, the title
 /// here and the tab item in `MainTabBarController` are the two places to change.
 final class ConfigViewController: UIViewController {
     private let container: AppContainer
@@ -84,7 +84,7 @@ final class ConfigViewController: UIViewController {
         ])
     }
 
-    // ── Cards ───────────────────────────────────────────────────────────────
+    // -- Cards ---------------------------------------------------------------
 
     private func makeAccountCard() -> UIView {
         let card = SectionCardView(title: "Account")
@@ -188,7 +188,7 @@ final class ConfigViewController: UIViewController {
         return card
     }
 
-    // ── Behaviour ───────────────────────────────────────────────────────────
+    // -- Behaviour -----------------------------------------------------------
 
     private func load() async {
         // Cached first, so the screen has content immediately even with no connection.

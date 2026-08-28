@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Dead ends point somewhere useful rather than apologising. The second sentence
 // is there because in this system a missing record often means a real thing
-// happened to it — rejection during review — not that the URL was mistyped.
+// happened to it - rejection during review - not that the URL was mistyped.
 </script>
 
 <template>

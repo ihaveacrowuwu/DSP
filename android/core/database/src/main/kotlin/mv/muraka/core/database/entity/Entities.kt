@@ -12,14 +12,14 @@ import androidx.room.PrimaryKey
  * The two are kept in separate tables on purpose, and nothing joins them in SQL. The
  * outbox is authoritative only about what has NOT been delivered; the cache is
  * last-known server state and never a record. Merging them into one table with a
- * `synced` column is the design this one exists to avoid — see D21 in `docs/08`.
+ * `synced` column is the design this one exists to avoid.
  */
 
 /**
  * One queued sighting.
  *
  * [state] is a string state machine rather than a boolean, because a boolean cannot say
- * *"we sent it and do not know what happened"* — and that is precisely the state a lost
+ * *"we sent it and do not know what happened"* - and that is precisely the state a lost
  * response leaves you in.
  */
 @Entity(
@@ -35,7 +35,7 @@ data class SightingQueueEntity(
      *
      * A row is only ever uploaded under its owner's session. Two people share a boat and
      * a phone more often than you would think, and without this one diver's queued
-     * sighting uploads under whoever signs in next — corrupt scientific data, and an
+     * sighting uploads under whoever signs in next - corrupt scientific data, and an
      * ethics problem in a project that collects named contributions.
      */
     @ColumnInfo(name = "user_id") val userId: String,
@@ -101,7 +101,7 @@ data class PhotoQueueEntity(
 )
 
 /**
- * Last-known server state for one sighting — a **display cache**, never a record.
+ * Last-known server state for one sighting - a **display cache**, never a record.
  *
  * [readAt] is what lets the interface say "as of 20 minutes ago" rather than presenting a
  * stale truth as a current one. A stale truth labelled stale is fine; a stale truth
@@ -133,7 +133,7 @@ data class CachedSightingEntity(
  * The full detail response, stored as the JSON the server sent.
  *
  * A blob rather than typed tables because the protocol says a cached record is replaced
- * **wholesale** on every refresh — never merged, never patched field by field. There is
+ * **wholesale** on every refresh - never merged, never patched field by field. There is
  * therefore no client-side merge logic to get wrong, and no schema to migrate when the
  * prediction payload grows a field.
  */

@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 /**
- * An Android library module — for layers that genuinely need the Android SDK
+ * An Android library module - for layers that genuinely need the Android SDK
  * (`:core:network`, `:core:database`, `:core:datastore`, `:core:data`, `:core:sync`,
  * `:core:designsystem`).
  *
@@ -63,7 +63,7 @@ class MurakaAndroidLibraryConventionPlugin : Plugin<Project> {
                     // NOTE: the Material 3 Expressive opt-in is deliberately NOT here. It
                     // belongs to the Compose convention plugin, because a module without
                     // material3 on its classpath cannot resolve the marker and Kotlin warns
-                    // "Opt-in requirement marker … is unresolved" — which -Werror turns into
+                    // "Opt-in requirement marker ... is unresolved" - which -Werror turns into
                     // a build failure for :core:network, :core:database and :core:sync.
                     freeCompilerArgs.addAll(
                         "-Xconsistent-data-class-copy-visibility",

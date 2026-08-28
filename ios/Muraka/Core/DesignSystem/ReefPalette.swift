@@ -4,7 +4,7 @@ import UIKit
 ///
 /// Every colour here carries scientific meaning, which is why it comes from a named asset
 /// catalogue entry rather than from the system palette or the app's tint. iOS semantic
-/// colours shift with appearance, Increase Contrast and Increased Legibility — correct and
+/// colours shift with appearance, Increase Contrast and Increased Legibility - correct and
 /// desirable for chrome, and catastrophic here. A system setting deciding what "bleached"
 /// looks like would corrupt the reading, and the same screenshot in the project would be a
 /// different colour on a different device.
@@ -34,7 +34,7 @@ enum ReefPalette {
     /// Expert-reviewed provenance. Always paired with a shape and a word (NFR13).
     static let verified = UIColor(named: "SignalVerified") ?? .systemBlue
 
-    /// The app's tint — the one colour shared with the dashboard's chrome.
+    /// The app's tint - the one colour shared with the dashboard's chrome.
     static let accent = UIColor(named: "AccentColor") ?? .systemTeal
 
     /// What goes **on** the accent.
@@ -46,7 +46,7 @@ enum ReefPalette {
 
     /// The severity ramp, 0 to 1, interpolated in sRGB.
     ///
-    /// Matches the dashboard legend and the map markers exactly — same numbers, same
+    /// Matches the dashboard legend and the map markers exactly - same numbers, same
     /// colours, all three clients. That, and bone-white bleaching, is most of what makes
     /// them read as one product.
     static func severity(_ value: Double) -> UIColor {

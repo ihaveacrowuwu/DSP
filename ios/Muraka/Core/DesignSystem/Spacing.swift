@@ -3,7 +3,7 @@ import UIKit
 /// The spacing scale.
 ///
 /// Every gap and inset in the app comes from here. Before this existed the screens each
-/// invented their own values — 8 here, 12 there, 20 in one row and 16 in the next — and the
+/// invented their own values - 8 here, 12 there, 20 in one row and 16 in the next - and the
 /// result reads as unplanned even when each individual number is defensible. A scale is what
 /// makes a layout look designed rather than assembled.
 ///

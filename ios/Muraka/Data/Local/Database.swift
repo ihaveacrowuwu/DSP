@@ -11,7 +11,7 @@ import GRDB
 ///   torn page.
 /// - **`synchronous = FULL`**, so a committed transaction has actually reached storage
 ///   before `enqueue` returns. SQLite's default under WAL is `NORMAL`, which lets the OS
-///   buffer a commit — and a phone that dies in that window loses a sighting the contributor
+///   buffer a commit - and a phone that dies in that window loses a sighting the contributor
 ///   watched the app accept.
 ///
 /// Both are asserted by `DurabilityPragmaTests`, because a pragma set in the wrong place
@@ -68,7 +68,7 @@ enum MurakaDatabase {
                 // The client's own UUIDv7. Sent as-is; it is the idempotency key.
                 table.primaryKey("id", .text)
                 // The account that captured this. A row is only ever uploaded under its
-                // owner's session — two people share a boat and a phone more often than you
+                // owner's session - two people share a boat and a phone more often than you
                 // would think, and uploading under the wrong one is corrupt scientific data
                 // and an ethics problem.
                 table.column("user_id", .text).notNull().indexed()
@@ -103,7 +103,7 @@ enum MurakaDatabase {
                 table.column("last_error", .text)
             }
 
-            // Last-known server state — a display cache, never a record.
+            // Last-known server state - a display cache, never a record.
             try db.create(table: "cached_sighting") { table in
                 table.primaryKey("id", .text)
                 table.column("user_id", .text).notNull().indexed()
@@ -127,8 +127,8 @@ enum MurakaDatabase {
             }
 
             // The full detail response, as the JSON the server sent. A blob because the
-            // protocol says a cached record is replaced WHOLESALE on every refresh — never
-            // merged, never patched field by field — so there is no merge logic to get
+            // protocol says a cached record is replaced WHOLESALE on every refresh - never
+            // merged, never patched field by field - so there is no merge logic to get
             // wrong and no schema to migrate when the prediction payload grows a field.
             try db.create(table: "cached_detail") { table in
                 table.primaryKey("id", .text)

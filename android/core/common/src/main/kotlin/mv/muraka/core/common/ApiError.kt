@@ -10,16 +10,16 @@ package mv.muraka.core.common
  * `mobile-shared/sync-protocol.md`.
  *
  * Extends [Exception] so repositories can return `Result<T>` without a second wrapper
- * type — the value is that `Result.failure(ApiError.Offline)` is exhaustively matchable
+ * type - the value is that `Result.failure(ApiError.Offline)` is exhaustively matchable
  * at the call site.
  */
 sealed class ApiError(message: String, cause: Throwable? = null) : Exception(message, cause) {
 
-    // ── Terminal: never retry, surface something the contributor can act on ──────
+    // -- Terminal: never retry, surface something the contributor can act on ------
 
     /**
      * `422 validation_failed`. [fields] maps a request field to its problem, which is
-     * what the sync list shows next to the failed item — "capturedAt cannot be in the
+     * what the sync list shows next to the failed item - "capturedAt cannot be in the
      * future" is actionable; "upload failed" is not.
      */
     data class Validation(val fields: Map<String, String>) :
@@ -37,19 +37,19 @@ sealed class ApiError(message: String, cause: Throwable? = null) : Exception(mes
     /** `400`. A malformed request is a client bug, not a transient failure. */
     data class BadRequest(val code: String) : ApiError("bad request: $code")
 
-    /** `403 forbidden`. Wrong role — should never happen in this app; treat as a bug. */
+    /** `403 forbidden`. Wrong role - should never happen in this app; treat as a bug. */
     data object Forbidden : ApiError("this account may not do that")
 
     /** `403 account_disabled`. Suspended by an admin. Sign out with an explanation. */
     data object AccountDisabled : ApiError("this account is not active")
 
-    /** `401 invalid_credentials`. Wrong email or password — not a token problem. */
+    /** `401 invalid_credentials`. Wrong email or password - not a token problem. */
     data object InvalidCredentials : ApiError("email or password is incorrect")
 
     /** `404`. Does not exist, or is not ours. */
     data object NotFound : ApiError("not found")
 
-    // ── Recoverable: refresh once, then retry ───────────────────────────────────
+    // -- Recoverable: refresh once, then retry -----------------------------------
 
     /**
      * `401 unauthorized` / `invalid_token`. The access token expired or was rejected.
@@ -59,7 +59,7 @@ sealed class ApiError(message: String, cause: Throwable? = null) : Exception(mes
      */
     data object Unauthorized : ApiError("the session has expired")
 
-    // ── Transient: retry with backoff. The outcome is genuinely unknown ──────────
+    // -- Transient: retry with backoff. The outcome is genuinely unknown ----------
 
     /** `5xx`. Includes `503 not_ready`/`ml_service`, where ingest still succeeded. */
     data class Server(val status: Int) : ApiError("the server is having trouble ($status)")

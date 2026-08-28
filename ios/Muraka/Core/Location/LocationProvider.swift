@@ -4,7 +4,7 @@ import Foundation
 /// A single position fix.
 ///
 /// **Nil is an ordinary outcome, not an error.** A diver under cloud, or on a hull that
-/// blocks the sky, may simply have no fix — and the capture flow then offers a dropped pin,
+/// blocks the sky, may simply have no fix - and the capture flow then offers a dropped pin,
 /// recorded as `manual_pin` so researchers can filter on the difference.
 ///
 /// `CLLocationManager` is delegate-based and single-shot requests have no async form, so this
@@ -31,7 +31,7 @@ final class LocationProvider: NSObject {
 
     var isDenied: Bool { manager.authorizationStatus == .denied }
 
-    /// Asks in context, at the moment of capture, never on launch — non-negotiable 6.
+    /// Asks in context, at the moment of capture, never on launch - non-negotiable 6.
     func requestPermission() {
         manager.requestWhenInUseAuthorization()
     }
@@ -40,8 +40,8 @@ final class LocationProvider: NSObject {
     func currentFix(timeout: Duration = .seconds(10)) async -> LocationFix? {
         guard hasPermission else { return nil }
 
-        // A watchdog, because CLLocationManager can simply never call back — under a hull,
-        // or with location services throttled — and a capture flow that waits forever is
+        // A watchdog, because CLLocationManager can simply never call back - under a hull,
+        // or with location services throttled - and a capture flow that waits forever is
         // worse than one that offers a pin.
         let watchdog = Task { [weak self] in
             try? await Task.sleep(for: timeout)

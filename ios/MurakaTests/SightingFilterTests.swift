@@ -35,7 +35,7 @@ struct SightingFilterTests {
 
     @Test func textSearchMatchesTheCoordinateAsItIsDisplayed() {
         // A contributor answering "the one at 4.1755, 73.50" has nothing else to search for,
-        // and the list shows four decimals — so four decimals is what must match.
+        // and the list shows four decimals - so four decimals is what must match.
         let filter = SightingFilter(query: "4.1755")
         #expect(filter.matches(healthy(lat: 4.17552, lon: 73.5093)))
         #expect(!filter.matches(healthy(lat: 6.79221, lon: 73.1944)))
@@ -65,7 +65,7 @@ struct SightingFilterTests {
     }
 
     @Test func anUnassessedSightingMatchesNoConditionFilter() {
-        // It is genuinely neither, rather than being both — a queued sighting the model has
+        // It is genuinely neither, rather than being both - a queued sighting the model has
         // not seen must not appear under "Healthy".
         #expect(!SightingFilter(condition: .healthy).matches(queued()))
         #expect(!SightingFilter(condition: .bleached).matches(queued()))
@@ -113,7 +113,7 @@ struct SightingFilterTests {
         #expect(filter.sort == .oldestFirst)
     }
 
-    // ── Fixtures ────────────────────────────────────────────────────────────
+    // -- Fixtures ------------------------------------------------------------
 
     private func healthy(
         siteName: String? = "Manta Point",
@@ -151,7 +151,7 @@ struct SightingFilterTests {
 
     /// Everything a fixture varies, as one value.
     ///
-    /// Seven positional parameters is a soup where a transposed pair goes unnoticed — and in
+    /// Seven positional parameters is a soup where a transposed pair goes unnoticed - and in
     /// a test, a fixture that quietly builds the wrong thing is worse than a failing one.
     private struct Fixture {
         var condition: Condition

@@ -5,8 +5,7 @@ with the iOS 26 Liquid Glass design language. The contributor half of Muraka: ca
 sighting, queue it, and watch the server's verdict arrive.
 
 Read [`../mobile-shared/`](../mobile-shared/) first — the API contract, the offline sync
-protocol and the shared design tokens are settled. [`CLAUDE.md`](CLAUDE.md) has the
-non-negotiables.
+protocol and the shared design tokens are settled.
 
 ## Running it
 
@@ -67,7 +66,7 @@ Two rules matter more than the API details:
 That fallback is not hypothetical even on iOS 26: **Reduce Transparency** turns the effect off
 system-wide, so it is a code path a reviewer can switch on in Settings rather than a claim.
 
-Every API name in `CLAUDE.md` was checked against the iPhoneSimulator26.5 SDK before use.
+Every Liquid Glass API name was checked against the iPhoneSimulator26.5 SDK before use.
 They were correct, with one exception recorded there: the Swift importer renames
 `containerConcentricRadiusWithMinimum:` to `UICornerRadius.containerConcentric(minimum:)`.
 

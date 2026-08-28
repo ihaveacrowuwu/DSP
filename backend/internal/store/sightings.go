@@ -17,7 +17,7 @@ import (
 //
 // Rules (see docs/05): the latest verification wins over any prediction; a
 // sighting's severity is the worst (max) across its photos, and its label comes
-// from that worst photo. Nothing here mutates predictions — provenance is kept.
+// from that worst photo. Nothing here mutates predictions - provenance is kept.
 const effectiveLabelCTE = `
 WITH latest_verification AS (
     SELECT DISTINCT ON (sighting_id)

@@ -38,8 +38,8 @@ import mv.muraka.ui.sync.SyncStatusScreen
 /**
  * The signed-in app.
  *
- * Three tabs and a capture action. The feature set is deliberately small — review, maps
- * and administration live in the dashboard, not on the phone — and keeping it that way is
+ * Three tabs and a capture action. The feature set is deliberately small - review, maps
+ * and administration live in the dashboard, not on the phone - and keeping it that way is
  * what makes the capture flow fit in under 60 seconds and 8 taps (NFR6).
  */
 @Composable
@@ -60,7 +60,7 @@ fun MurakaNavHost(
     Scaffold(
         modifier = modifier,
         // Only the BOTTOM inset. Each screen has its own Scaffold with its own top app
-        // bar, which applies the status-bar inset itself — so letting this one apply it
+        // bar, which applies the status-bar inset itself - so letting this one apply it
         // too leaves a second status bar's worth of empty space above every title.
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom),
         bottomBar = {

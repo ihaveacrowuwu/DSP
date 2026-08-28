@@ -1,6 +1,6 @@
 """Metrics arithmetic, pinned against numbers worked out by hand.
 
-The headline metric is F2 on the bleached class — recall weighted four times as heavily
+The headline metric is F2 on the bleached class - recall weighted four times as heavily
 as precision, because a missed bleaching event costs more than a false alarm. That is a
 scientific decision the project defends, so the arithmetic behind it is checked rather
 than assumed, and checked against values a reader can verify with a calculator.
@@ -43,12 +43,12 @@ def test_accuracy_and_recall_are_derived_from_one_matrix():
 
 
 def test_f2_weights_recall_four_times_as_heavily_as_precision():
-    # precision 1.0, recall 0.5 — F1 and F2 must differ, and F2 must be the lower one
+    # precision 1.0, recall 0.5 - F1 and F2 must differ, and F2 must be the lower one
     # because the missing half is recall.
     f1 = m.fbeta(1.0, 0.5, 1.0)
     f2 = m.fbeta(1.0, 0.5, 2.0)
     assert f1 == pytest.approx(2 / 3)
-    # F2 = 5·P·R / (4P + R) = 5·0.5 / 4.5
+    # F2 = 5-P-R / (4P + R) = 5-0.5 / 4.5
     assert f2 == pytest.approx(5 * 1.0 * 0.5 / (4 * 1.0 + 0.5))
     assert f2 < f1, "F2 must punish poor recall harder than F1 does"
 

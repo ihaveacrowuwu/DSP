@@ -2,7 +2,7 @@
  * Typed client for the Muraka API.
  *
  * Access tokens are short-lived, so every request transparently retries once
- * after a refresh. Types here mirror backend/internal/domain — keep them in step
+ * after a refresh. Types here mirror backend/internal/domain - keep them in step
  * with docs/openapi.yaml.
  */
 

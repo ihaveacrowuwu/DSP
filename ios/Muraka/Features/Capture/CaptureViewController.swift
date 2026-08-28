@@ -3,7 +3,7 @@ import UIKit
 
 /// Capturing a sighting.
 ///
-/// Everything is arranged around NFR6 — under 60 seconds and at most 8 taps:
+/// Everything is arranged around NFR6 - under 60 seconds and at most 8 taps:
 ///
 /// ```
 /// 1  New sighting     2  Add a photograph     3  the shutter
@@ -59,7 +59,7 @@ final class CaptureViewController: UIViewController {
         )
         buildHierarchy()
 
-        // Asked in context, at the moment of capture, never on launch — non-negotiable 6.
+        // Asked in context, at the moment of capture, never on launch - non-negotiable 6.
         container.locationProvider.requestPermission()
         Task { await findPosition() }
     }
@@ -169,12 +169,12 @@ final class CaptureViewController: UIViewController {
         field.accessibilityLabel = placeholder
     }
 
-    // ── Position ────────────────────────────────────────────────────────────
+    // -- Position ------------------------------------------------------------
 
     /// Position is required; GPS is not.
     ///
     /// A diver under cloud, or on a hull that blocks the sky, may have no fix at all. Dropping
-    /// a pin records `manual_pin`, which researchers filter on — so the two are genuinely
+    /// a pin records `manual_pin`, which researchers filter on - so the two are genuinely
     /// different things rather than one silently standing in for the other.
     private func findPosition() async {
         positionDetailPlaceholder("Finding your position…")
@@ -254,7 +254,7 @@ final class CaptureViewController: UIViewController {
         updateSubmitState()
     }
 
-    // ── Photographs ─────────────────────────────────────────────────────────
+    // -- Photographs ---------------------------------------------------------
 
     @objc private func addPhoto() {
         let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
@@ -343,7 +343,7 @@ final class CaptureViewController: UIViewController {
         refreshPhotoStrip()
     }
 
-    // ── Submission ──────────────────────────────────────────────────────────
+    // -- Submission ----------------------------------------------------------
 
     private func updateSubmitState() {
         submitButton.isEnabled = fix != nil && photos.count >= CaptureLimits.minPhotos

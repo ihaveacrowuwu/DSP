@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.lerp
  *
  * Every colour here carries scientific meaning, which is why it lives in its own type and
  * not in `MaterialTheme.colorScheme`. Material 3 dynamic colour re-tints the whole scheme
- * from the user's wallpaper — correct and desirable for chrome, and catastrophic here. A
+ * from the user's wallpaper - correct and desirable for chrome, and catastrophic here. A
  * wallpaper deciding what "bleached" looks like would corrupt the reading, and the same
  * screenshot in the project would be a different colour on a different phone.
  *
@@ -45,7 +45,7 @@ data class ReefColors(
     /**
      * The severity ramp, 0 to 1, interpolated in sRGB.
      *
-     * Matches the dashboard legend and the map markers exactly — same numbers, same
+     * Matches the dashboard legend and the map markers exactly - same numbers, same
      * colours, all three clients. That, and bone-white bleaching, is most of what makes
      * them read as one product.
      */
@@ -75,7 +75,7 @@ data class ReefColors(
  * The dark scheme.
  *
  * The bleached end is bone-white, because that is literally what a bleached reef looks
- * like — the coral's skeleton showing through. A red/green scale would be the wrong
+ * like - the coral's skeleton showing through. A red/green scale would be the wrong
  * metaphor and would fail for roughly one man in twelve.
  */
 val DarkReefColors = ReefColors(
@@ -94,8 +94,8 @@ val DarkReefColors = ReefColors(
  * The light scheme.
  *
  * Not the dark one lightened. On a light surface bone-white is invisible, so the bleached
- * end becomes parched sand; what is preserved is the *direction* of the scale —
- * saturated life to drained skeleton — rather than the hue.
+ * end becomes parched sand; what is preserved is the *direction* of the scale
+ * saturated life to drained skeleton - rather than the hue.
  */
 val LightReefColors = ReefColors(
     healthy = Color(0xFF0F8168),

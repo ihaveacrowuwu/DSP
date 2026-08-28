@@ -9,7 +9,7 @@ import org.gradle.kotlin.dsl.getByType
  *
  * Applied per module rather than once at the app: KSP must run in every module that has
  * annotations to process, and a module without bindings should not pay the
- * annotation-processing cost. `:app` still applies `dagger.hilt.android.plugin` itself —
+ * annotation-processing cost. `:app` still applies `dagger.hilt.android.plugin` itself
  * only the application module assembles the final component.
  */
 class MurakaHiltConventionPlugin : Plugin<Project> {

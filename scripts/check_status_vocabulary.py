@@ -3,13 +3,13 @@
 
 `mobile-shared/design-language.md` requires it in as many words:
 
-    The status vocabulary shown to the contributor — the same sighting must not read
+    The status vocabulary shown to the contributor - the same sighting must not read
     "Analysing" on one platform and "Processing" on the other.
 
 Nothing in either toolchain can enforce that: ktlint does not read Swift, SwiftLint does not
 read Kotlin, and neither reads Markdown. So this does, and `make mobile-lint` runs it.
 
-It also enforces the rule underneath the vocabulary — D21, that the client may assert
+It also enforces the rule underneath the vocabulary - D21, that the client may assert
 "waiting to upload" and "uploading" and nothing else. A status meaning "delivered" appearing
 in either app is the exact bug the whole sync design exists to prevent, and it is far easier
 to add one by accident than to notice it later.
@@ -28,7 +28,7 @@ ROOT = Path(__file__).resolve().parent.parent
 KOTLIN = ROOT / "android/core/model/src/main/kotlin/mv/muraka/core/model/SyncState.kt"
 SWIFT = ROOT / "ios/Muraka/Domain/Model/SightingDisplayStatus.swift"
 
-# Words that would be a client claiming something only the server can know. "Checking…" is
+# Words that would be a client claiming something only the server can know. "Checking..." is
 # the honest alternative and is deliberately absent from this list.
 FORBIDDEN = ("synced", "uploaded", "saved to server", "delivered", "backed up")
 

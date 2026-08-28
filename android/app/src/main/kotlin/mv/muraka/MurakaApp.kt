@@ -21,7 +21,7 @@ import mv.muraka.ui.navigation.MurakaNavHost
  *
  * One decision only: signed in or not. Everything else is inside [MurakaNavHost].
  *
- * Note what happens on sign-out — the app returns here and shows sign-in, and **the
+ * Note what happens on sign-out - the app returns here and shows sign-in, and **the
  * outbox is untouched**. Queued sightings belong to the account that captured them and
  * wait for that account to come back, which is what stops one diver's reef data uploading
  * under whoever borrows the phone next.

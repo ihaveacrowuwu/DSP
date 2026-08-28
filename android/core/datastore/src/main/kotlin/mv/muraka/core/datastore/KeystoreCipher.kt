@@ -23,14 +23,14 @@ import javax.inject.Singleton
  * adopting it would mean either suppressing the warning at every call site or carrying a
  * dependency the platform team has abandoned.
  *
- * What that library provides that matters here is one thing — a Keystore-backed AES-GCM
- * key wrapping the stored values — and that is thirty lines of platform API. So the
+ * What that library provides that matters here is one thing - a Keystore-backed AES-GCM
+ * key wrapping the stored values - and that is thirty lines of platform API. So the
  * *property* the protocol asks for is preserved exactly; only the library is different.
- * Recorded as a deviation in `docs/08`.
+ * Recorded as a known deviation.
  *
  * ### On key invalidation
  *
- * A Keystore key can become permanently unusable — the user removes the device lock, the
+ * A Keystore key can become permanently unusable - the user removes the device lock, the
  * device is restored from a backup, or the secure hardware is reset. Decryption then
  * throws, and it will keep throwing forever. [decrypt] answers `null` in that case rather
  * than propagating, so the token store treats it as "no session" and the contributor

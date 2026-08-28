@@ -15,7 +15,7 @@ import javax.inject.Inject
  *
  * It implements [Configuration.Provider] so WorkManager initialises **lazily** with
  * Hilt's worker factory. The manifest removes WorkManager's own startup initialiser for
- * the same reason — without both halves, the app either crashes with "WorkManager is
+ * the same reason - without both halves, the app either crashes with "WorkManager is
  * already initialized" or hands [mv.muraka.core.sync.SyncWorker] a factory that cannot
  * construct it.
  */

@@ -5,7 +5,7 @@ other mistake surfaces: a bad config fails `config.load`, a bad export fails the
 check, a bad graph fails the batch-dimension test. A corpus that quietly gained, lost or
 re-cut images trains perfectly well and produces a number nobody can reproduce.
 
-So these tests cover the two things `corpus.py` promises — that a wrong tree is refused
+So these tests cover the two things `corpus.py` promises - that a wrong tree is refused
 rather than logged, and that the manifest is a function of the bytes and nothing else.
 None of them touch the network.
 """
@@ -37,8 +37,7 @@ def _build(root: Path, counts: dict[str, dict[str, int]]) -> Path:
 
 
 def test_the_expected_counts_are_the_split_totals_from_the_dataset_card():
-    # 7,292 / 1,562 / 1,565 and 10,419 images, read from the card on 2026-08-21 (docs/08,
-    # Q6). If someone edits the table, this is what says the edit was not a typo.
+    # 7,292 / 1,562 / 1,565 and 10,419 images, as published on the dataset card.
     totals = {split: sum(classes.values()) for split, classes in corpus_module.EXPECTED_COUNTS.items()}
     assert totals == {"train": 7292, "val": 1562, "test": 1565}
     assert sum(totals.values()) == 10419
@@ -142,10 +141,9 @@ def test_the_retry_backoff_starts_long_and_is_capped():
     """Waiting is the only tool a keyless download has against a rate limiter.
 
     The corpus is 10,419 files, and fetching it anonymously does get 429'd partway
-    through — HuggingFace's own message suggests setting HF_TOKEN, which constraint 2 in
-    CLAUDE.md forbids. So the retry schedule has to be genuinely patient: a limiter that
-    has just fired will not forgive a retry two seconds later, and hammering it extends
-    the ban rather than shortening it.
+    through, and the suggested remedy is an API token the project does not use. Waiting is
+    therefore the only option, and the schedule has to be patient: a limiter that has just
+    fired will not forgive a retry two seconds later.
     """
     delays = corpus_module.backoff_delays(10)
     assert len(delays) == 10

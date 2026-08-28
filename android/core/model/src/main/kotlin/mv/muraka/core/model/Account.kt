@@ -17,7 +17,7 @@ data class User(
  *
  * These come from `GET /v1/me` and **only** from there. A client-side tally drifts the
  * moment anything is rejected, verified or anonymised, and the number the contributor
- * sees would then disagree with the dashboard — see D21.
+ * sees would then disagree with the dashboard - see D21.
  */
 data class ContributorStats(val total: Int, val verified: Int, val pending: Int, val rejected: Int)
 

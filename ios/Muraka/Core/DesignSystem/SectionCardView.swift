@@ -17,7 +17,7 @@ final class SectionCardView: UIView {
     private let titleLabel = UILabel()
 
     /// - Parameters:
-    ///   - title: Optional. The first card on a screen is often self-evident — a photograph
+    ///   - title: Optional. The first card on a screen is often self-evident - a photograph
     ///     does not need to be labelled "Photograph".
     ///   - trailing: Shown at the end of the title row: a count, a toggle, a timestamp.
     init(title: String? = nil, trailing: UIView? = nil) {
@@ -78,7 +78,7 @@ final class SectionCardView: UIView {
 
     /// A row of readouts that share a baseline.
     ///
-    /// Measurements belong in a row, evenly spaced, so the eye can compare them — which is
+    /// Measurements belong in a row, evenly spaced, so the eye can compare them - which is
     /// the whole reason they are monospaced. Stacked one per line they stop being a set of
     /// related numbers and become a list.
     static func readoutRow(_ readouts: [UIView]) -> UIStackView {

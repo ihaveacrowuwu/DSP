@@ -3,7 +3,7 @@ import UIKit
 /// The contributor's own history.
 ///
 /// Offline-first: the list comes from local state and is shown immediately, cached or not. A
-/// refresh that fails leaves it exactly as it was and says so — never a blank screen and never
+/// refresh that fails leaves it exactly as it was and says so - never a blank screen and never
 /// a spinner over data the app already has.
 final class MySightingsViewController: UIViewController {
     private let container: AppContainer
@@ -86,12 +86,12 @@ final class MySightingsViewController: UIViewController {
         }
     }
 
-    // ── Search and filtering ────────────────────────────────────────────────
+    // -- Search and filtering ------------------------------------------------
 
     /// The native search field in the navigation item, plus a filter menu beside it.
     ///
     /// `UISearchController` is what gives the search field its glass treatment, its scroll
-    /// behaviour and its VoiceOver handling for free — none of which a custom text field in a
+    /// behaviour and its VoiceOver handling for free - none of which a custom text field in a
     /// header view would have.
     private func installSearchAndFilter() {
         searchController.searchResultsUpdater = self
@@ -121,7 +121,7 @@ final class MySightingsViewController: UIViewController {
 
         // `+` in the top right, which is where Contacts and Calendar have put "add" for
         // years. Apple's newest apps (Mail, Notes on iOS 26) use a floating bottom-right
-        // button instead — but neither has a tab bar, so bottom-right is free for them. Ours
+        // button instead - but neither has a tab bar, so bottom-right is free for them. Ours
         // does, and a floating pill there competed with the tab bar and covered the last row.
         let capture = UIBarButtonItem(
             systemItem: .add,
@@ -136,7 +136,7 @@ final class MySightingsViewController: UIViewController {
 
     /// The filter lives in the **left** slot.
     ///
-    /// Not the conventional place — Files, Photos and Reminders all put view and sort options
+    /// Not the conventional place - Files, Photos and Reminders all put view and sort options
     /// top right, and the left slot is normally Back, Cancel or Edit. But this is a tab root,
     /// so there is no Back to collide with, and the right slot now holds `+`; two icons there
     /// alongside a search field is crowded enough to be worse than the unconventional
@@ -332,7 +332,7 @@ extension MySightingsViewController: UISearchResultsUpdating {
     /// No debounce, on purpose.
     ///
     /// Filtering a few hundred rows already in memory is instant, so a debounce would add lag
-    /// to something that has none. This would need one if the query went to the server —
+    /// to something that has none. This would need one if the query went to the server
     /// which is exactly why it does not.
     func updateSearchResults(for searchController: UISearchController) {
         filter.query = searchController.searchBar.text ?? ""

@@ -5,8 +5,8 @@
 results, so the project's testing chapter can be assembled from evidence rather than
 memory. A hand-written table like that has one predictable failure mode: a test gets
 renamed or deleted and the table keeps citing it, so the project claims coverage that
-no longer exists. This repository has already had documents drift from the code —
-`CLAUDE.md` warns about it — and a traceability matrix is the worst possible place
+no longer exists. This repository has already had documents drift from the code  -
+Documents drift from code - and a traceability matrix is the worst possible place
 for it to happen, because its entire value is being trustworthy.
 
 So every test name `TESTING.md` cites in backticks is checked against the tests that
@@ -28,9 +28,9 @@ import re
 import sys
 from pathlib import Path
 
-# The document and this output carry ✅/◐/○; a Windows console defaults to cp1252
+# The document and this output carry status glyphs; a Windows console defaults to cp1252
 # and dies on the first one. Files are read with an explicit encoding for the same
-# reason — the repository is UTF-8 on every platform, whatever the OS default says.
+# reason - the repository is UTF-8 on every platform, whatever the OS default says.
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -74,7 +74,7 @@ def collect() -> dict[str, set[str]]:
     found["python"] = py
 
     # Web: Vitest. The name IS the sentence, so it is matched verbatim rather than as
-    # an identifier. Both `it('…')` and `it.each([...])('…')` are collected — the first
+    # an identifier. Both `it('...')` and `it.each([...])('...')` are collected - the first
     # version missed every `.each` declaration, which is why the collector reported 63
     # names against a runner reporting 84 tests.
     #
@@ -92,7 +92,7 @@ def collect() -> dict[str, set[str]]:
 
     # Kotlin: JUnit methods. Unit tests name themselves with backtick-quoted
     # sentences; the instrumented tests cannot, because Android's instrumentation
-    # runner will not accept a method name containing spaces — so both forms are
+    # runner will not accept a method name containing spaces - so both forms are
     # collected by anchoring on `@Test` rather than on the naming style. Anchoring on
     # backticks alone silently lost all twelve instrumented tests.
     kotlin = set()

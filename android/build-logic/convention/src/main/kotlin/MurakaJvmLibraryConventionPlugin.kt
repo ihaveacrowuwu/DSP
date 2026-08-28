@@ -16,8 +16,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
  * **no Android SDK on its compile classpath at all**, so:
  *
  * ```kotlin
- * import androidx.room.Entity    // ← does not resolve. Compile error.
- * import android.content.Context // ← does not resolve. Compile error.
+ * import androidx.room.Entity    // <- does not resolve. Compile error.
+ * import android.content.Context // <- does not resolve. Compile error.
  * ```
  *
  * The architecture rule "the domain imports nothing platform-specific" stops being a

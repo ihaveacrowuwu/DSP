@@ -13,7 +13,7 @@ import javax.inject.Singleton
 /**
  * Attaches the bearer token.
  *
- * Skips requests that already carry an `Authorization` header — which is how
+ * Skips requests that already carry an `Authorization` header - which is how
  * [TokenAuthenticator] re-issues a retried request with a fresher token without this
  * interceptor overwriting it with the stale one it just replaced.
  */
@@ -42,7 +42,7 @@ class AuthInterceptor @Inject constructor(private val tokenStore: SessionTokenSt
 /**
  * Learns the server's clock from the `Date` header of every response.
  *
- * Free — the header is on every response already — and it is what stops a phone with a
+ * Free - the header is on every response already - and it is what stops a phone with a
  * wrong clock from losing the sighting it just captured to a terminal `422`. See
  * [ServerClock].
  */

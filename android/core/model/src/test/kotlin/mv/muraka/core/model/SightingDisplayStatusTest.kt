@@ -16,7 +16,7 @@ class SightingDisplayStatusTest {
 
     @Test
     fun `there is no client-assertable success state`() {
-        // If someone adds one, this fails — which is the point. A local flag saying the
+        // If someone adds one, this fails - which is the point. A local flag saying the
         // upload worked is a claim, not a fact.
         val clientAsserted = SightingDisplayStatus.entries.filter { it.isClientAsserted }
         assertEquals(

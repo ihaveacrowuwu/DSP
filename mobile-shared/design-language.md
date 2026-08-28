@@ -41,7 +41,7 @@ only.
 sighting" in a bottom-right FAB; iOS puts it as a `+` in the navigation bar's
 trailing slot. Same action, same screen, deliberately different chrome, because that
 is what each platform's users already reach for. If a change makes the two apps look
-*more* alike in a place like this, it is probably wrong. See D38 in `docs/08`.
+*more* alike in a place like this, it is probably wrong.
 
 ## Android — Material 3
 
@@ -148,5 +148,5 @@ In order:
 3. Otherwise pick the platform-idiomatic option and note it in the app's README.
 
 If a choice contradicts the rule at the top of this file, it needs a decision-log
-entry in [`docs/08-scope-risks-decisions.md`](../docs/08-scope-risks-decisions.md),
+entry in the project's decision log,
 not a quiet exception.

@@ -98,7 +98,7 @@ fun MySightingsScreen(
 
             LazyColumn(
                 // Extra room at the bottom so the floating action button does not cover
-                // the last sighting — which on a short history is every sighting.
+                // the last sighting - which on a short history is every sighting.
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -225,7 +225,7 @@ private fun LatticeGlyph(sighting: ContributorSighting) {
     androidx.compose.foundation.layout.Box(
         modifier = Modifier.clearAndSetSemantics { contentDescription = description },
     ) {
-        // The list row has no patches to hand — those come with the detail response — so
+        // The list row has no patches to hand - those come with the detail response - so
         // this is the severity swatch standing in for the lattice at glyph size. The real
         // lattice is one tap away.
         mv.muraka.core.designsystem.component.SeveritySwatch(severity)

@@ -3,11 +3,11 @@ import Foundation
 /// The wire vocabulary, exactly as the Go API speaks it.
 ///
 /// Raw values are spelled out rather than derived from the case name, because two of them
-/// would not survive that (`manualPin` → `manual_pin`, `pendingPhotos` → `pending_photos`)
+/// would not survive that (`manualPin` -> `manual_pin`, `pendingPhotos` -> `pending_photos`)
 /// and a silent mismatch is a `422` the outbox cannot retry.
 ///
-/// Every one of these must match `android/core/model/.../Enums.kt` exactly — same strings,
-/// same set — because they are the same contract with the same server.
+/// Every one of these must match `android/core/model/.../Enums.kt` exactly - same strings,
+/// same set - because they are the same contract with the same server.
 
 /// What the reef looks like. Binary by design (D3).
 enum Condition: String, Codable, CaseIterable, Sendable {
@@ -37,7 +37,7 @@ enum VerificationDecision: String, Codable, CaseIterable, Sendable {
     case rejected
 }
 
-/// Why a photograph was rejected. Shown to the contributor — it is their own record.
+/// Why a photograph was rejected. Shown to the contributor - it is their own record.
 enum RejectReason: String, Codable, CaseIterable, Sendable {
     case blurry
     case notCoral = "not_coral"

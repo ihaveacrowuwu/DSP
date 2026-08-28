@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * The only segmented control. Every tab bar, filter toggle and mode switch in the
- * app goes through it — building one inline out of buttons would mean
+ * app goes through it - building one inline out of buttons would mean
  * reimplementing the pill, and two pills that move differently look like two
  * different products.
  *

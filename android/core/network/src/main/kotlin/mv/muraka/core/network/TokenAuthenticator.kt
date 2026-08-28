@@ -30,8 +30,8 @@ import javax.inject.Singleton
  *    token instead of queueing for a refresh each.
  *
  * 2. **The refresh call must not itself carry an authenticator**, or a failing refresh
- *    recurses into another refresh. [refreshApi] is built on a bare client — see
- *    `NetworkModule` — for exactly that reason.
+ *    recurses into another refresh. [refreshApi] is built on a bare client - see
+ *    `NetworkModule` - for exactly that reason.
  *
  * Returning null from [authenticate] tells OkHttp to give up and surface the `401`, which
  * `ErrorMapper` turns into [mv.muraka.core.common.ApiError.Unauthorized].
@@ -99,7 +99,7 @@ class TokenAuthenticator @Inject constructor(
             return body.accessToken
         }
 
-        // A network failure is not a dead session — the token may be perfectly valid and
+        // A network failure is not a dead session - the token may be perfectly valid and
         // simply unreachable. Only an explicit rejection ends the session.
         val status = result?.code()
         if (status == HTTP_UNAUTHORIZED || status == HTTP_FORBIDDEN) {

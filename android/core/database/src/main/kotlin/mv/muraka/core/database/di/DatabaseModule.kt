@@ -26,7 +26,7 @@ import javax.inject.Singleton
  *   and so a crash mid-write leaves a recoverable log rather than a torn page.
  * - **`synchronous = FULL`** so a committed transaction has actually reached the storage
  *   medium before `enqueue` returns. Android's default under WAL is `NORMAL`, which lets
- *   the OS buffer a commit — and a phone that dies in that window loses a sighting the
+ *   the OS buffer a commit - and a phone that dies in that window loses a sighting the
  *   contributor watched the app accept.
  *
  * Both are asserted by `DurabilityPragmaTest`, because a pragma set in the wrong place
@@ -67,7 +67,7 @@ object DatabaseModule {
  * Applies `synchronous = FULL` where it actually sticks.
  *
  * The obvious place is `RoomDatabase.Callback.onOpen`, and it does not work: Android's
- * `SQLiteDatabase` applies its own WAL sync mode — `NORMAL` — when it configures a
+ * `SQLiteDatabase` applies its own WAL sync mode - `NORMAL` - when it configures a
  * connection, **after** `onOpen` has run, so the pragma is silently overwritten and
  * `PRAGMA synchronous` reads back `1`. `DurabilityPragmaTest` caught exactly that, which is
  * the whole reason it reads the value back instead of trusting the call.
@@ -91,7 +91,7 @@ private class DurableOpenHelperFactory : SupportSQLiteOpenHelper.Factory {
 /**
  * Room's own callback, with `onConfigure` extended.
  *
- * Everything else delegates untouched — this must not become a second place where schema
+ * Everything else delegates untouched - this must not become a second place where schema
  * decisions live.
  */
 private class DurableCallback(private val delegate: SupportSQLiteOpenHelper.Callback) :

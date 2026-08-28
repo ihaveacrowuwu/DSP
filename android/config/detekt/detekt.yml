@@ -13,7 +13,7 @@ complexity:
     ignoreAnnotated: ['Composable']
   LongParameterList:
     # Stateless composables legitimately take many small parameters (state in,
-    # lambdas out) — that is the hoisting pattern, not a smell.
+    # lambdas out) - that is the hoisting pattern, not a smell.
     active: true
     functionThreshold: 8
     constructorThreshold: 12
@@ -44,7 +44,7 @@ naming:
     constantPattern: '[A-Z][_A-Za-z0-9]*'
   MatchingDeclarationName:
     # The rule assumes class-first Kotlin: one file, one class, named after it. Compose
-    # and the design system are function-first — PatchLattice.kt is named after the
+    # and the design system are function-first - PatchLattice.kt is named after the
     # composable everyone looks for, and the LatticeMode enum beside it is part of the
     # same idea. Renaming those files after their only enum would make them harder to
     # find, which is the opposite of what the rule is for.

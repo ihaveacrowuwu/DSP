@@ -8,13 +8,13 @@ import Foundation
 /// dropped sighting.
 ///
 /// The catalogue is `mobile-shared/integration.md`; the retry rules are
-/// `mobile-shared/sync-protocol.md`. This mirrors `ApiError.kt` on Android case for case —
+/// `mobile-shared/sync-protocol.md`. This mirrors `ApiError.kt` on Android case for case
 /// same server, same decisions.
 enum ApiError: Error, Equatable, Sendable {
-    // ── Terminal: never retry, surface something the contributor can act on ──
+    // -- Terminal: never retry, surface something the contributor can act on --
 
     /// `422`. `fields` maps a request field to its problem, which is what the sync list
-    /// shows — "capturedAt cannot be in the future" is actionable; "upload failed" is not.
+    /// shows - "capturedAt cannot be in the future" is actionable; "upload failed" is not.
     case validation(fields: [String: String])
     /// `409`. This UUID belongs to another account. Regenerate the id or discard.
     case idOwnedByAnotherUser
@@ -24,7 +24,7 @@ enum ApiError: Error, Equatable, Sendable {
     case uploadTooLarge
     /// `400`. A malformed request is a client bug, not a transient failure.
     case badRequest(code: String)
-    /// `403`. Wrong role — should never happen in this app; treat as a bug.
+    /// `403`. Wrong role - should never happen in this app; treat as a bug.
     case forbidden
     /// `403 account_disabled`. Suspended by an admin. Sign out with an explanation.
     case accountDisabled
@@ -33,12 +33,12 @@ enum ApiError: Error, Equatable, Sendable {
     /// `404`. Does not exist, or is not ours.
     case notFound
 
-    // ── Recoverable: refresh once, then retry ───────────────────────────────
+    // -- Recoverable: refresh once, then retry -------------------------------
 
     /// `401`. Reaching the drain loop with this means the refresh already failed too.
     case unauthorized
 
-    // ── Transient: retry with backoff. The outcome is genuinely unknown ──────
+    // -- Transient: retry with backoff. The outcome is genuinely unknown ------
 
     case server(status: Int)
     case rateLimited

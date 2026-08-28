@@ -22,7 +22,7 @@ data class DetailUiState(val refreshing: Boolean = false, val message: String? =
 /**
  * One sighting: the photographs, the model's reading of each, and any expert verdict.
  *
- * Refreshes on open, which is the read-back that turns "Checking…" into whatever the
+ * Refreshes on open, which is the read-back that turns "Checking..." into whatever the
  * server actually says.
  */
 @HiltViewModel

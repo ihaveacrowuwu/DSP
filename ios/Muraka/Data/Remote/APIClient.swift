@@ -3,7 +3,7 @@ import Foundation
 /// Everything the app asks of the Muraka API.
 ///
 /// An `actor`, and that is the design rather than an ambient choice: it serialises token
-/// refresh. If four queued uploads all get `401` at once, only one refresh may run —
+/// refresh. If four queued uploads all get `401` at once, only one refresh may run
 /// refresh tokens are single-use, so two concurrent refreshes mean the second presents an
 /// already-consumed token, the server rejects it, and the contributor is signed out for no
 /// reason. ``refreshInFlight`` is what lets the other three wait for the first result and
@@ -39,7 +39,7 @@ actor APIClient {
         self.session = session
     }
 
-    // ── Authentication ──────────────────────────────────────────────────────
+    // -- Authentication ------------------------------------------------------
 
     func register(email: String, password: String, displayName: String) async throws -> SessionDTO {
         try await send(
@@ -71,7 +71,7 @@ actor APIClient {
         )
     }
 
-    // ── Account ─────────────────────────────────────────────────────────────
+    // -- Account -------------------------------------------------------------
 
     /// The only source of contribution totals. Never count local rows.
     func me() async throws -> MeDTO {
@@ -83,9 +83,9 @@ actor APIClient {
         try await sendIgnoringBody(.delete("v1/me"))
     }
 
-    // ── Sightings ───────────────────────────────────────────────────────────
+    // -- Sightings -----------------------------------------------------------
 
-    /// `201` on create, `200` on replay. The client treats them identically — that is the
+    /// `201` on create, `200` on replay. The client treats them identically - that is the
     /// entire point of it generating the id.
     func createSighting(_ request: CreateSightingRequest) async throws -> SightingDTO {
         try await send(.post("v1/sightings", body: request))
@@ -98,7 +98,7 @@ actor APIClient {
 
     /// The reconciliation primitive.
     ///
-    /// Returns nil on `404` — the server has nothing under this id, which is an **answer**
+    /// Returns nil on `404` - the server has nothing under this id, which is an **answer**
     /// rather than a failure. A `200` carries `photos[]`, whose ids are the client's own, so
     /// diffing gives the exact set still missing.
     func sighting(id: String) async throws -> SightingDetailDTO? {
@@ -109,12 +109,12 @@ actor APIClient {
         }
     }
 
-    /// Photograph bytes. Requires the bearer token — this is not a public URL.
+    /// Photograph bytes. Requires the bearer token - this is not a public URL.
     func photoImage(id: String) async throws -> Data {
         try await sendRaw(.get("v1/photos/\(id)/image"))
     }
 
-    // ── Requests ────────────────────────────────────────────────────────────
+    // -- Requests ------------------------------------------------------------
 
     /// One request, described declaratively so ``perform(_:)`` can retry it after a refresh.
     struct Request: Sendable {
@@ -267,7 +267,7 @@ actor APIClient {
                 ))
                 return session.accessToken
             } catch ApiError.unauthorized, ApiError.invalidCredentials {
-                // An explicit rejection ends the session. A network failure does NOT — the
+                // An explicit rejection ends the session. A network failure does NOT - the
                 // token may be perfectly valid and simply unreachable.
                 await tokens.clear()
                 sessionEvents.send(.refreshFailed)
@@ -296,9 +296,9 @@ extension APIClient {
     /// 1123. This runs once per response, which is not a hot path, and the alternative
     /// would be an unsafe opt-out for no measurable gain.
     ///
-    /// The fixed locale and time zone are not optional: a device in Malé must parse a
+    /// The fixed locale and time zone are not optional: a device in Male must parse a
     /// header written in English and GMT, and a device set to Dhivehi would otherwise
-    /// silently fail to — which would leave the clock uncalibrated exactly where the
+    /// silently fail to - which would leave the clock uncalibrated exactly where the
     /// correction matters most.
     static func parseHTTPDate(_ raw: String) -> Date? {
         let formatter = DateFormatter()

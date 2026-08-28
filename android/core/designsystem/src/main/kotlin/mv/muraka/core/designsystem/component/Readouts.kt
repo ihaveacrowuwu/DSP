@@ -26,7 +26,7 @@ import kotlin.math.roundToInt
  *
  * Every number in this app goes through here: coordinates, depths, severities, counts,
  * model versions. It is the cheapest piece of family resemblance the three clients have
- * and the strongest — columns line up, and the interface reads like an instrument.
+ * and the strongest - columns line up, and the interface reads like an instrument.
  *
  * Only the family is fixed. The size comes from [style], so it still scales with the
  * user's font-size setting.
@@ -59,7 +59,7 @@ fun Readout(
  * What the model made of a photograph.
  *
  * **Severity leads, not the label.** "62% bleached" tells a contributor something that
- * "bleached" does not — it is the difference between a reef in trouble and a reef with a
+ * "bleached" does not - it is the difference between a reef in trouble and a reef with a
  * few pale colonies, and it is the number researchers actually work with.
  *
  * The model version is shown because it is provenance: `fake-0.0.0` means no trained
@@ -121,7 +121,7 @@ fun SeveritySwatch(severity: Double, modifier: Modifier = Modifier) {
 /**
  * The contributor-facing status of a sighting.
  *
- * The vocabulary is [SightingDisplayStatus] and nothing else — there is no "Synced",
+ * The vocabulary is [SightingDisplayStatus] and nothing else - there is no "Synced",
  * because a local flag claiming the upload worked is a claim rather than a fact. The
  * colour is decoration; the word is the information, which is what makes this legible in
  * a greyscale screenshot.

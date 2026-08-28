@@ -26,14 +26,14 @@ import javax.inject.Singleton
  *    behind it deleted, long before the outbox drains. What is queued has to be bytes we
  *    own, in app-private storage.
  * 2. **Write to a temporary name, then rename atomically.** A half-written file that
- *    looks complete is indistinguishable from a real one at upload time — the upload
+ *    looks complete is indistinguishable from a real one at upload time - the upload
  *    succeeds and the researcher gets a truncated image.
  * 3. **Downscale before uploading.** The server analyses at 224 px per grid cell, so a
- *    5×5 grid gains nothing above roughly 1600 px. That is far under the 12 MiB cap and
+ *    5x5 grid gains nothing above roughly 1600 px. That is far under the 12 MiB cap and
  *    much kinder to a resort Wi-Fi connection than a 12-megapixel original.
  *
  * EXIF orientation is applied to the pixels rather than preserved as a tag, because the
- * server strips EXIF when it re-encodes — a photograph relying on an orientation tag
+ * server strips EXIF when it re-encodes - a photograph relying on an orientation tag
  * would reach the researcher sideways, and the patch lattice with it.
  */
 @Singleton
@@ -50,7 +50,7 @@ class PhotoStore @Inject constructor(
     /**
      * Copies, rotates and downscales a picked or captured image into app-private storage.
      *
-     * Returns the stored file, or null if the source could not be decoded — which is an
+     * Returns the stored file, or null if the source could not be decoded - which is an
      * ordinary outcome for a corrupt file from an action camera, not an error worth
      * crashing over.
      */
@@ -60,7 +60,7 @@ class PhotoStore @Inject constructor(
         writeAtomically(photoId, oriented)
     }
 
-    /** Same, for bytes already in memory — the CameraX capture path. */
+    /** Same, for bytes already in memory - the CameraX capture path. */
     suspend fun store(photoId: String, bytes: ByteArray): File? = withContext(dispatchers.io) {
         val bitmap = decodeDownscaled(bytes) ?: return@withContext null
         writeAtomically(photoId, bitmap)
@@ -82,7 +82,7 @@ class PhotoStore @Inject constructor(
     /**
      * Deletes a photograph's bytes.
      *
-     * Called **only** once the server's own `photos[]` lists the id — not when an upload
+     * Called **only** once the server's own `photos[]` lists the id - not when an upload
      * call returns, and not when a local flag is set. Deleting earlier is how a photograph
      * disappears with nothing left to retry from.
      */
@@ -97,7 +97,7 @@ class PhotoStore @Inject constructor(
         Unit
     }
 
-    // ── Internals ───────────────────────────────────────────────────────────
+    // -- Internals -----------------------------------------------------------
 
     private fun writeAtomically(
         photoId: String,
@@ -180,7 +180,7 @@ class PhotoStore @Inject constructor(
      * Rotates the pixels to match the EXIF orientation tag.
      *
      * The server re-encodes and strips EXIF, so an image that relies on the tag arrives
-     * sideways — and the patch lattice is drawn over the centre square, which would then
+     * sideways - and the patch lattice is drawn over the centre square, which would then
      * be the wrong square.
      */
     private fun applyExifOrientation(bitmap: Bitmap, source: Uri): Bitmap = runCatching {

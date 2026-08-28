@@ -30,15 +30,15 @@ import mv.muraka.core.designsystem.theme.MurakaTheme
  * never be mistaken for an expert verdict.** The distinction is carried three ways over,
  * so that losing any one of them still leaves it legible:
  *
- * 1. **Shape** — a dashed outline for the model, a solid filled surface for an expert.
- * 2. **A marker** — hollow for the model, filled for an expert.
- * 3. **A word** — literally "model" or "expert".
+ * 1. **Shape** - a dashed outline for the model, a solid filled surface for an expert.
+ * 2. **A marker** - hollow for the model, filled for an expert.
+ * 3. **A word** - literally "model" or "expert".
  *
  * That redundancy is the requirement. It survives greyscale, it survives colour
  * blindness, and it survives a screenshot pasted into the project at 60% scale.
  *
  * *Standard component rejected:* M3's chips (`AssistChip`, `FilterChip`, `SuggestionChip`)
- * are all interactive by definition — they take an `onClick` and carry the affordances of
+ * are all interactive by definition - they take an `onClick` and carry the affordances of
  * something you can press. This is a static provenance label, and dressing a button up as
  * one would invite a tap that does nothing. `Surface` plus the M3 shape and label styles
  * gets the same visual language without the false affordance.
@@ -95,7 +95,7 @@ private fun ProvenanceMarker(filled: Boolean, color: Color) {
  * A dashed outline.
  *
  * Compose has no dashed-border modifier, and `BorderStroke` cannot express one, so this
- * draws it — which is the only reason there is custom drawing in a component whose whole
+ * draws it - which is the only reason there is custom drawing in a component whose whole
  * argument is to prefer the platform's own.
  */
 private fun Modifier.dashedBorderWhen(enabled: Boolean, color: Color): Modifier = if (!enabled) {

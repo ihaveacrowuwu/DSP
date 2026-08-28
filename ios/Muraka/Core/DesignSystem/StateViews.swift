@@ -3,7 +3,7 @@ import UIKit
 /// The states every data-backed screen has to handle.
 ///
 /// They live here rather than being rewritten per screen because the loading, empty and error
-/// paths are where interfaces are usually thinnest — and in this app the error path is not an
+/// paths are where interfaces are usually thinnest - and in this app the error path is not an
 /// edge case: a phone on a boat spends most of its life in it.
 final class MessageStateView: UIStackView {
     private let titleLabel = UILabel()
@@ -71,7 +71,7 @@ final class MessageStateView: UIStackView {
 
 extension UIViewController {
     /// Shows a message the contributor can dismiss. Used for failures that are not a state
-    /// of the screen — a retry that did not work, say.
+    /// of the screen - a retry that did not work, say.
     func presentMessage(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))

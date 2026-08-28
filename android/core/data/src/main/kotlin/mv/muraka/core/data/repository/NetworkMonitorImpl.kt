@@ -20,7 +20,7 @@ import javax.inject.Singleton
  *
  * Used to *decide when to try*, never to decide what to tell the contributor. A phone
  * reporting a connection to a resort captive portal will still fail every request, so the
- * queue's own state — not this flow — is what the sync screen shows.
+ * queue's own state - not this flow - is what the sync screen shows.
  *
  * `NET_CAPABILITY_VALIDATED` rather than merely `INTERNET`: the former means Android
  * actually reached something, which on a boat's marina Wi-Fi is a materially different

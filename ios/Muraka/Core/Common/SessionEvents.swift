@@ -4,7 +4,7 @@ import Foundation
 enum SessionEvent: Sendable {
     /// The refresh token was rejected. The session is over.
     ///
-    /// The contributor is returned to sign-in and **the queue is kept** — scenario 6 of
+    /// The contributor is returned to sign-in and **the queue is kept** - scenario 6 of
     /// `mobile-shared/sync-protocol.md`. Clearing it here would throw away reef data because
     /// a token expired, which is not a reason to lose anything.
     case refreshFailed
@@ -14,8 +14,8 @@ enum SessionEvent: Sendable {
 
 /// A bus for the two events that can end a session from underneath the interface.
 ///
-/// It exists because the place that discovers them — a token refresh deep inside a
-/// background upload — has no way to reach a navigation controller, and passing one down
+/// It exists because the place that discovers them - a token refresh deep inside a
+/// background upload - has no way to reach a navigation controller, and passing one down
 /// there would be far worse than a stream.
 ///
 /// `AsyncStream` with a buffering policy rather than an unbounded one: emission must never

@@ -15,8 +15,8 @@ import org.junit.runner.RunWith
  *
  * This is an instrumented test rather than a JVM one on purpose: the pragmas are a
  * property of real SQLite on a real device, and a Robolectric shadow would happily report
- * whatever it liked. It also exists because a pragma set in the wrong place — in the
- * builder instead of `onOpen`, say — **silently does nothing**, and a durability setting
+ * whatever it liked. It also exists because a pragma set in the wrong place - in the
+ * builder instead of `onOpen`, say - **silently does nothing**, and a durability setting
  * that quietly is not applied is worse than one that was never attempted.
  */
 @RunWith(AndroidJUnit4::class)
@@ -56,7 +56,7 @@ class DurabilityPragmaTest {
     @Test
     fun commitsReachTheStorageMediumBeforeEnqueueReturns() {
         // 2 is FULL. Android's default under WAL is 1 (NORMAL), which lets the OS buffer a
-        // commit — and a phone that dies in that window loses a sighting the contributor
+        // commit - and a phone that dies in that window loses a sighting the contributor
         // watched the app accept. If this reads "1", the pragma is not being applied and
         // the durability guarantee in the project is not real.
         assertEquals("2", pragma("synchronous"))

@@ -5,7 +5,7 @@ sighting, queue it, and watch the server's verdict arrive.
 
 Read [`../mobile-shared/`](../mobile-shared/) first — the API contract, the offline sync
 protocol and the shared design tokens are settled, so this app is written against a fixed
-target. [`CLAUDE.md`](CLAUDE.md) has the non-negotiables.
+target.
 
 ## Running it
 
@@ -103,4 +103,4 @@ problem fails the build rather than accumulating.
 
 The durability test reads the pragmas back rather than trusting that setting them worked, and
 it earned its keep: `synchronous = FULL` set from `RoomDatabase.Callback.onOpen` is silently
-overwritten by Android's own WAL configuration. See D28 in `docs/08`.
+overwritten by Android's own WAL configuration.

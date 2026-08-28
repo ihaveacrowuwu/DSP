@@ -61,7 +61,7 @@ fun SignInContent(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             // This screen has no Scaffold to apply window insets for it, and the app runs
-            // edge to edge — so without this the title is drawn underneath the status bar.
+            // edge to edge - so without this the title is drawn underneath the status bar.
             .safeDrawingPadding()
             // Without this the keyboard covers the submit button on a short screen, which
             // is the single most common way a sign-in form is unusable.

@@ -1,7 +1,7 @@
 /**
  * What the interface says about a photograph's own resolution.
  *
- * The photo frame is one fixed size everywhere — see the `.plate` rules in the
+ * The photo frame is one fixed size everywhere - see the `.plate` rules in the
  * detail and queue views for why. That is the right call for the task: a
  * researcher confirming or correcting a bleaching label is making a judgement
  * about the whole frame, and a frame that shrinks to 224 px because the source
@@ -30,13 +30,13 @@ export function isLowResolution(width: number, height: number): boolean {
   return Math.min(width, height) < LOW_RESOLUTION_PX
 }
 
-/** `900×700`, for a resolution readout. */
+/** `900x700`, for a resolution readout. */
 export function dimensions(width: number, height: number): string {
   return `${width}×${height}`
 }
 
 /**
- * The full explanation, for somewhere with room to print it — the detail page's
+ * The full explanation, for somewhere with room to print it - the detail page's
  * assessment panel. Names the actual resolution rather than saying "low", because
  * how low it is changes what you can conclude.
  */

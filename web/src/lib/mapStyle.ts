@@ -1,23 +1,14 @@
 /**
- * The reef map's style — every layer, colour and size expression MapLibre needs.
+ * The reef map's style: every layer, colour and size expression MapLibre needs.
  *
- * This lives outside the view for two reasons.
+ * It lives outside the view for two reasons. MapLibre paints on a canvas and
+ * cannot read CSS custom properties, so colours must be passed as literal strings;
+ * taking a `TokenReader` parameter rather than reaching for `document` keeps that
+ * dependency explicit and lets the expressions be evaluated in a test. A malformed
+ * paint expression is not a type error, it is a layer that silently fails to draw.
  *
- * First, MapLibre paints on a canvas and cannot read CSS custom properties, so
- * every colour has to be handed to it as a literal string. Reading the design
- * tokens at runtime, rather than duplicating hex values, is what keeps the map in
- * step with the rest of the interface when the colour scheme changes — but it
- * means the whole style depends on the DOM. Taking a `TokenReader` as a parameter
- * instead of reaching for `document` makes that dependency explicit and lets the
- * expressions be evaluated in a test, which is the only way to check them without
- * a GPU: a malformed paint expression is not a type error, it is a layer that
- * silently fails to appear.
- *
- * Second, a repaint has to reapply exactly what the layers were created with. The
- * previous version listed the properties to update by hand in a second function,
- * which is a drift waiting to happen — add a layer, forget the repaint line, and
- * the map half-changes theme. `repaint()` below re-derives the layers and replays
- * their paint, so there is nothing to keep in sync.
+ * Second, `repaint()` re-derives the layers and replays their paint, so a theme
+ * change cannot miss a property that was added later.
  */
 import type {
   ExpressionSpecification,
@@ -44,7 +35,7 @@ export const MALDIVES_BOUNDS: LngLatBoundsLike = [
  * There is only geography for the Maldives, so zooming out past the archipelago
  * shows nothing but ocean. A floor is the fix; `maxBounds` is not, and was tried
  * first. When the bounds are narrower than the viewport MapLibre resolves the
- * conflict by zooming *in* until they fill it — so fencing the camera to a
+ * conflict by zooming *in* until they fill it - so fencing the camera to a
  * 6-degree-wide country makes the whole country unviewable on a wide monitor,
  * which is the opposite of the intent. The floor plus the "Whole archipelago"
  * button covers the same ground with no dependence on window shape.
@@ -90,7 +81,7 @@ function byCount(one: number, fifty: number, many: number): ExpressionSpecificat
  * Marker radius, in pixels, as a function of zoom first and cluster size second.
  *
  * Both variables matter and the earlier expression used only the count. A cluster
- * standing for 400 sightings should be bigger than one standing for three — but
+ * standing for 400 sightings should be bigger than one standing for three - but
  * not at national zoom, where the old ladder topped out at 15 px, wide enough to
  * cover an entire atoll and hide the geography it sits on. So the count ramp is
  * re-declared at four zoom levels: small and crisp with the whole country on
@@ -284,7 +275,7 @@ export function sightingLayers(read: TokenReader): LayerSpecification[] {
         'circle-radius': coreRadius(),
         'circle-color': severityColour(read),
         // Slightly translucent so overlapping markers darken rather than hide one
-        // another — the only cue that two clusters are stacked.
+        // another - the only cue that two clusters are stacked.
         'circle-opacity': 0.92,
         // A hairline separating touching markers, suppressed at national zoom
         // where a 1 px ring on a 2 px dot is most of the dot. It takes the

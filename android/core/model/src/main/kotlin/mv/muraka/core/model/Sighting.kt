@@ -19,7 +19,7 @@ data class Position(val lat: Double, val lon: Double) {
  * There is deliberately no `synced` field and no client-computed status. This type only
  * ever comes from a server response; anything the client knows about work it has not
  * delivered yet lives in the outbox instead, and the two are combined for display by
- * `SightingDisplayStatus`. See D21 in `docs/08` for why that separation is the whole
+ * `SightingDisplayStatus`. That separation is the whole
  * point rather than an implementation detail.
  */
 data class Sighting(
@@ -41,11 +41,11 @@ data class Sighting(
     val photoCount: Int = 0,
     /**
      * Effective condition: the expert's label when one exists, otherwise the model's.
-     * Absent until analysis completes. Never render this without [verified] beside it —
+     * Absent until analysis completes. Never render this without [verified] beside it
      * a model label presented as fact is the NFR13 failure.
      */
     val condition: Condition? = null,
-    /** Worst bleached extent across the sighting's photos, 0–1. */
+    /** Worst bleached extent across the sighting's photos, 0-1. */
     val severity: Double? = null,
     val confidence: Double? = null,
     /** True only when an expert confirmed or corrected. */
@@ -56,7 +56,7 @@ data class Sighting(
 data class Photo(
     val id: String,
     val sightingId: String,
-    /** Relative path to the bytes. Requires the bearer token — it is not a public URL. */
+    /** Relative path to the bytes. Requires the bearer token - it is not a public URL. */
     val url: String,
     val width: Int,
     val height: Int,
@@ -73,7 +73,7 @@ data class Patch(val row: Int, val col: Int, val label: Condition, val confidenc
  * What the model made of one photograph.
  *
  * [severity] is the number to lead with, not [label]: "62% bleached" tells a contributor
- * something "bleached" does not. [modelVersion] is provenance and must be shown —
+ * something "bleached" does not. [modelVersion] is provenance and must be shown
  * `fake-0.0.0` means no trained model is loaded yet (D19).
  */
 data class Prediction(

@@ -6,7 +6,7 @@ Reproducibility is the kind of claim that is easy to assert and easy to be wrong
 because there are more sources of randomness than anyone remembers: Python's `random`,
 NumPy, Torch's global generator, the DataLoader's shuffle, and the weighted sampler used
 for the minority class. Missing any one of them produces runs that are *nearly* the same,
-which is worse than obviously different — the project would claim reproducibility and a
+which is worse than obviously different - the project would claim reproducibility and a
 marker re-running it would get other numbers.
 
 These runs are deliberately tiny (two epochs, a few hundred synthetic images, a small
@@ -83,7 +83,7 @@ def test_the_same_seed_gives_the_same_metrics(tmp_path):
 @pytest.mark.slow
 def test_a_different_seed_gives_different_metrics(tmp_path):
     # The other half. A pipeline that returns identical numbers for every seed is not
-    # reproducible, it is broken — and it would pass the test above.
+    # reproducible, it is broken - and it would pass the test above.
     baseline = _run(tmp_path / "a")
     altered = _run(tmp_path / "b", seed=1234)
     assert baseline["train_losses"] != altered["train_losses"], (
@@ -104,7 +104,7 @@ def test_the_synthetic_split_is_seeded_and_stable():
 
 
 def test_the_synthetic_split_keeps_the_real_datasets_imbalance():
-    # The real training split is roughly 4,541 healthy to 2,751 bleached — 62/38. If the
+    # The real training split is roughly 4,541 healthy to 2,751 bleached - 62/38. If the
     # synthetic split were balanced, the class weighting and oversampling would never be
     # exercised by a pipeline check.
     cfg = config_module.load(BASELINE)
@@ -129,7 +129,7 @@ def test_the_eval_transform_produces_what_the_service_will_feed_the_model():
     _, eval_tf = data_module.build_transforms(cfg)
     image = data_module._synthetic_image(0, 0, 480)
     tensor = eval_tf(image)
-    # CHW, the model's input size, and normalised — the same shape and treatment
+    # CHW, the model's input size, and normalised - the same shape and treatment
     # `inference.py` builds for each patch.
     assert tensor.shape == (3, cfg.data.image_size, cfg.data.image_size)
     assert tensor.dtype == torch.float32

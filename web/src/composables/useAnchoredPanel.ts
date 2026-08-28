@@ -3,8 +3,8 @@
  * <body>: the select menu and the date-range picker.
  *
  * Teleporting is what makes this necessary. It keeps the panel out of any
- * ancestor's `overflow: hidden` — several of these open from inside map overlays
- * and scrolling cards — but it also means the panel has no layout relationship
+ * ancestor's `overflow: hidden` - several of these open from inside map overlays
+ * and scrolling cards - but it also means the panel has no layout relationship
  * to its trigger, so position has to be measured on open and abandoned when the
  * page moves.
  *

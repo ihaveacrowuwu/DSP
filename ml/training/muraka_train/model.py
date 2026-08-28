@@ -75,8 +75,8 @@ def set_backbone_trainable(model: nn.Module, config, trainable: bool) -> None:
 def build_optimiser(model: nn.Module, config) -> torch.optim.Optimizer:
     """Two parameter groups, so the backbone can be unfrozen without a new optimiser.
 
-    Creating the optimiser once with both groups — the backbone group present from the
-    start but frozen — means the momentum buffers survive the unfreeze. Rebuilding it at
+    Creating the optimiser once with both groups - the backbone group present from the
+    start but frozen - means the momentum buffers survive the unfreeze. Rebuilding it at
     the unfreeze epoch would reset Adam's state and produce a visible loss spike that
     looks like a bug in the schedule.
     """
@@ -95,8 +95,8 @@ def build_optimiser(model: nn.Module, config) -> torch.optim.Optimizer:
 def resolve_device(requested: str) -> torch.device:
     """Honour the request where possible, and say so when falling back.
 
-    The recipe asks for `mps`. A machine without it — CI, a Linux box, a reviewer's
-    laptop — must still be able to run the pipeline, so this degrades rather than
+    The recipe asks for `mps`. A machine without it - CI, a Linux box, a reviewer's
+    laptop - must still be able to run the pipeline, so this degrades rather than
     failing. It never silently *upgrades*: asking for cpu gets cpu.
     """
     wanted = requested.lower()

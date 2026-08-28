@@ -6,7 +6,7 @@
 
 **Why this exists.** The FP32 graph classifies a 5x5 lattice in ~405 ms on this M1 Pro,
 inside NFR2's 500 ms budget. The same graph inside the compose stack takes ~822 ms,
-because Docker Desktop on macOS is a virtual machine and costs roughly 2x — same
+because Docker Desktop on macOS is a virtual machine and costs roughly 2x - same
 onnxruntime, same architecture, no CPU cap. No thread setting recovers it. The choices
 are then to coarsen the patch lattice (a product concession to a tooling artefact), to
 report a Must requirement as missed in deployment, or to make the graph genuinely
@@ -14,17 +14,17 @@ cheaper. This is the third.
 
 **Static, not dynamic.** `quantize_dynamic` quantises weights and leaves activations to be
 scaled at run time, which helps MatMul-heavy graphs and does almost nothing for a
-convolutional one — the Conv kernels stay in float. Static quantisation runs real images
+convolutional one - the Conv kernels stay in float. Static quantisation runs real images
 through the graph first to learn activation ranges, then emits `QLinearConv`, which is
 where the speedup on a CNN comes from. The cost is needing calibration data, and getting
 that data wrong is the classic way to lose accuracy quietly.
 
-**THE ANSWER WAS NO — read this before reaching for it again.** Quantisation works
+**THE ANSWER WAS NO - read this before reaching for it again.** Quantisation works
 exactly as advertised on latency: **4.2x**, 408 ms to 98 ms on the host, and the artefact
 shrinks from 16 MB to 4.9 MB. It was still rejected, because of where the cost lands.
 Accuracy fell about **2 points**, which looks like a bargain and is the number a
 quantisation write-up usually quotes. Measured on the metric this project actually selects
-on, the same artefact lost **14 points of bleached recall** — 0.843 to 0.699 — turning a
+on, the same artefact lost **14 points of bleached recall** - 0.843 to 0.699 - turning a
 model that catches roughly five bleaching events in six into one that catches two in three.
 The loss concentrates in the minority class, which is precisely the class the whole
 verification-first design exists to catch. Best configuration found was Percentile 99.999

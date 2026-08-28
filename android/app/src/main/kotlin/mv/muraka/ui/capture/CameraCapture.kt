@@ -39,8 +39,8 @@ import java.nio.ByteBuffer
 /**
  * In-app capture with CameraX.
  *
- * The system camera intent would be less code, but it costs two extra taps — the system
- * camera's own confirm step, then the return — and NFR6 caps the whole flow at eight. An
+ * The system camera intent would be less code, but it costs two extra taps - the system
+ * camera's own confirm step, then the return - and NFR6 caps the whole flow at eight. An
  * in-app shutter is one tap per photograph.
  *
  * Bytes come back in memory rather than as a file, because [PhotoStore] is going to
@@ -125,8 +125,8 @@ private fun ImageCapture.takeInto(context: Context, onCaptured: (ByteArray) -> U
             override fun onError(exception: ImageCaptureException) {
                 // Deliberately silent: a failed shutter press is not worth an error
                 // dialogue mid-dive. The contributor presses it again, and nothing has
-                // been lost because nothing was queued. A failure that MATTERS — the
-                // photograph not reaching disk — is reported by PhotoStore instead.
+                // been lost because nothing was queued. A failure that MATTERS - the
+                // photograph not reaching disk - is reported by PhotoStore instead.
                 Unit
             }
         },

@@ -8,7 +8,7 @@
  * theme, and appears on a delay the browser owns.
  *
  * A single delegated listener handles every tooltip in the app, so adding one to
- * a new element costs an attribute and no wiring. Focus shows it too — the rail
+ * a new element costs an attribute and no wiring. Focus shows it too - the rail
  * is keyboard-navigable and icon-only, so without that a keyboard user would
  * have nothing to read.
  */

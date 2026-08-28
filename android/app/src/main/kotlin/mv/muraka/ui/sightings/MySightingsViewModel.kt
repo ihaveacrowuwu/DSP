@@ -36,7 +36,7 @@ data class MySightingsUiState(
  * The contributor's own history.
  *
  * Offline-first: the list comes from local state and is shown immediately, cached or not.
- * A refresh that fails leaves it exactly as it was and says so in a banner — never a
+ * A refresh that fails leaves it exactly as it was and says so in a banner - never a
  * blank screen and never a spinner over data the app already has.
  */
 @HiltViewModel
@@ -53,7 +53,7 @@ class MySightingsViewModel @Inject constructor(private val sightingRepository: S
     /**
      * What the list shows: the merged history with the filter applied.
      *
-     * Filtered here rather than in the query, so it keeps working with no connection — this
+     * Filtered here rather than in the query, so it keeps working with no connection - this
      * screen's whole purpose is to work offline (NFR7). See `SightingFilter`.
      */
     val sightings: StateFlow<List<ContributorSighting>> =
@@ -71,7 +71,7 @@ class MySightingsViewModel @Inject constructor(private val sightingRepository: S
         refresh()
     }
 
-    // ── Search and filtering ────────────────────────────────────────────────
+    // -- Search and filtering ------------------------------------------------
 
     fun onQueryChange(query: String) = _uiState.update { it.copy(filter = it.filter.copy(query = query)) }
 

@@ -3,7 +3,7 @@ import Foundation
 /// The life of a row in the outbox.
 ///
 /// A string state machine and **not** a `synced` boolean, because a boolean cannot express
-/// *"we sent it and do not know what happened"* — and that is exactly the state a lost
+/// *"we sent it and do not know what happened"* - and that is exactly the state a lost
 /// response leaves you in. Collapsing it to `false` re-sends work that already succeeded;
 /// collapsing it to `true` tells the contributor their sighting is safe when nobody has
 /// confirmed it, which is the worst failure this system can have because nobody goes
@@ -70,7 +70,7 @@ enum SightingDisplayStatus: CaseIterable, Sendable {
 
     /// The single place outbox state and server status are combined.
     ///
-    /// `serverStatus` is nil when the server has never answered for this sighting — which
+    /// `serverStatus` is nil when the server has never answered for this sighting - which
     /// is normal offline, and exactly when the client must NOT invent a status.
     static func of(outboxState: OutboxState?, serverStatus: SightingStatus?) -> SightingDisplayStatus {
         switch outboxState {

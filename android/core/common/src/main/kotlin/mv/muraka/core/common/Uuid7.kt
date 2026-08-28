@@ -4,17 +4,17 @@ import java.security.SecureRandom
 import java.util.UUID
 
 /**
- * UUIDv7 — a time-ordered UUID, generated on the device at capture time.
+ * UUIDv7 - a time-ordered UUID, generated on the device at capture time.
  *
  * This is the single rule that makes the whole offline protocol simple: because the
  * client owns the id, the server can upsert on it, so a retry after a timeout, after a
  * killed process, or after a lost response creates nothing new. The client never has to
- * ask "did that one get through?" — it can just send again.
+ * ask "did that one get through?" - it can just send again.
  *
  * v7 rather than v4 because it is time-ordered, which keeps PostgreSQL's index locality
- * good and makes the outbox naturally chronological — the queue sorts by id.
+ * good and makes the outbox naturally chronological - the queue sorts by id.
  *
- * Layout (RFC 9562 §5.7), 128 bits:
+ * Layout (RFC 9562 section 5.7), 128 bits:
  * ```
  *  0                   1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -30,7 +30,7 @@ import java.util.UUID
  * `rand_a` is used as a **monotonic counter** within a millisecond rather than as random
  * bits (RFC 9562 "method 1"). Without that, five photographs captured in the same
  * millisecond get ids in random order, and the researcher's queue then shows them in an
- * order that is not the order they were taken — which `sync-protocol.md` requires it to
+ * order that is not the order they were taken - which `sync-protocol.md` requires it to
  * reflect.
  */
 object Uuid7 {

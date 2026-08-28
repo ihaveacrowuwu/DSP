@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
  * The four states every data-backed screen has to handle.
  *
  * They live here rather than being rewritten per screen because the loading, empty and
- * error paths are where interfaces are usually thinnest — and in this app the error path
+ * error paths are where interfaces are usually thinnest - and in this app the error path
  * is not an edge case: a phone on a boat spends most of its life in it.
  */
 
@@ -40,7 +40,7 @@ fun LoadingState(modifier: Modifier = Modifier, message: String = "Loading") {
 }
 
 /**
- * Nothing here yet — and why, plus what to do about it.
+ * Nothing here yet - and why, plus what to do about it.
  *
  * An empty state that only says "no sightings" wastes the one screen where the
  * contributor is most likely to need telling what the app is for.

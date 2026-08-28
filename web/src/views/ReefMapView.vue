@@ -1,42 +1,23 @@
 <script setup lang="ts">
 /**
- * Reef map — where reef condition is read across space and time.
+ * Reef map - reef condition across space and time.
  *
- * The map fills the whole viewport and runs underneath the floating rail, because
- * it is the content rather than a widget on a page: panning should not stop at a
- * panel edge. The controls and the legend float over it as frosted cards, inset
- * far enough from the left to clear the rail.
+ * The map fills the viewport and runs under the floating rail; controls and the
+ * legend float over it, inset far enough to clear the rail.
  *
- * ── The basemap ────────────────────────────────────────────────────────────
- * The geography is a local vector file, `public/basemap/maldives.json`, built by
- * `scripts/build_basemap.py` from Natural Earth 10m (public domain). It carries
- * four kinds of geometry — the 1000 m slope, the shallow atoll platforms, the
- * reef rims, and the islands — plus the twenty administrative atolls as label
- * anchors.
+ * Basemap: a local vector file, `public/basemap/maldives.json`, built by
+ * `scripts/build_basemap.py` from Natural Earth 10m. It holds the 1000 m slope,
+ * atoll platforms, reef rims and islands, plus twenty atolls as label anchors.
+ * 67 KB, so no tile server, glyph server or network is needed. A raster basemap
+ * can be supplied via VITE_MAP_TILE_URL; when set, the local fills stand down and
+ * only rims and islands are drawn over the imagery.
  *
- * This replaced an earlier design where the basemap was an optional raster tile
- * URL, blank by default. The default is what shipped, so in practice the map was
- * markers floating on a flat colour: correctly placed, and impossible to read,
- * because a coordinate means nothing without a coastline next to it. Bundling the
- * geography fixes that without breaking the rule that nothing may depend on a
- * third-party service — the whole country is 67 KB of GeoJSON, needs no tile
- * server, no glyph server and no network, and cannot fail during a demo.
+ * Place names are DOM markers rather than a symbol layer, which would need a
+ * glyph server. There are twenty-one of them.
  *
- * A raster basemap is still supported via VITE_MAP_TILE_URL for anyone who wants
- * imagery. When one is configured the local *fills* stand down, because two
- * basemaps stacked is worse than either; the reef rims and islands stay on as
- * annotation over the imagery.
- *
- * Place names are DOM markers, not a symbol layer. Symbol layers need a glyph
- * server — one more external dependency — whereas an absolutely-positioned span
- * gets the app's own typeface for free. There are twenty-one of them, so the cost
- * is nil.
- *
- * ── The markers ────────────────────────────────────────────────────────────
- * Clustering happens in SQL, so the payload stays small no matter how much data
- * exists: a national view of 10,000 sightings is on the order of 150 features
- * (NFR3). Every layer, colour and size expression lives in `lib/mapStyle.ts` —
- * see that file's header for why a paint expression is worth keeping testable.
+ * Markers are clustered in SQL, so a national view of 10,000 sightings is on the
+ * order of 150 features. Layers, colours and size expressions live in
+ * `lib/mapStyle.ts`.
  */
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { FeatureCollection, Point as GeoJSONPoint } from 'geojson'
@@ -142,7 +123,7 @@ function addLabels(instance: MapLibreMap, data: FeatureCollection) {
     }
 
     const [lon, lat] = (feature.geometry as GeoJSONPoint).coordinates
-    // Nudged apart vertically. Kaafu's centroid and Malé are barely a kilometre
+    // Nudged apart vertically. Kaafu's centroid and Male are barely a kilometre
     // apart, so on the anchor itself the two labels sit on top of each other.
     const offset: [number, number] = kind === 'capital' ? [0, 9] : [0, -9]
     labelMarkers.push(
@@ -284,7 +265,7 @@ onMounted(() => {
   }
 
   // A map that fails to initialise must say so. Without this the failure is
-  // entirely silent — no console output, no banner, just an empty map — which
+  // entirely silent - no console output, no banner, just an empty map - which
   // is indistinguishable from "there are no sightings here" and cost real time
   // to diagnose once already.
   instance.on('error', (event) => {
@@ -293,8 +274,8 @@ onMounted(() => {
     error.value = 'The map could not be initialised.'
   })
 
-  // `loaded()` covers the case where the style — which is local, so it resolves
-  // synchronously — finished before this handler was attached. Without it the
+  // `loaded()` covers the case where the style - which is local, so it resolves
+  // synchronously - finished before this handler was attached. Without it the
   // data layers would never be added and the map would sit empty.
   //
   // Note for anyone debugging an empty map: MapLibre draws on requestAnimationFrame,
@@ -310,7 +291,7 @@ onMounted(() => {
   instance.on('zoom', () => syncLabelDetail(instance))
 
   // Counts live in a popup rather than a symbol layer, which would need a glyph
-  // server — one more external dependency the project does not allow.
+  // server - one more external dependency the project does not allow.
   instance.on('mousemove', CORE_LAYER, (event) => {
     const feature = event.features?.[0]
     if (!feature) return
@@ -793,7 +774,7 @@ function bucketLabel(iso: string): string {
   font-family: var(--font-ui);
 }
 
-/* MapLibre builds the tip from border triangles, which cannot be glass — it
+/* MapLibre builds the tip from border triangles, which cannot be glass - it
    would be an opaque wedge hanging off a translucent panel. The popup is offset
    above the marker under the cursor, so what it refers to was never in doubt. */
 .maplibregl-popup-tip {

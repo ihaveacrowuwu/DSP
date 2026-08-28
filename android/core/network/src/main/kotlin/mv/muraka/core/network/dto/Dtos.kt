@@ -13,7 +13,7 @@ import java.time.OffsetDateTime
 /**
  * The wire format, one type per JSON shape the Go API produces.
  *
- * These never leave `:core:network` — mappers turn them into domain models at the
+ * These never leave `:core:network` - mappers turn them into domain models at the
  * repository boundary. A `SightingDto` appearing in a view model signature is an
  * architecture violation, and the module boundaries make it visible.
  *
@@ -21,7 +21,7 @@ import java.time.OffsetDateTime
  * rather than sending `null`, so absence is the normal case, not an error.
  */
 
-/** RFC 3339 in, [Instant] out. Accepts both `…Z` and `…+05:00`, which Go may emit. */
+/** RFC 3339 in, [Instant] out. Accepts both `...Z` and `...+05:00`, which Go may emit. */
 object InstantSerializer : KSerializer<Instant> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("Instant", PrimitiveKind.STRING)
@@ -154,7 +154,7 @@ data class SightingPageDto(
     val offset: Int = 0,
 )
 
-// ── Requests ────────────────────────────────────────────────────────────────
+// -- Requests ----------------------------------------------------------------
 
 @Serializable
 data class RegisterRequest(val email: String, val password: String, val displayName: String)
@@ -168,7 +168,7 @@ data class RefreshRequest(val refreshToken: String)
 /**
  * `POST /v1/sightings`.
  *
- * [id] is the client's own UUIDv7 and is what makes the whole submission idempotent —
+ * [id] is the client's own UUIDv7 and is what makes the whole submission idempotent
  * see `mobile-shared/sync-protocol.md`. The server resolves `siteId` itself from the
  * coordinate, so the client must not send one.
  */

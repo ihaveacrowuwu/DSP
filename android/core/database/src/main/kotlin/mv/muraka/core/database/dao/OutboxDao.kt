@@ -38,7 +38,7 @@ interface OutboxDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPhotos(photos: List<PhotoQueueEntity>)
 
-    // ── Reading ─────────────────────────────────────────────────────────────
+    // -- Reading -------------------------------------------------------------
 
     /** Everything still owed to the server, oldest capture first. */
     @Query(
@@ -65,7 +65,7 @@ interface OutboxDao {
      * `created_at ASC` so the researcher's queue reflects capture order, and
      * `next_attempt_at` respects the backoff curve. `sending` rows are included because a
      * process killed mid-request leaves one behind, and reconciliation is what resolves
-     * it — not another sender picking it up blindly.
+     * it - not another sender picking it up blindly.
      */
     @Query(
         """
@@ -91,7 +91,7 @@ interface OutboxDao {
     @Query("SELECT * FROM photo_queue WHERE sighting_id IN (SELECT id FROM sighting_queue WHERE user_id = :userId)")
     fun observePhotos(userId: String): Flow<List<PhotoQueueEntity>>
 
-    // ── State transitions ───────────────────────────────────────────────────
+    // -- State transitions ---------------------------------------------------
 
     @Query("UPDATE sighting_queue SET state = :state WHERE id = :id")
     suspend fun setSightingState(id: String, state: String)
@@ -144,13 +144,13 @@ interface OutboxDao {
     )
     suspend fun requeuePhotos(sightingId: String)
 
-    // ── Deletion ────────────────────────────────────────────────────────────
+    // -- Deletion ------------------------------------------------------------
 
     /**
      * Drops an acknowledged row and its photographs.
      *
      * Called **only** after the server has confirmed the sighting exists and holds every
-     * one of its photographs — not when an upload call returns, and never on a response
+     * one of its photographs - not when an upload call returns, and never on a response
      * the client could not parse. Deleting earlier is how a sighting disappears with
      * nothing left to retry from.
      */

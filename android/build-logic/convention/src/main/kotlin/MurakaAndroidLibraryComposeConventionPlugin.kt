@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
  * [MurakaAndroidLibraryConventionPlugin], never instead of it.
  *
  * Separate from the base library plugin because `:core:model`, `:core:common` and
- * `:core:domain` must never see Compose — and a module that cannot import
+ * `:core:domain` must never see Compose - and a module that cannot import
  * `@Composable` cannot accidentally put UI in the domain.
  */
 class MurakaAndroidLibraryComposeConventionPlugin : Plugin<Project> {

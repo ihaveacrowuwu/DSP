@@ -1,6 +1,6 @@
 """Training must not disagree with serving.
 
-Three facts are held in two places — the recipe and `ml/service/app` — and every one of
+Three facts are held in two places - the recipe and `ml/service/app` - and every one of
 them fails *silently* when they diverge. A wrong class order does not crash; it inverts
 every prediction with full confidence. Wrong normalisation does not crash; it degrades
 accuracy invisibly. A wrong image size does not crash; it letterboxes.
@@ -126,7 +126,7 @@ def test_the_benchmark_measures_the_threads_the_stack_deploys():
     """A latency benchmark must use the thread count the service will actually run.
 
     This is the check that D58's 381 ms figure needed and did not have. That number was a
-    correct measurement of `onnxruntime`'s default thread count — one per core — while the
+    correct measurement of `onnxruntime`'s default thread count - one per core - while the
     stack shipped ONNX_THREADS=2, and the difference was 1.25x: the whole gap between
     "24% headroom" and a p95 over the 500 ms budget. Nothing failed, because nothing was
     comparing the two.

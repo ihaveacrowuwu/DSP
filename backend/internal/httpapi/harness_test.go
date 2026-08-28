@@ -1,9 +1,9 @@
 // Integration-test harness: a real API on a real PostgreSQL+PostGIS database.
 //
 // The other 40 Go tests are pure unit tests, which means the things this project
-// actually promises — that a contributor cannot verify a sighting, that a replayed
+// actually promises - that a contributor cannot verify a sighting, that a replayed
 // submission creates one row, that PostGIS assigns a site, that deleting an account
-// keeps the science and drops the person — had no automated evidence at all. Those
+// keeps the science and drops the person - had no automated evidence at all. Those
 // claims cannot be tested without a database, because the database is where most of
 // them are implemented: `ST_Covers` containment, `ON CONFLICT DO NOTHING` idempotency
 // and the `ORDER BY confidence ASC NULLS FIRST` queue order are SQL, not Go.
@@ -14,7 +14,7 @@
 // and fails in CI for reasons nobody can reproduce.
 //
 // The suite **skips** when PostgreSQL is unreachable rather than failing. A red suite
-// on a machine with no Docker running tells nobody anything — the same rule the iOS
+// on a machine with no Docker running tells nobody anything - the same rule the iOS
 // integration suites follow.
 package httpapi_test
 
@@ -44,7 +44,7 @@ import (
 	"muraka/backend/internal/store"
 )
 
-// The compose stack publishes PostgreSQL on 5433 — 5432 was taken on the development
+// The compose stack publishes PostgreSQL on 5433 - 5432 was taken on the development
 // machine. Overridable so this suite can run against any reachable instance.
 const defaultAdminURL = "postgres://muraka:muraka@localhost:5433/muraka?sslmode=disable"
 
@@ -198,7 +198,7 @@ func (h *harness) signUp(role domain.Role) *actor {
 			h.t.Fatalf("promote to %s: %v", role, err)
 		}
 		// The role is a claim inside the JWT, so the old token still says
-		// "contributor". Logging in again is what makes the promotion effective —
+		// "contributor". Logging in again is what makes the promotion effective
 		// and that asymmetry is itself worth knowing about.
 		token = h.login(email, "muraka-integration-2026")
 	}

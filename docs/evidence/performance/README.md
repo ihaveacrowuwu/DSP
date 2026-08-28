@@ -41,7 +41,7 @@ open: `ml/README.md` said "if it is slow, drop to MobileNetV3-Large before touch
 accuracy", and it is not slow, so the accuracy-first backbone stays.
 
 ⚠️ **This figure replaces the 381 ms recorded on 2026-08-21, and the reason is worth a
-paragraph in the evaluation chapter** (D64). The original measurement was correct
+paragraph in the evaluation chapter**. The original measurement was correct
 arithmetic on the wrong session: `cpu_latency` built a plain `InferenceSession`, which
 takes onnxruntime's default of one thread per core — ten on this machine — while
 `ml/service/app/inference.py` builds its session with `intra_op_num_threads =
@@ -136,7 +136,7 @@ in place. NFR11 passes at 919 submissions per second with the lookup on every on
 
 ## Figures this supersedes
 
-`CLAUDE.md` previously recorded "map with 10k sightings 22ms" and "sync→label ~1.5s".
+The project notes previously recorded "map with 10k sightings 22ms" and "sync→label ~1.5s".
 The map figure is now **43–56 ms** at 10,304 sightings, measured five times; the 22 ms
 was either a smaller corpus or a warm single sample. The sync figure is **0.89 s**. Both
 are comfortably inside their thresholds, and the point of writing them down here is that

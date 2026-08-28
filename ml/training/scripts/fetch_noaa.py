@@ -4,13 +4,13 @@
     python3 scripts/fetch_noaa.py                  # download, verify, manifest
     python3 scripts/fetch_noaa.py --verify-only    # re-verify an existing copy, no network
 
-Roughly 768 MB into `ml/datasets/noaa`, which `.gitignore` excludes — imagery is never
+Roughly 768 MB into `ml/datasets/noaa`, which `.gitignore` excludes - imagery is never
 stageable. The manifest it writes to `ml/training/manifests/noaa.sha256` **is** committed:
 it is small, and it is the project's evidence that the corpus behind the numbers is the
 corpus a reader would download.
 
-Cleared for use by D63 (docs/08). The citation and the NOAA disclaimer this printout
-hands back are obligations of that decision, not decoration.
+The dataset carries a requested citation and a NOAA as-is disclaimer; both are printed
+on success so they reach the project's data section.
 """
 
 from __future__ import annotations
@@ -81,7 +81,6 @@ def main() -> int:
 
     print(f"\nCite as: {corpus_module.CITATION}")
     print(f"Disclaimer owed in the project's data section: {corpus_module.DISCLAIMER}")
-    print("Cleared for use by D63 in docs/08-scope-risks-decisions.md.")
     return 0
 
 

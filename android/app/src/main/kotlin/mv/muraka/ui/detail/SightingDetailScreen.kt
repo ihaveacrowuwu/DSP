@@ -63,7 +63,7 @@ import kotlin.math.roundToInt
  * between a screen a contributor can read at a glance and a list of facts they have to sort
  * out for themselves.
  *
- * Refreshes on open, which is the read-back that turns "Checking…" into whatever the server
+ * Refreshes on open, which is the read-back that turns "Checking..." into whatever the server
  * actually says.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -149,7 +149,7 @@ fun SightingDetailScreen(viewModel: SightingDetailViewModel, onBack: () -> Unit,
     }
 }
 
-/** Status, how fresh it is, and any refresh problem — the three things read first. */
+/** Status, how fresh it is, and any refresh problem - the three things read first. */
 @Composable
 private fun StatusHeader(status: mv.muraka.core.model.SightingDisplayStatus, checkedAt: String?, message: String?) {
     Column(
@@ -181,7 +181,7 @@ private fun StatusHeader(status: mv.muraka.core.model.SightingDisplayStatus, che
  *
  * The toggle exists because the lattice is an annotation and an annotation you cannot
  * remove is an obstruction. Turning it off is how a contributor checks the model's reading
- * against the reef rather than against the model's own drawing of it — which is the whole
+ * against the reef rather than against the model's own drawing of it - which is the whole
  * argument for drawing the grid in the first place.
  */
 @Composable

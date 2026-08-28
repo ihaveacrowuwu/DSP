@@ -80,7 +80,7 @@ object ErrorMapper {
     /** Refresh once, then retry. */
     private fun recoverable(status: Int): ApiError? = if (status == UNAUTHORIZED) ApiError.Unauthorized else null
 
-    /** Retry with backoff — the outcome is unknown. */
+    /** Retry with backoff - the outcome is unknown. */
     private fun transient(status: Int): ApiError? = when {
         status == TOO_MANY_REQUESTS -> ApiError.RateLimited
         status >= SERVER_ERROR_FLOOR -> ApiError.Server(status)

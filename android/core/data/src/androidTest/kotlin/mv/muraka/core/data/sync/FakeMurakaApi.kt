@@ -25,8 +25,8 @@ import java.time.Instant
  * A server the test controls.
  *
  * Not a mock framework: the point of these tests is what the sync engine does when the
- * server's state and the client's disagree, so the fake keeps **real state** — a map of
- * the sightings and photo ids it has actually received — and answers from it. An
+ * server's state and the client's disagree, so the fake keeps **real state** - a map of
+ * the sightings and photo ids it has actually received - and answers from it. An
  * expectation-based mock would let a test pass while describing a server that could not
  * exist.
  *
@@ -34,7 +34,7 @@ import java.time.Instant
  * than it looks: `ErrorMapper` maps `UnknownHostException` and `ConnectException` to
  * `ApiError.Offline` and a **plain `IOException` to `ApiError.Timeout`**. The first
  * version of this fake threw `IOException`, so every offline test exercised the
- * retryable-failure path instead — burning attempt counters and never reporting itself
+ * retryable-failure path instead - burning attempt counters and never reporting itself
  * offline. A device in aeroplane mode fails to resolve the host, so
  * `UnknownHostException` is both the faithful choice and the one the engine reads as
  * "there is no network".
@@ -52,7 +52,7 @@ class FakeMurakaApi : MurakaApi {
 
     /**
      * Called before each photo upload is recorded, with the 1-based index of that
-     * upload. Throw from it to break the connection at a chosen point — which is how
+     * upload. Throw from it to break the connection at a chosen point - which is how
      * "killed mid-upload" is expressed when a sighting has several photographs.
      */
     var onPhotoUpload: ((Int) -> Unit)? = null
@@ -73,7 +73,7 @@ class FakeMurakaApi : MurakaApi {
         calls += "createSighting:${body.id}"
         val fresh = stored.putIfAbsent(body.id, mutableSetOf()) == null
         val dto = sightingDto(body.id)
-        // 201 when it is new, 200 when it is a replay — the server's real behaviour, and
+        // 201 when it is new, 200 when it is a replay - the server's real behaviour, and
         // the protocol tells clients to treat them identically.
         return if (fresh) Response.success(201, dto) else Response.success(200, dto)
     }
@@ -123,7 +123,7 @@ class FakeMurakaApi : MurakaApi {
         status = if (photoCount == 0) "pending_photos" else "awaiting_verification",
     )
 
-    // ── Not exercised by these tests ────────────────────────────────────────
+    // -- Not exercised by these tests ----------------------------------------
     // Left as failures rather than empty successes: a test that accidentally depends on
     // one of these should say so loudly instead of quietly asserting against a stub.
 

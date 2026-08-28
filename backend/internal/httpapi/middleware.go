@@ -145,7 +145,7 @@ func (a *API) requireAuth(next http.Handler) http.Handler {
 
 		// The token alone is not enough. A JWT is a snapshot of the moment it was
 		// issued, so without this lookup a ban or an account deletion does not take
-		// effect until the access token expires — up to 15 minutes of continued full
+		// effect until the access token expires - up to 15 minutes of continued full
 		// access for the user an administrator has just banned. Refresh already refuses
 		// a non-active account, so the ban was permanent but not immediate; for an
 		// abuse-response feature (FR10) immediate is the point.

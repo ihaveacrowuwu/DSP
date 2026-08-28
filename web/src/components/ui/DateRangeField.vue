@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Date range picker — one control for the "from" and "to" filter that every
+ * Date range picker - one control for the "from" and "to" filter that every
  * data screen in this system uses.
  *
  * It is one control rather than two date fields on purpose. A range has an
@@ -10,8 +10,8 @@
  * start instead, and the shaded span shows what you are about to ask for before
  * you ask.
  *
- * Presets sit above the calendar because most reef questions are relative — "the
- * last month", "this year" — and paging a calendar back to find them is work the
+ * Presets sit above the calendar because most reef questions are relative - "the
+ * last month", "this year" - and paging a calendar back to find them is work the
  * interface can do instead.
  */
 import { computed, ref } from 'vue'
@@ -223,7 +223,7 @@ function onPanelKey(event: KeyboardEvent) {
   color: var(--ink-4);
 }
 
-/* ── panel ──────────────────────────────────────────────────────────────── */
+/* -- panel ---------------------------------------------------------------- */
 
 .panel {
   position: fixed;
@@ -232,7 +232,7 @@ function onPanelKey(event: KeyboardEvent) {
   gap: 0.625rem;
   padding: 0.75rem;
   overflow-y: auto;
-  /* Glass, matching the select menu — the calendar inside it inherits this
+  /* Glass, matching the select menu - the calendar inside it inherits this
      surface rather than painting its own. */
   background: var(--chrome);
   backdrop-filter: blur(var(--blur-lg));

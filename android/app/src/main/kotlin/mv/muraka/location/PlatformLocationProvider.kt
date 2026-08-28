@@ -26,14 +26,14 @@ import kotlin.coroutines.resume
 /**
  * A position fix, preferring Google's fused provider and falling back to the platform's.
  *
- * The fused provider is what `android/CLAUDE.md` specifies and it is markedly better at
- * getting a fix quickly on a moving boat. It needs no API key and no account — it is the
+ * The fused provider is markedly better at
+ * getting a fix quickly on a moving boat. It needs no API key and no account - it is the
  * platform's own sensor fusion, not a hosted service, so it does not engage the key-free
  * constraint. It does need Play Services, which not every device has, so
  * [LocationManager] backs it up and nothing depends on Play Services being present.
  *
  * **Null is an ordinary outcome, not an error.** A diver under cloud on a hull that
- * blocks the sky may simply have no fix, and the capture flow then offers a dropped pin —
+ * blocks the sky may simply have no fix, and the capture flow then offers a dropped pin
  * recorded as `manual_pin` so researchers can filter on the difference.
  */
 @Singleton
@@ -78,7 +78,7 @@ class PlatformLocationProvider @Inject constructor(@param:ApplicationContext pri
      * Goes through `LocationManagerCompat` rather than calling
      * `LocationManager.getCurrentLocation` directly: that method is API 30 and this app
      * supports API 26, so the direct call would compile, pass review, and crash on a
-     * five-year-old phone. `ContextCompat.getMainExecutor` is here for the same reason —
+     * five-year-old phone. `ContextCompat.getMainExecutor` is here for the same reason
      * the platform version of it arrived in API 28.
      *
      * The signal is the PLATFORM `android.os.CancellationSignal` (API 16), not

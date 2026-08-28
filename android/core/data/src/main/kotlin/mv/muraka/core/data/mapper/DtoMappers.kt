@@ -32,7 +32,7 @@ import mv.muraka.core.network.dto.VerificationDto
  * Wire types to domain types.
  *
  * This is the boundary the architecture rule protects: a `SightingDto` must never appear
- * above this file. The mapping is deliberately total — unknown enum values fall back to a
+ * above this file. The mapping is deliberately total - unknown enum values fall back to a
  * sane default rather than throwing, so a server that grows a sixth status shows an
  * installed app something odd rather than crashing it.
  */

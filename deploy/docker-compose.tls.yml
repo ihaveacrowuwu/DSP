@@ -10,7 +10,7 @@
 # both apps' trust stores or breaking every emulator run. The base file stays the
 # development stack; this file is the one the demo is given.
 #
-# The certificate is generated locally by deploy/tls/generate.sh — no certificate
+# The certificate is generated locally by deploy/tls/generate.sh - no certificate
 # authority, no account, no API key (NFR9).
 
 services:
@@ -28,7 +28,7 @@ services:
 
   # Rebuilt against the HTTPS origin. Vite inlines the API base URL at build time, so
   # a dashboard built for http://localhost:8090 and served over HTTPS would have every
-  # request blocked as mixed content — the page would load and silently do nothing.
+  # request blocked as mixed content - the page would load and silently do nothing.
   web:
     build:
       args:

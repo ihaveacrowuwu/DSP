@@ -4,7 +4,7 @@ import UIKit
 ///
 /// This screen exists because `sync-protocol.md` insists pending work must be visible: a
 /// silent queue is how a contributor's reef data goes missing without anyone noticing. It is
-/// also where a terminally failed row gets its way out — retry, retry smaller, or discard —
+/// also where a terminally failed row gets its way out - retry, retry smaller, or discard
 /// rather than sitting in a failure the contributor can see but not act on.
 final class SyncStatusViewController: UIViewController {
     private let container: AppContainer

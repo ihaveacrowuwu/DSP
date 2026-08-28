@@ -49,7 +49,7 @@ import java.time.Instant
 /**
  * Search and filtering for the contributor's own history.
  *
- * Everything here filters **local** data, so it works with no connection — see
+ * Everything here filters **local** data, so it works with no connection - see
  * `SightingFilter`. That is why there is no loading state and no debounce: filtering a few
  * hundred rows in memory is instant, and a debounce would only add lag to something that has
  * none.
@@ -290,7 +290,7 @@ private fun Instant.toLocalDate() = java.time.LocalDate.ofInstant(this, java.tim
  * One day, minus a millisecond.
  *
  * The range picker returns midnight for the end date. Used as-is, a sighting captured that
- * afternoon falls outside its own selected day — which reads as the filter being broken.
+ * afternoon falls outside its own selected day - which reads as the filter being broken.
  */
 private const val END_OF_DAY_MILLIS = 24 * 60 * 60 * 1000L - 1
 

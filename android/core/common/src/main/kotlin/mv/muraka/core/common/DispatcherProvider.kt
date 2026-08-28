@@ -8,8 +8,8 @@ import javax.inject.Inject
  * Dispatchers, injected rather than referenced directly.
  *
  * The point is testability: a test swaps in a single deterministic dispatcher and the
- * outbox drain — which is otherwise the hardest thing in this app to test, being a loop
- * over network calls with backoff — becomes ordinary synchronous code.
+ * outbox drain - which is otherwise the hardest thing in this app to test, being a loop
+ * over network calls with backoff - becomes ordinary synchronous code.
  */
 interface DispatcherProvider {
     val io: CoroutineDispatcher

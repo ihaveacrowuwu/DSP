@@ -16,7 +16,7 @@ actor OutboxStore {
         self.queue = queue
     }
 
-    // ── Writing ─────────────────────────────────────────────────────────────
+    // -- Writing -------------------------------------------------------------
 
     /// Queues a sighting and its photographs in **one transaction**.
     ///
@@ -38,7 +38,7 @@ actor OutboxStore {
         }
     }
 
-    // ── Reading ─────────────────────────────────────────────────────────────
+    // -- Reading -------------------------------------------------------------
 
     /// Everything still owed to the server, oldest capture first.
     func queued(for userID: String) throws -> [SightingQueueRecord] {
@@ -105,7 +105,7 @@ actor OutboxStore {
         }
     }
 
-    // ── State transitions ───────────────────────────────────────────────────
+    // -- State transitions ---------------------------------------------------
 
     func setSightingState(id: String, state: OutboxState) throws {
         try queue.write { db in
@@ -179,12 +179,12 @@ actor OutboxStore {
         }
     }
 
-    // ── Deletion ────────────────────────────────────────────────────────────
+    // -- Deletion ------------------------------------------------------------
 
     /// Drops an acknowledged row and its photographs.
     ///
     /// Called **only** after the server has confirmed the sighting exists and holds every
-    /// one of its photographs — not when an upload call returns, and never on a response the
+    /// one of its photographs - not when an upload call returns, and never on a response the
     /// client could not parse. Deleting earlier is how a sighting disappears with nothing
     /// left to retry from.
     func delete(sightingID: String) throws {
@@ -206,7 +206,7 @@ actor OutboxStore {
         }
     }
 
-    // ── Cache ───────────────────────────────────────────────────────────────
+    // -- Cache ---------------------------------------------------------------
 
     func cacheSightings(_ records: [CachedSightingRecord]) throws {
         try queue.write { db in

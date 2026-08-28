@@ -14,7 +14,7 @@ excluded:
   - .build
 
 
-# ── Rules enabled beyond the defaults ────────────────────────────────────────
+# -- Rules enabled beyond the defaults ----------------------------------------
 opt_in_rules:
   - array_init
   - closure_end_indentation
@@ -56,26 +56,26 @@ opt_in_rules:
   - yoda_condition
 
 disabled_rules:
-  # ── Layout rules SwiftFormat owns ──────────────────────────────────────────
+  # -- Layout rules SwiftFormat owns ------------------------------------------
   # SwiftFormat is the formatter; SwiftLint checks what it cannot fix. Leaving these
   # on makes the two tools fight, and every `swiftformat .` would then produce
   # SwiftLint errors.
   #
-  #   trailing_comma  — .swiftformat sets `--commas always`; trailing commas mean
+  #   trailing_comma - .swiftformat sets `--commas always`; trailing commas mean
   #                     adding a line touches one line, not two.
-  #   opening_brace   — .swiftformat sets `--wrapMultilineStatementBraces`.
+  #   opening_brace - .swiftformat sets `--wrapMultilineStatementBraces`.
   - trailing_comma
   - opening_brace
 
-  # ── Genuinely not wanted ───────────────────────────────────────────────────
+  # -- Genuinely not wanted ---------------------------------------------------
   # A UIKit view controller that builds its hierarchy in code is legitimately long;
   # the alternative is a XIB, which reviews far worse.
   - type_body_length
   - function_body_length
-  # TODOs are allowed when they carry an owner and a reason — see ../CLAUDE.md.
+  # TODOs are allowed when they carry an owner and a reason - see ../CLAUDE.md.
   - todo
 
-# ── Thresholds ───────────────────────────────────────────────────────────────
+# -- Thresholds ---------------------------------------------------------------
 line_length:
   warning: 120
   error: 140
@@ -110,7 +110,7 @@ cyclomatic_complexity:
 nesting:
   type_level: 2
 
-# ── Rules that must never be violated ────────────────────────────────────────
+# -- Rules that must never be violated ----------------------------------------
 # A force unwrap in the outbox path would crash on exactly the malformed row a diver
 # most needs recovered. The only tolerated `try!` is on an in-memory store in tests,
 # where a failure genuinely is a programmer error.
@@ -136,8 +136,8 @@ custom_rules:
     # exists to prevent, so it is a lint error rather than a code-review hope.
     #
     # `match_kinds: string` restricts it to actual string literals. Without that it fired on
-    # its own documentation — every comment explaining why "Synced" is forbidden contains the
-    # word — which is the classic way a well-meant custom rule gets disabled instead of fixed.
+    # its own documentation - every comment explaining why "Synced" is forbidden contains the
+    # word - which is the classic way a well-meant custom rule gets disabled instead of fixed.
     regex: '"(Synced|Uploaded|Saved to server|Backed up)"'
     match_kinds:
       - string

@@ -82,7 +82,7 @@ object NetworkModule {
         .authenticator(tokenAuthenticator)
         // Uploads are retried by the outbox with its own backoff curve, not by OkHttp.
         // Leaving this on would silently repeat a request the drain loop is also about
-        // to repeat, which is harmless — the ids make it idempotent — but it doubles a
+        // to repeat, which is harmless - the ids make it idempotent - but it doubles a
         // diver's tethering use for no benefit and hides real failures from the queue.
         .retryOnConnectionFailure(false)
         .build()

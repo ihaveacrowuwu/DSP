@@ -17,7 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * The queue's behaviour, against real SQLite and real Room codegen — which is where the
+ * The queue's behaviour, against real SQLite and real Room codegen - which is where the
  * bugs these guard against would actually live.
  */
 @RunWith(AndroidJUnit4::class)
@@ -49,7 +49,7 @@ class OutboxDaoTest {
     @Test
     fun photographs_come_back_in_capture_order() = runTest {
         // The researcher's queue has to reflect the order things were photographed, so
-        // ordinal — not insertion order or id — governs.
+        // ordinal - not insertion order or id - governs.
         dao.enqueue(sighting("s1"), listOf(photo("p3", "s1", 2), photo("p1", "s1", 0), photo("p2", "s1", 1)))
         assertEquals(listOf("p1", "p2", "p3"), dao.photosFor("s1").map { it.id })
     }
@@ -57,7 +57,7 @@ class OutboxDaoTest {
     @Test
     fun theQueueNeverOffersAnotherContributorsRows() = runTest {
         // Two divers, one phone. Uploading A's sighting under B's session attributes reef
-        // data to the wrong person — corrupt science, and an ethics problem.
+        // data to the wrong person - corrupt science, and an ethics problem.
         dao.enqueue(sighting("mine", userId = USER), emptyList())
         dao.enqueue(sighting("theirs", userId = "other-diver"), emptyList())
 

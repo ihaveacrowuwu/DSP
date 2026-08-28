@@ -8,7 +8,7 @@ import java.util.UUID
 
 /**
  * The id is the idempotency key for the entire offline protocol, so these assert the
- * properties the protocol actually relies on — not merely that a UUID comes back.
+ * properties the protocol actually relies on - not merely that a UUID comes back.
  */
 class Uuid7Test {
 

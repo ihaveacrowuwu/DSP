@@ -13,11 +13,11 @@ import mv.muraka.core.domain.SyncEngine
  *
  * Deliberately almost empty: the algorithm lives in `SyncEngine`, which knows nothing
  * about WorkManager, so the hard part is testable without an emulator and this class has
- * only one decision to make — whether to ask for another go.
+ * only one decision to make - whether to ask for another go.
  *
  * `Result.retry()` versus `Result.success()` is that decision, and it matters. Returning
  * success while sightings are still queued tells WorkManager the job is done, and nothing
- * wakes the app again until the next periodic run — which on a boat could be an hour of a
+ * wakes the app again until the next periodic run - which on a boat could be an hour of a
  * contributor watching a queue that says it is waiting and never moves.
  */
 @HiltWorker

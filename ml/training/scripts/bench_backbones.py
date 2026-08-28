@@ -8,7 +8,7 @@ The question this answers is "could a larger backbone still fit under 500 ms?", 
 answers it by measuring rather than by arguing from parameter counts.
 
 **Random weights are valid evidence here.** Latency is a function of the architecture,
-the input size and the runtime — not of what the weights learned — so an untrained graph
+the input size and the runtime - not of what the weights learned - so an untrained graph
 times identically to a trained one. That is also why this script does not download
 ImageNet weights: they would cost bandwidth and change nothing. The caveat travels in the
 output file rather than living only in this docstring, because the file is what a reader
@@ -16,10 +16,10 @@ of the project sees.
 
 Two things are held fixed on purpose:
 
-* **The batch is one photograph**, `patch_grid²` = 25 patches, because the service
+* **The batch is one photograph**, `patch_grid2` = 25 patches, because the service
   classifies a whole lattice in a single call. A per-patch figure would understate the
-  requirement by 25×.
-* **The session is the service's session** — `ONNX_THREADS` intra-op, one inter-op,
+  requirement by 25x.
+* **The session is the service's session** - `ONNX_THREADS` intra-op, one inter-op,
   full graph optimisation. Thread count moves this number by more than the choice of
   backbone does, so a benchmark on onnxruntime's defaults would rank architectures
   correctly and size the headroom wrongly.
@@ -194,7 +194,7 @@ def main() -> int:
             try:
                 result = measure(backbone, cfg, workdir, runs=args.runs, threads=args.threads)
             except export_module.ParityError as error:
-                # Not a slow backbone — a broken measurement. Loud, and nonzero.
+                # Not a slow backbone - a broken measurement. Loud, and nonzero.
                 print(f"\nEXPORT/PARITY FAILED for {backbone}: {error}", file=sys.stderr)
                 return 1
             results.append(result)

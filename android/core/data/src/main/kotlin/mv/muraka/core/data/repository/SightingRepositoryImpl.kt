@@ -56,7 +56,7 @@ class SightingRepositoryImpl @Inject constructor(
 ) : SightingRepository {
 
     /**
-     * Queues a sighting. Local only — this returns as soon as the bytes are durably on
+     * Queues a sighting. Local only - this returns as soon as the bytes are durably on
      * disk and never waits for the network (NFR7).
      */
     override suspend fun capture(draft: SightingDraft): Result<String> = withContext(dispatchers.io) {
@@ -165,7 +165,7 @@ class SightingRepositoryImpl @Inject constructor(
         Result.success(Unit)
     }
 
-    /** The read that turns "Checking…" into a real status. */
+    /** The read that turns "Checking..." into a real status. */
     override suspend fun refreshSighting(id: String): Result<Unit> = withContext(dispatchers.io) {
         val userId = tokens.current()?.userId
             ?: return@withContext Result.failure(ApiError.Unauthorized)
@@ -203,7 +203,7 @@ class SightingRepositoryImpl @Inject constructor(
         Result.success(body.use { it.bytes() })
     }
 
-    // ── The merge ───────────────────────────────────────────────────────────
+    // -- The merge -----------------------------------------------------------
 
     private fun merge(
         queued: List<SightingQueueEntity>,

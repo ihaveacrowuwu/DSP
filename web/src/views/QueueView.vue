@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Review queue — the screen researchers spend their time in.
+ * Review queue - the screen researchers spend their time in.
  *
  * Designed for bursts of keyboard work: lowest-confidence sighting first, one key
  * per decision, the next item prefetched so the queue never stalls. Every action
@@ -57,7 +57,7 @@ const REJECT_REASONS = [
   { value: 'other', label: 'Other', hint: 'Unusable for a reason not listed' },
 ]
 
-/** Share of patches the model called bleached — the lattice as one number. */
+/** Share of patches the model called bleached - the lattice as one number. */
 const bleachedShare = computed(() => {
   const patches = prediction.value?.patches ?? []
   if (!patches.length) return 0
@@ -462,7 +462,7 @@ function formatCoord(value: number, positive: string, negative: string): string 
  *
  * 100% keeps it in the column, 66vh keeps the caption and the accept/correct row
  * on screen with it, and 44rem is the upscale ceiling. The frame is square, so
- * its width is also its height — the max-height this used to carry was saying
+ * its width is also its height - the max-height this used to carry was saying
  * the same thing twice. */
 .plate {
   display: grid;

@@ -3,7 +3,7 @@
  * The only checkbox in the app.
  *
  * A native checkbox renders differently in every browser and ignores the theme
- * entirely — under the light scheme it stays a blue-grey Windows control on a
+ * entirely - under the light scheme it stays a blue-grey Windows control on a
  * chart-paper panel. So the box is drawn, and a real input is laid over it at
  * zero opacity: the control keeps its keyboard behaviour, its focus ring and its
  * label association, and only the appearance is ours.

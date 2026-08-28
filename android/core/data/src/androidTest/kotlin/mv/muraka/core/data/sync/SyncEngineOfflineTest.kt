@@ -35,7 +35,7 @@ import java.util.UUID
  * because each one describes a *situation* rather than a function: no network, a
  * force-quit, a connection dropped halfway through an upload. The instinct is to test
  * them by hand with a device in aeroplane mode, which is worth doing once and is
- * useless as a regression guard — nobody re-walks it after every change.
+ * useless as a regression guard - nobody re-walks it after every change.
  *
  * So the situations are constructed instead. Real Room, real files, real
  * Keystore-encrypted session store; only the server is a fake, and it keeps genuine
@@ -125,7 +125,7 @@ class SyncEngineOfflineTest {
      *
      * A retryable failure records an attempt and sets `next_attempt_at` to
      * `min(2^attempts, 300)s` ahead, which is correct and is why a second drain
-     * immediately afterwards finds nothing due — the first version of these tests read
+     * immediately afterwards finds nothing due - the first version of these tests read
      * that as "the engine failed to resume". The curve itself is covered by
      * `RetryPolicyTest`; these tests are about reconciliation, so they skip the clock
      * rather than sleeping through it.
@@ -170,7 +170,7 @@ class SyncEngineOfflineTest {
         return sightingId to photoIds
     }
 
-    // ── "Capture completes with the device in airplane mode" ─────────────────
+    // -- "Capture completes with the device in airplane mode" -----------------
 
     @Test
     fun capturingWithNoNetworkQueuesTheSightingAndKeepsThePhotograph() = runTest {
@@ -200,12 +200,12 @@ class SyncEngineOfflineTest {
         val row = database.outboxDao().sighting(sightingId)!!
         assertEquals(OutboxState.QUEUED.wire, row.state)
         // The attempt counter drives exponential backoff. Burning it against a network
-        // that is not there would push a sighting into a long wait — or into the
-        // give-up state after eight — for a reason that was never its fault.
+        // that is not there would push a sighting into a long wait - or into the
+        // give-up state after eight - for a reason that was never its fault.
         assertEquals(0, row.attempts)
     }
 
-    // ── "Queued sightings survive a force-quit and a device restart" ─────────
+    // -- "Queued sightings survive a force-quit and a device restart" ---------
 
     @Test
     fun theQueueSurvivesTheProcessDying() = runTest {
@@ -227,7 +227,7 @@ class SyncEngineOfflineTest {
         assertTrue(database.outboxDao().dueForSync(userId, System.currentTimeMillis()).any { it.id == sightingId })
     }
 
-    // ── "Sync resumes automatically when connectivity returns" ──────────────
+    // -- "Sync resumes automatically when connectivity returns" --------------
 
     @Test
     fun theQueueDrainsOnceTheNetworkReturns() = runTest {
@@ -249,7 +249,7 @@ class SyncEngineOfflineTest {
         }
     }
 
-    // ── "Killing the app mid-upload does not duplicate or lose" ─────────────
+    // -- "Killing the app mid-upload does not duplicate or lose" -------------
 
     @Test
     fun aConnectionLostMidUploadResumesWithoutResendingWhatArrived() = runTest {
@@ -279,7 +279,7 @@ class SyncEngineOfflineTest {
 
         // And what already arrived was not sent again. The engine asks the server what
         // it holds before sending anything, so the second pass carries only the
-        // difference — this is what separates "safe because the ids are idempotent"
+        // difference - this is what separates "safe because the ids are idempotent"
         // from "actually reconciled", and only the second saves a diver's tethering.
         assertEquals(
             "only the two missing photographs should have been re-sent",
@@ -288,7 +288,7 @@ class SyncEngineOfflineTest {
         )
     }
 
-    // ── "Submitting the same sighting twice creates exactly one record" ─────
+    // -- "Submitting the same sighting twice creates exactly one record" -----
 
     @Test
     fun drainingTwiceCreatesOneRecordAndUploadsNothingTheSecondTime() = runTest {
@@ -304,7 +304,7 @@ class SyncEngineOfflineTest {
         assertEquals(callsAfterFirst, api.calls.size)
     }
 
-    // ── Nothing is deleted on a response the client could not trust ─────────
+    // -- Nothing is deleted on a response the client could not trust ---------
 
     @Test
     fun aServerErrorOnTheReadBackLeavesTheRowInTheQueue() = runTest {
@@ -329,7 +329,7 @@ class SyncEngineOfflineTest {
         assertNull(database.outboxDao().sighting(sightingId))
     }
 
-    // ── No session means no uploads, and no data loss either ───────────────
+    // -- No session means no uploads, and no data loss either ---------------
 
     @Test
     fun signingOutLeavesTheQueueUntouchedRatherThanUploadingOrDiscardingIt() = runTest {

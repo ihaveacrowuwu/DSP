@@ -6,7 +6,7 @@ import UIKit
 ///
 /// A hand-written container rather than a DI framework: the graph is small, the wiring is
 /// readable in one screen, and it adds no third-party dependency. Android uses Hilt because
-/// that is the platform-idiomatic choice there — the *testability* property is identical
+/// that is the platform-idiomatic choice there - the *testability* property is identical
 /// either way, and that property is the point.
 @MainActor
 final class AppContainer {

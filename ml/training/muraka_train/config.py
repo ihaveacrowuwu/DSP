@@ -1,7 +1,7 @@
 """Load a run configuration, and refuse to run one that contradicts the server.
 
 The training recipe and the serving code hold the same three facts in two different
-places, and if they ever disagree the system does not crash — it quietly returns wrong
+places, and if they ever disagree the system does not crash - it quietly returns wrong
 answers:
 
 * **Class order.** The model emits logits in a fixed order and the service reads index 0
@@ -11,7 +11,7 @@ answers:
   model sees images it was never trained on. Accuracy degrades quietly rather than
   visibly, which is the worst failure mode for a project whose whole argument is that
   experts correct the model.
-* **Image size.** The service tiles a photograph into `patch_grid²` patches and resizes
+* **Image size.** The service tiles a photograph into `patch_grid2` patches and resizes
   each to the model's input; a mismatch is silent letterboxing.
 
 So the config is validated against `ml/service/app` at load time. This is deliberately

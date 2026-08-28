@@ -34,7 +34,7 @@ final class SightingRepository: Sendable {
 
     /// Queues a sighting.
     ///
-    /// **Local only** — this returns as soon as the row and its photo files are durably on
+    /// **Local only** - this returns as soon as the row and its photo files are durably on
     /// disk, and never waits for the network. NFR7 is the whole point: the app is fully
     /// functional with no connectivity except sign-in.
     func capture(_ draft: SightingDraft) async throws -> String {
@@ -130,7 +130,7 @@ final class SightingRepository: Sendable {
         )
     }
 
-    /// Pulls the list from the server. A failure leaves the cache exactly as it was —
+    /// Pulls the list from the server. A failure leaves the cache exactly as it was
     /// never a blank history because the network dropped.
     func refreshMySightings() async throws {
         guard let userID = await tokens.currentUserID() else { throw ApiError.unauthorized }
@@ -145,7 +145,7 @@ final class SightingRepository: Sendable {
         try await outbox.pruneCachedSightings(userID: userID, keeping: records.map(\.id))
     }
 
-    /// The read that turns "Checking…" into a real status.
+    /// The read that turns "Checking..." into a real status.
     func refreshSighting(id: String) async throws {
         guard let userID = await tokens.currentUserID() else { throw ApiError.unauthorized }
         guard let detail = try await api.sighting(id: id) else { return }
@@ -168,7 +168,7 @@ final class SightingRepository: Sendable {
         try await api.photoImage(id: id)
     }
 
-    // ── The merge ───────────────────────────────────────────────────────────
+    // -- The merge -----------------------------------------------------------
 
     static func merge(
         queued: [SightingQueueRecord],

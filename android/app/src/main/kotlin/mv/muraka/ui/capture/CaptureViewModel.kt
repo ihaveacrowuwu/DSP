@@ -46,7 +46,7 @@ data class CaptureUiState(
      * A position is required; GPS is not.
      *
      * If there is no fix the contributor drops a pin, and the sighting records
-     * `manual_pin` — researchers filter on that difference, so it is stored rather than
+     * `manual_pin` - researchers filter on that difference, so it is stored rather than
      * quietly treated as equivalent.
      */
     val canSubmit: Boolean
@@ -63,7 +63,7 @@ data class CaptureUiState(
  * depth, note and self-assessment are all optional and collapsed by default.
  *
  * Nothing here waits for the network. [submit] returns as soon as the row and its photo
- * files are durably on disk, and the drain loop does the rest — which is what makes
+ * files are durably on disk, and the drain loop does the rest - which is what makes
  * capture work in aeroplane mode (NFR7, FR3).
  */
 @HiltViewModel

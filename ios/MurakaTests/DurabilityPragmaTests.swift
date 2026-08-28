@@ -8,7 +8,7 @@ import Testing
 ///
 /// These read the pragmas back out of a real on-disk SQLite file rather than trusting that
 /// setting them worked, because **a pragma applied in the wrong place silently does nothing**
-/// — and a durability setting that quietly is not applied is worse than one that was never
+/// - and a durability setting that quietly is not applied is worse than one that was never
 /// attempted. The Android app has the same three assertions in `DurabilityPragmaTest.kt`.
 struct DurabilityPragmaTests {
     /// On disk, not in memory: WAL is meaningless for an in-memory database, so an
@@ -37,7 +37,7 @@ struct DurabilityPragmaTests {
     @Test func commitsReachTheStorageMediumBeforeEnqueueReturns() throws {
         try withTemporaryDatabase { queue in
             // 2 is FULL. SQLite's default under WAL is 1 (NORMAL), which lets the OS buffer a
-            // commit — and a phone that dies in that window loses a sighting the contributor
+            // commit - and a phone that dies in that window loses a sighting the contributor
             // watched the app accept. If this reads 1, the durability claim in the project is
             // not real.
             let synchronous = try queue.read { try Int.fetchOne($0, sql: "PRAGMA synchronous") }

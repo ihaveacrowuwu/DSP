@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
      * The app's own HTTP client, handed to Coil.
      *
      * Photograph bytes need the bearer token, so the image loader has to be the same
-     * client as everything else — see [mv.muraka.ui.common.AuthedPhotoUrl].
+     * client as everything else - see [mv.muraka.ui.common.AuthedPhotoUrl].
      */
     @Inject lateinit var okHttpClient: OkHttpClient
 
