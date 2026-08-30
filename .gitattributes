@@ -1,2 +1,22 @@
-# Auto detect text files and perform LF normalization
+# Text files get LF normalisation on commit. Git decides what counts as text by
+# sniffing content, which is reliable but implicit - and this repository ships a
+# 15 MB model artefact whose corruption would be silent until the ML service
+# failed to start. The rules below take that decision away from the heuristic.
 * text=auto
+
+# The served model. Never normalise, never diff as text.
+*.onnx binary
+*.pt    binary
+*.pth   binary
+
+# Screenshots and other image evidence.
+*.png binary
+*.jpg binary
+*.jpeg binary
+
+# Fonts, archives and compiled artefacts that may appear under tooling.
+*.zip  binary
+*.jar  binary
+*.pdf  binary
+*.pptx binary
+*.docx binary

@@ -22,15 +22,20 @@ __pycache__/
 .venv/
 venv/
 
-# ML artefacts and datasets are large build outputs, never source
+# ML artefacts and datasets are large build outputs, never source - with one
+# deliberate exception. `active.onnx` is committed because deploy/docker-compose.yml
+# runs the ML service with FAKE_MODE=0, and onnxruntime raises NoSuchFile at import
+# when the artefact is absent, so a clone without it crash-loops the container and
+# `make up` never classifies anything. 15 MB is a cheap price for a working clone.
 /ml/models/*.onnx
+!/ml/models/active.onnx
 /ml/models/*.pt
 /ml/models/*.pth
 /ml/datasets/
 /ml/runs/
 # The corpora are build outputs; the code that evaluates against them is not.
-# Both domain-gap evaluations live in ml/eval/ so the method behind a figure in
-# the project is in version control even though its inputs are not.
+# Both domain-gap evaluations live in ml/eval/ so the method behind every figure in
+# docs/evidence/ is in version control even though its inputs are not.
 
 # Local environment
 .env
@@ -97,7 +102,3 @@ deploy/tls/certs/
 
 # Training run outputs: checkpoints, metrics, error galleries.
 /ml/training/runs/
-
-# The assembled report is a build output of scripts/build_report_docx.py.
-# The chapters are the source; committing the .docx would create a second copy to drift.
-/docs/report/Muraka-report.docx
