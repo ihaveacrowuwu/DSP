@@ -28,6 +28,9 @@ venv/
 /ml/models/*.pth
 /ml/datasets/
 /ml/runs/
+# The corpora are build outputs; the code that evaluates against them is not.
+# Both domain-gap evaluations live in ml/eval/ so the method behind a figure in
+# the project is in version control even though its inputs are not.
 
 # Local environment
 .env
