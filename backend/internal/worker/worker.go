@@ -9,6 +9,7 @@ package worker
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"sync"
@@ -89,7 +90,21 @@ func (w *Worker) processBatch(ctx context.Context) (int, error) {
 }
 
 func (w *Worker) processJob(ctx context.Context, job store.Job) {
-	log := w.log.With("job_id", job.ID, "photo_id", job.PhotoID, "attempt", job.Attempts)
+	// NFR12: the classification call is the only hop that crosses into the
+	// Python service in normal operation, and it had no correlation id on it -
+	// the middleware that assigns one only runs for inbound HTTP, and nothing
+	// inbound is on the stack here. The Python log line recorded request_id=None
+	// for every photograph the system has ever graded.
+	//
+	// The job id plus the attempt number is the correlation id: stable for a
+	// given attempt, distinct across retries of the same job, and already the
+	// key the Go-side log lines below are grouped by. It joins to the upload
+	// that produced the work through photo_id, which both sides log.
+	rid := fmt.Sprintf("%s#%d", job.ID, job.Attempts)
+	ctx = context.WithValue(ctx, mlclient.RequestIDKey, rid)
+
+	log := w.log.With("job_id", job.ID, "photo_id", job.PhotoID, "attempt", job.Attempts,
+		"request_id", rid)
 
 	if job.StorageKey == "" {
 		w.fail(ctx, job, "photo has no storage key", log)

@@ -60,6 +60,9 @@ type harness struct {
 	server *httptest.Server
 	store  *store.Store
 	pool   *pgxpool.Pool
+	// Kept so a test can run the real worker over the same images the API just
+	// wrote, which is the only way to exercise the Go-to-Python hop end to end.
+	imagesStore storage.Store
 }
 
 // newHarness brings up an isolated database, migrates it, and serves the real router
@@ -142,7 +145,7 @@ func newHarness(t *testing.T) *harness {
 	server := httptest.NewServer(api.Routes())
 	t.Cleanup(server.Close)
 
-	return &harness{t: t, server: server, store: st, pool: pool}
+	return &harness{t: t, server: server, store: st, pool: pool, imagesStore: images}
 }
 
 // replaceDatabase swaps the database name in a postgres URL, keeping credentials,
