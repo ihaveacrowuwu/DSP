@@ -164,8 +164,11 @@ android-install: ## Build and install on the running emulator or device
 android-lint: ## ktlint, detekt and Android Lint
 	cd android && ./gradlew qualityCheck
 
+# `test` and not `testDebugUnitTest`: core/common and core/model are plain JVM
+# modules, which never get the Android variant tasks, so testDebugUnitTest ran
+# 6 of the 47 tests and reported success. `test` covers both kinds.
 test-android: ## Android JVM unit tests
-	cd android && ./gradlew testDebugUnitTest
+	cd android && ./gradlew test
 
 ios-generate: ## Regenerate Muraka.xcodeproj from ios/project.yml
 	cd ios && xcodegen generate

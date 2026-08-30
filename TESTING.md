@@ -9,14 +9,22 @@ is not evidence, it is decoration - the value is in the rows that say **none**, 
 those are the project's honest limitations section and the build's to-do list at the
 same time.
 
-Of thirty-three requirements, **twenty** have full automated evidence, ten are partly
-covered and **three have none at all**. Those
-figures are tallied from the table below by `scripts/testing_matrix.py --check`, not
-written by hand - an early draft of this paragraph claimed sixteen when the true figure
-was three, which is exactly the kind of number a report should never carry unchecked.
+Of thirty-two live requirements, **twenty-five** have full automated evidence, six are
+partly covered and **one has none at all**. Those figures are tallied from the table
+below by `scripts/testing_matrix.py --check`, not written by hand - an early draft of
+this paragraph claimed sixteen when the true figure was three, which is exactly the kind
+of number a report should never carry unchecked.
 
-**Results below are from a real run on 2026-08-21**, not from memory. Reproduce with
-the commands in [Running everything](#running-everything).
+They were 20 / 10 / 2 until 2026-08-30, when the three gaps this document had been
+recording longest were closed: the dashboard views (FR7, FR8, FR12), upload validation
+(NFR5) and cross-service request tracing (NFR12). Two of the three turned out to be
+hiding defects rather than merely lacking tests, which is the argument for writing them
+and is set out under each below.
+
+**Results below are from a real run on 2026-08-30**, not from memory. Reproduce with
+the commands in [Running everything](#running-everything). Every suite except the
+Android instrumented tests was re-run that day; those need an emulator and were last
+run on 2026-08-21.
 
 ## How this document is kept honest
 
@@ -38,23 +46,37 @@ one shaped like a Go, Python or Swift test method - as a build failure.
 
 | Suite | Tests | Command | Needs |
 |---|---:|---|---|
-| Go unit | 40 | `make test-go` | nothing |
-| Go integration | 28 | `make test-go` | PostgreSQL+PostGIS; skips without it |
+| Go unit + integration | 91 | `make test-go` | PostgreSQL+PostGIS; integration skips without it |
 | ML service (pytest) | 15 | `make test-ml` | creates a venv on first run |
-| Dashboard (Vitest) | 84 | `make test-web` | `npm install` |
-| ML training | 41 | `make test-train` | `ml/training/requirements.txt` |
-| Android unit (JVM) | 47 | `cd android && ./gradlew testDebugUnitTest` | nothing |
+| Dashboard (Vitest) | 142 | `make test-web` | `npm install` |
+| ML training | 42 | `make test-train` | `ml/training/requirements.txt` |
+| Android unit (JVM) | 47 | `make test-android` | nothing |
 | Android instrumented | 20 | `cd android && ./gradlew connectedDebugAndroidTest` | an emulator |
 | iOS (XCTest + XCUITest) | 9 | `make test-ios` | a simulator; skips without the stack |
-| **Total automated** | **284** | `make test && make mobile` | |
+| **Total automated** | **366** | `make test && make mobile` | |
 | End-to-end smoke | 33 checks | `make smoke` | the running stack |
 | Performance | 4 checks | `make perf` | the stack, seeded to 10,000 |
 | Config checks | 5 + matrix | `make lint` | nothing |
 | Smoke over TLS | 33 checks | `make smoke-tls` | Docker |
 
-All 270 passed and all 33 smoke checks passed on 2026-08-21. The ML training suite
-grew from 29 to 41 on 2026-08-26 (corpus fetch and verification, plus the ONNX thread
-contract); those 41 were re-run and pass. The other suites have not been re-run since.
+**346 of the 366 passed on 2026-08-30 with none failing and none skipped**, along with
+all 33 smoke checks. The remaining 20 are the Android instrumented suite, which needs an
+emulator and was not re-run.
+
+Two of those figures moved for reasons worth recording rather than quietly restating.
+
+**Go went from 68 to 91** and the dashboard **from 84 to 142**: the upload suite
+(NFR5), the tracing suite (NFR12) and the three view suites (FR7/FR8/FR12) are new, and
+each of the three gaps they close is described below.
+
+**Android was never running 47 tests.** `make test-android` invoked
+`./gradlew testDebugUnitTest`, and `core:common` and `core:model` are plain JVM modules
+that never get the Android variant tasks - so the target ran **6** of the 47 and
+reported success, and had done since it was written. The counts in this document were
+right because the tests exist and pass; the command offered for reproducing them was
+not. It now runs `./gradlew test`, which covers both kinds, and all 47 pass. This is the
+sharpest illustration of why the document tallies from runs rather than from memory: a
+green build is not evidence that anything ran.
 
 The counts in this table are **runtime results from the runners** - what
 `Tests 84 passed` and `ok muraka/backend/...` actually reported.
@@ -85,12 +107,12 @@ virtualenv alone once counted as 11,917 Python tests.
 | FR4 | Submission is idempotent; retries never duplicate | Must | `TestReplayingASubmissionCreatesExactlyOneRow` (eight attempts, the outbox give-up threshold), `TestDepthAndNoteSurviveAReplay`; smoke 6 | ✅ |
 | FR5 | Classify each photo; record label, confidence, model version | Must | smoke 9, 10, 13; `test_classify_returns_one_patch_per_cell`, `test_label_follows_severity_threshold`, `test_severity_matches_bleached_patch_fraction`, `test_to_dict_shape_matches_go_client_contract`; plus `test_the_exported_onnx_agrees_with_the_pytorch_model`. **Trained model effnetb0-0.1.0 served since 2026-08-26** - 0.8575 accuracy / 0.9027 F2-bleached on the held-out test split, all 33 smoke checks pass with `FAKE_MODE=0` (`docs/evidence/ml/baseline-effnetb0.md`). Field accuracy is still unevidenced: the model has never seen a Maldivian reef (D60) | ✅ |
 | FR6 | Verification queue: confirm, correct, reject, audit-logged | Must | `TestRejectingASightingIsRecordedWithItsReasonAndAuthor`, `TestARejectionWithoutAReasonIsRefused`, `TestAnInvalidRejectReasonSaysSoRatherThanClaimingItIsMissing`; smoke 11-14 | ✅ |
-| FR7 | Map with clustering, heatmap, filters | Must | 14 `mapStyle` tests incl. `is valid against the MapLibre style specification`, `never lets a national-zoom cluster cover a whole atoll`; smoke 15 | ◐ |
-| FR8 | Full provenance per sighting | Must | smoke 13, 15 (CSV carries provenance columns) | ◐ |
+| FR7 | Map with clustering, heatmap, filters | Must | 14 `mapStyle` tests incl. `is valid against the MapLibre style specification`, `never lets a national-zoom cluster cover a whole atoll`; 16 `ReefMapView` tests incl. `asks for the bounding box the map is actually showing`, `applies the verified-only filter to both queries`, `re-queries after a pan, and coalesces a burst into one request`; smoke 15 | ✅ |
+| FR8 | Full provenance per sighting | Must | 21 `SightingDetailView` tests incl. `shows the model label, its confidence and the version that produced it`, `keeps the model's original claim visible after it was overruled`, `names who decided, what they decided, and when`; smoke 13, 15 (CSV carries provenance columns) | ✅ |
 | FR9 | Contributor sees own sightings with status | Must | `testSignInShowsTheContributorsOwnSightings`, `testSearchingAndFilteringNarrowsTheHistory`, `testTheScopeBarFiltersWhileSearchIsActive`, `testNoScreenClaimsASightingIsSynced`; `every server status maps to a status the client did not invent`, `a queued row reads as waiting, whatever the server last said` | ✅ |
 | FR10 | Admin: roles, bans, site data, model versions | Must | `TestPromotingAUserTakesEffectImmediately`, `TestDemotingAUserRemovesTheirAccess`, `TestBanningAUserStopsThemSigningIn`, `TestBanningAUserStopsTheirExistingSession`, `TestAnAdminCannotBanThemselves`, `TestActivatingAModelVersionLeavesExactlyOneActive`, `TestActivatingAnUnknownModelVersionIs404`, `TestAtollsAreUpsertedRatherThanDuplicated` | ✅ |
 | FR11 | Rejected sightings excluded from maps, trends, exports | Must | `TestRejectedSightingsAreExcludedFromMapTrendsAndExport` asserts all three paths; plus the SQL-builder unit tests | ✅ |
-| FR12 | Condition trends over time | Should | smoke 15 (trends returns buckets) | ◐ |
+| FR12 | Condition trends over time | Should | `draws one bar per bucket`, `carries the bleached share as well as the volume`, `changes the trend interval without changing the markers`, `applies the capture-date range to both queries`; smoke 15 (trends returns buckets) | ✅ |
 | FR13 | CSV export of the filtered set, with provenance | Should | smoke 15 | ✅ |
 | FR14 | Queue prioritises low-confidence predictions | Should | `TestTheVerificationQueuePutsLowConfidenceFirst` | ✅ |
 | FR15 | Auto-assign sightings to reef sites by polygon | Should | `TestASightingInsideASitePolygonIsAssignedToIt`, `TestCreatingASiteBackfillsSightingsAlreadyInside` | ✅ |
@@ -103,11 +125,19 @@ virtualenv alone once counted as 11,917 Python tests.
   situations (`docs/evidence/mobile/acceptance.md`). What is still not automated is the
   **capture flow itself** on either platform: nothing drives the camera, the position
   fallback or the 1-5 photo limit through the UI.
-- **FR7/FR8/FR12** - the map style, the basemap, the condition chip and the patch
-  lattice are now covered, but the **views** are not: nothing mounts `QueueView`,
-  `ReefMapView` or `SightingDetailView`, so a filter control or a provenance panel could
-  break without failing anything. The component harness now exists, so this is work
-  rather than groundwork.
+- **FR7/FR8/FR12** - closed on 2026-08-30. All three views are now mounted: 58 tests
+  across `QueueView.dom.test.ts`, `SightingDetailView.dom.test.ts` and
+  `ReefMapView.dom.test.ts`, aimed at the failures the API cannot catch because the API
+  would be behaving correctly while storing the wrong thing - a correction sending the
+  model's label instead of the reviewer's, a filter reaching the marker query but not
+  the trend query. MapLibre is faked; it needs a WebGL context no headless DOM provides,
+  and the behaviour under test is the view's. Each suite was checked by mutation:
+  breaking the view three ways failed the tests that name those behaviours.
+
+  Writing them found a leak in `QueueView`. `onMounted` awaited the detail load after the queue load, but loading the queue had already moved `current` off null and
+  triggered the watcher that does the same thing - two detail fetches and two image
+  downloads raced on every mount, and whichever object URL lost was overwritten without
+  being revoked.
 - **FR16** - the dashboard's side of the unusable-photograph rule is tested; the
   mobile warning is not.
 - **FR17** - no evidence. It is a Could, and it is blocked on the training track: there
@@ -135,13 +165,13 @@ is the argument for having written them:
 | NFR2 | CPU inference ≤ 500 ms per image | Must | **405 ms p50 / 414 ms p95** per photograph (a 25-patch lattice) for the trained effnetb0-0.1.0 model on ONNX/CPU at the deployed `ONNX_THREADS=4` - `docs/evidence/performance/nfr2-backbone-comparison.json`. **Met on the CPU, missed in the container: 822 ms through Docker Desktop's macOS VM** (D67), which no thread count recovers and INT8 quantisation could not fix without costing 14 points of bleached recall (D68). Two earlier figures were wrong for instructive reasons - 381 ms measured the wrong thread count (D64) | ◐ |
 | NFR3 | Map interactive at 10,000 sightings; viewport ≤ 2 s | Must | `make perf` - **56 ms** worst of 5 at 10,304 sightings; the check fails if the corpus is smaller | ✅ |
 | NFR4 | argon2id, TLS in the demo config, JWT ≤ 15 min | Must | argon2id: `TestHashPasswordIsSaltedPerCall`, `TestHashPasswordProducesVerifiableArgon2idHash`; expiry: `TestParseAccessTokenRejectsExpiredToken`; refresh: `TestRefreshTokenStoresOnlyItsHash`, `TestRefreshTokensAreUnique`; TLS: `make lint` static checks + `make smoke-tls` (33 checks over TLS 1.3) | ✅ |
-| NFR5 | Validate, re-encode and strip EXIF from uploads | Must | smoke 8 refuses a non-image | ◐ |
+| NFR5 | Validate, re-encode and strip EXIF from uploads | Must | 10 upload tests incl. `TestUploadRefusesADecompressionBomb` (asserted on allocation, not only status), `TestUploadRejectsAFileOverTheSizeCap`, `TestUploadKeepsExifFactsAndStripsTheRest`; 11 `internal/imagemeta` tests incl. `TestMalformedExifIsSurvivedRatherThanTrusted`, `TestAPositionWithNoHemisphereIsDiscarded`; smoke 8 | ✅ |
 | NFR6 | Capture completable in < 60 s and ≤ 8 taps | Must | **5 taps**, counted from the capture code (6 on the first ever capture, including the permission grant). The **timing** has never been measured | ◐ |
 | NFR7 | Contributor app fully functional offline except register/login | Must | the 8 `SyncEngineOfflineTest` cases, `journalsWriteAheadSoAReaderNeverBlocksTheCaptureFlow`, `commitsReachTheStorageMediumBeforeEnqueueReturns`, `DurabilityPragmaTests`; plus a device walkthrough with the radio off - GPS resolved, camera captured (`docs/evidence/mobile/acceptance.md`) | ✅ |
 | NFR9 | No component depends on a key-requiring external service | Must | `make mobile-lint` fails on an App Transport Security exception in a release plist; the basemap is committed vector GeoJSON with no tile or glyph server (D22/D23) | ◐ |
 | NFR10 | Startable by one documented command; seed by one more | Must | `make up`, `make seed`; `make test`, `make test-ml`, `make test-web` and `make smoke` were all broken before 2026-08-21 and now run (D42) | ◐ |
 | NFR11 | 50 concurrent sighting submissions with no error or loss | Should | `make perf` - **0 errors, 0 lost**, 919/s; every client-generated id is read back afterwards | ✅ |
-| NFR12 | Request IDs propagated through Go and Python logs | Should | - | ○ |
+| NFR12 | Request IDs propagated through Go and Python logs | Should | `TestTheClassificationCallCarriesACorrelationID`, `TestARetriedJobIsDistinguishableFromItsFirstAttempt`, `TestAnInboundRequestIDIsReusedRatherThanReplaced`, `TestEveryResponseCarriesARequestIDEvenWithoutOne` | ✅ |
 | NFR13 | ML-only labels visually distinct from expert-verified | Must | `says "expert" when a human decided`, `says "model" when only the classifier has`, `is distinguishable with every colour class stripped`, `marks the two with different classes, so shape and border can differ`; both apps encode it in shape and word too (`docs/evidence/mobile/`) | ✅ |
 | NFR14 | Material 3 / Liquid Glass; light and dark on both | Must | `testTheAppearanceToggleDarkensEveryScreen`, `testTheAppearanceChoiceIsRemembered`, `testTheLastRowIsReachableUnderTheFloatingTabBar`, `testThePatchGridCanBeTurnedOffAndStaysOff`; Android night resources verified with `aapt2 dump` (D33) | ✅ |
 | NFR15 | Account deletion anonymises rather than deletes, and says so | Should | `TestDeletingAnAccountKeepsTheScienceAndDropsThePerson` | ✅ |
@@ -164,10 +194,23 @@ is the argument for having written them:
   the demo certificate is **self-signed**, because NFR9 rules out a certificate
   authority. A browser warns on first visit. That is the honest cost of the key-free
   constraint, not a defect.
-- **NFR5** - refusing a non-image is the easy half. Nothing tests the size cap, a
-  hostile file (a valid image header with a huge decompressed size), or that EXIF is
-  stripped *after* capture time and GPS are extracted - which is a privacy claim the
-  report makes.
+- **NFR5** - closed on 2026-08-30, and it was hiding two defects rather than one gap.
+
+  **The hostile file was not hypothetical.** A PNG's IHDR declares its dimensions and
+  the decoder sizes its pixel buffer from that before reading a scanline, so the size
+  checks - all of which measure bytes on the wire - passed a file that costs gigabytes
+  to decode. Measured against the handler as it stood: **a 77-byte upload allocated
+  244 MiB** at 8000x8000, and 30000x30000 would have asked for 3.6 GB. The handler now
+  reads the header first and refuses anything over 80 MP or 20,000 pixels on a side.
+
+  **The EXIF clause was satisfied by doing nothing.** NFR5 says "stripping EXIF *after*
+  extracting capture time and GPS". The stripping was implemented; the extracting never
+  was. The exif_captured_at and exif_location columns have existed since the first
+  migration and were always NULL, so the ordering held only in the sense that discarding
+  data trivially satisfies any claim about handling it first. `internal/imagemeta` now
+  reads both, before the re-encode destroys them. The test asserts both halves at once -
+  the row carries what the camera recorded, and the bytes served back no longer do -
+  because each half is trivially satisfiable alone.
 - **NFR6** - half done. The tap count is now counted from the code rather than claimed:
   **5**, or 6 on the first capture. The **timing** is still unmeasured, and its
   verification method is "usability testing measurement", so a stopwatch and a person is
@@ -185,8 +228,16 @@ is the argument for having written them:
   clears comfortably. The honest alternative was a rushed five-person study behind an
   unresolved ethics process (Q5). Usability is now evidenced by **NFR6** instead - 5 taps,
   counted from the capture code, with the timing still to be measured.
-- **NFR12** - no evidence. Request IDs propagated across Go and Python needs log
-  assertions rather than a harness.
+- **NFR12** - closed on 2026-08-30, and writing the assertion showed the requirement was
+  implemented for a path nothing uses. The middleware puts a correlation id on inbound
+  HTTP and `mlclient` forwards it, which covers a request that calls the classifier
+  synchronously - and no request does. Classification runs in the **worker**, draining a
+  queue with no inbound request on the stack, so every call the system had ever made to
+  the Python service went out with no `X-Request-ID`, and every Python log line for a
+  graded photograph recorded `request_id=None`. The worker now derives one from the job
+  id and attempt number, distinct across retries so a retry is not mistaken for a
+  duplicated log line. The tests assert the header on the wire rather than words in a
+  log: a log line proves the Go side meant to correlate, the header proves it can.
 
 ## Where the tests live
 
