@@ -190,9 +190,27 @@ def main() -> int:
         ids = ids[: args.limit]
     print(f"{len(ids)} images have both annotations and pixels", file=sys.stderr)
 
+    # Results are appended to a JSONL sidecar as they are produced, and any that
+    # are already there are skipped on a restart. A 1,612-image run takes about
+    # 25 minutes against a CPU-only service; losing all of it because the process
+    # was interrupted at minute 24 is a bad trade for the few lines this costs.
+    partial = args.out.with_suffix(".jsonl")
+    partial.parent.mkdir(parents=True, exist_ok=True)
     results = []
+    if partial.exists():
+        with partial.open() as handle:
+            for line in handle:
+                line = line.strip()
+                if line:
+                    results.append(json.loads(line))
+        print(f"resuming: {len(results)} images already scored", file=sys.stderr)
+
+    done = {r["id"] for r in results}
+    ids = [q for q in ids if q not in done]
+
     latencies = []
     started = time.time()
+    sink = partial.open("a")
 
     for index, quadrat_id in enumerate(ids, start=1):
         image = Image.open(paths[quadrat_id]).convert("RGB")
@@ -208,7 +226,7 @@ def main() -> int:
         prediction = classify(buffer.getvalue())
         latencies.append((time.time() - call_started) * 1000)
 
-        results.append(
+        record = (
             {
                 "id": quadrat_id,
                 "campaign": "2015" if quadrat_id.startswith("37") else "2017",
@@ -224,6 +242,9 @@ def main() -> int:
                 },
             }
         )
+        results.append(record)
+        sink.write(json.dumps(record) + "\n")
+        sink.flush()
 
         if index % 50 == 0:
             elapsed = time.time() - started
@@ -233,6 +254,7 @@ def main() -> int:
                 file=sys.stderr,
             )
 
+    sink.close()
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(
         json.dumps(
@@ -240,7 +262,7 @@ def main() -> int:
                 "model_version": results[0]["pred"]["model_version"] if results else None,
                 "grid": GRID,
                 "evaluable": len(results),
-                "considered": len(ids),
+                "considered": len(ids) + len(done),
                 "latency_ms": {
                     "p50": round(statistics.median(latencies), 1) if latencies else None,
                     "p95": (
