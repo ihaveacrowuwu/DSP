@@ -220,7 +220,7 @@ def main() -> int:
                     "severity": prediction["severity"],
                     "confidence": prediction["confidence"],
                     "patches": prediction["patches"],
-                    "modelVersion": prediction.get("modelVersion"),
+                    "model_version": prediction.get("model_version"),
                 },
             }
         )
@@ -237,7 +237,7 @@ def main() -> int:
     args.out.write_text(
         json.dumps(
             {
-                "model_version": results[0]["pred"]["modelVersion"] if results else None,
+                "model_version": results[0]["pred"]["model_version"] if results else None,
                 "grid": GRID,
                 "evaluable": len(results),
                 "considered": len(ids),
