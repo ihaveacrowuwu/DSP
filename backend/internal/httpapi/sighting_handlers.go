@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 
 	"muraka/backend/internal/domain"
+	"muraka/backend/internal/imagemeta"
 	"muraka/backend/internal/storage"
 	"muraka/backend/internal/store"
 )
@@ -200,6 +201,15 @@ func (a *API) handleUploadPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// NFR5 in the order the requirement states it: extract capture time and GPS
+	// *first*, because the re-encode below destroys them irreversibly. Failure
+	// here is never fatal - most photographs carry no position, and an upload
+	// must not be refused because its metadata was odd or absent.
+	meta, err := imagemeta.FromJPEG(raw)
+	if err != nil {
+		a.log.DebugContext(r.Context(), "no usable exif", "photo", photoID, "reason", err)
+	}
+
 	// Re-encode as JPEG: strips EXIF (including any GPS the contributor did not
 	// intend to share) while keeping the pixels we need for inference.
 	var normalised bytes.Buffer
@@ -228,6 +238,14 @@ func (a *API) handleUploadPhoto(w http.ResponseWriter, r *http.Request) {
 		Width:       bounds.Dx(),
 		Height:      bounds.Dy(),
 		Bytes:       len(stored),
+
+		// Kept for provenance, never as the authoritative values: the sighting
+		// carries the position and time the app recorded, and these are what the
+		// camera claimed. Where they disagree, that disagreement is worth having
+		// - a gallery import of an old photograph is exactly the case the
+		// sighting's own timestamp cannot describe.
+		ExifCapturedAt: meta.CapturedAt,
+		ExifLocation:   exifPoint(meta),
 	})
 	if err != nil {
 		a.writeStoreError(w, r, err, "sighting not found")
@@ -362,4 +380,14 @@ func (a *API) handleGetPhotoImage(w http.ResponseWriter, r *http.Request) {
 	if _, err := io.Copy(w, reader); err != nil {
 		a.log.WarnContext(r.Context(), "stream image aborted", "error", err)
 	}
+}
+
+// exifPoint converts the parser's optional pair into the store's optional point.
+// Both coordinates or neither: imagemeta already refuses half a fix, and this
+// keeps that invariant visible at the boundary rather than assumed across it.
+func exifPoint(meta imagemeta.Metadata) *domain.Point {
+	if meta.Lat == nil || meta.Lon == nil {
+		return nil
+	}
+	return &domain.Point{Lat: *meta.Lat, Lon: *meta.Lon}
 }

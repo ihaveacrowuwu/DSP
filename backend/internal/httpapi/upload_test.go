@@ -19,6 +19,7 @@ import (
 	"github.com/google/uuid"
 
 	"muraka/backend/internal/domain"
+	"muraka/backend/internal/imagemeta"
 )
 
 // photoCount reads the number of photographs actually stored for a sighting.
@@ -300,4 +301,113 @@ func TestUploadRefusesAPhotographForAnotherContributorsSighting(t *testing.T) {
 	if status != http.StatusForbidden {
 		t.Fatalf("cross-contributor upload: got %d, want 403", status)
 	}
+}
+
+// TestUploadKeepsExifFactsAndStripsTheRest is NFR5's ordering clause end to end:
+// "stripping EXIF after extracting capture time and GPS".
+//
+// The two halves have to be asserted together, because each is trivially
+// satisfiable alone. Stripping everything and keeping nothing passes any test
+// that only looks at the stored file; keeping everything passes any test that
+// only looks at the database. This checks that the facts reached the row *and*
+// that the bytes on disk no longer carry them.
+func TestUploadKeepsExifFactsAndStripsTheRest(t *testing.T) {
+	h := newHarness(t)
+	diver := h.signUp(domain.RoleContributor)
+	sighting := h.newSighting(diver, 4.05, 72.94)
+
+	photoID := uuid.New()
+	captured := time.Date(2026, 8, 20, 8, 30, 0, 0, time.UTC)
+	withExif := jpegWithExif(t, captured, 4.0520, 72.9481)
+
+	status, body := h.upload(sighting, diver.Token, photoID, "reef.jpg", withExif)
+	if status != http.StatusCreated {
+		t.Fatalf("upload: got %d, want 201 - body: %s", status, body)
+	}
+
+	// Extracted: the row carries what the camera recorded.
+	gotTime, gotLat, gotLon := h.exifOf(photoID)
+	if gotTime == nil || !gotTime.Equal(captured) {
+		t.Fatalf("exif_captured_at: got %v, want %s", gotTime, captured)
+	}
+	if gotLat == nil || gotLon == nil {
+		t.Fatal("exif_location was not stored; the GPS fix was discarded")
+	}
+	if *gotLat < 4.051 || *gotLat > 4.053 || *gotLon < 72.947 || *gotLon > 72.949 {
+		t.Fatalf("exif_location: got %f,%f - want about 4.0520,72.9481", *gotLat, *gotLon)
+	}
+
+	// Stripped: whatever is served back no longer carries the block.
+	stored := h.photoBytes(diver.Token, photoID)
+	if bytes.Contains(stored, []byte("Exif\x00\x00")) {
+		t.Fatal("the stored image still carries an EXIF segment")
+	}
+	leftover, err := imagemeta.FromJPEG(stored)
+	if err == nil && (leftover.CapturedAt != nil || leftover.Lat != nil) {
+		t.Fatalf("EXIF survived the re-encode: %+v", leftover)
+	}
+}
+
+func TestUploadAcceptsAPhotographWithNoExifAtAll(t *testing.T) {
+	h := newHarness(t)
+	diver := h.signUp(domain.RoleContributor)
+	sighting := h.newSighting(diver, 4.05, 72.94)
+
+	// The common case. Missing metadata must never cost a contributor their
+	// sighting, so this is a 201 with null columns, not a refusal.
+	photoID := uuid.New()
+	status, _ := h.upload(sighting, diver.Token, photoID, "reef.jpg", jpegOf(t, 64, 64))
+	if status != http.StatusCreated {
+		t.Fatalf("upload without exif: got %d, want 201", status)
+	}
+
+	when, lat, lon := h.exifOf(photoID)
+	if when != nil || lat != nil || lon != nil {
+		t.Fatalf("metadata invented for a file that had none: %v %v %v", when, lat, lon)
+	}
+}
+
+// exifOf reads back the EXIF columns for a photograph.
+func (h *harness) exifOf(photoID uuid.UUID) (*time.Time, *float64, *float64) {
+	h.t.Helper()
+	var when *time.Time
+	var lat, lon *float64
+	err := h.pool.QueryRow(context.Background(), `
+		SELECT exif_captured_at,
+		       ST_Y(exif_location::geometry),
+		       ST_X(exif_location::geometry)
+		FROM photo WHERE id = $1`, photoID).Scan(&when, &lat, &lon)
+	if err != nil {
+		h.t.Fatalf("read exif columns: %v", err)
+	}
+	if when != nil {
+		utc := when.UTC()
+		when = &utc
+	}
+	return when, lat, lon
+}
+
+// photoBytes fetches the stored image back through the API, which is the only
+// form of it a contributor or researcher ever sees.
+func (h *harness) photoBytes(token string, photoID uuid.UUID) []byte {
+	h.t.Helper()
+	req, err := http.NewRequest(http.MethodGet,
+		fmt.Sprintf("%s/v1/photos/%s/image", h.server.URL, photoID), nil)
+	if err != nil {
+		h.t.Fatalf("build image request: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	res, err := h.server.Client().Do(req)
+	if err != nil {
+		h.t.Fatalf("fetch image: %v", err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		h.t.Fatalf("fetch image: got %d, want 200", res.StatusCode)
+	}
+	out, err := io.ReadAll(res.Body)
+	if err != nil {
+		h.t.Fatalf("read image: %v", err)
+	}
+	return out
 }
