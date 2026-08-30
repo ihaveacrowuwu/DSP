@@ -178,8 +178,11 @@ watch(current, () => void loadCurrentDetail())
 
 onMounted(async () => {
   window.addEventListener('keydown', onKey)
+  // No loadCurrentDetail() here. Loading the queue moves `current` off null,
+  // which the watcher above already answers; calling it as well ran two detail
+  // fetches and two image downloads concurrently, and whichever object URL lost
+  // the race was overwritten without being revoked - a leak on every mount.
   await loadQueue()
-  await loadCurrentDetail()
 })
 
 onUnmounted(() => {
