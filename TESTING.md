@@ -211,10 +211,15 @@ is the argument for having written them:
   reads both, before the re-encode destroys them. The test asserts both halves at once -
   the row carries what the camera recorded, and the bytes served back no longer do -
   because each half is trivially satisfiable alone.
-- **NFR6** - half done. The tap count is now counted from the code rather than claimed:
-  **5**, or 6 on the first capture. The **timing** is still unmeasured, and its
-  verification method is "usability testing measurement", so a stopwatch and a person is
-  what closes it - not another test.
+- **NFR6** - half done, and the other half is deliberately left open rather than filled
+  with a weak number. The tap count is counted from the code rather than claimed: **5**, or
+  6 on the first capture. The **timing** is unmeasured, and its verification method is
+  "usability testing measurement", so a stopwatch and a person is what closes it - not
+  another test, and not an emulator. Timing on the emulator was considered on 2026-08-30
+  and rejected: it returns a mock position instantly and photographs a virtual scene, so it
+  fakes GPS acquisition and camera focus, which are the two steps that dominate capture
+  time in the water. What it would measure is navigation between five taps, which was never
+  what threatened the 60-second budget. No physical handset is available, so this stays ◐.
 - **NFR7** - closed. Durability was already proven by reading the pragmas back; the
   network half is now eight instrumented tests with the server unreachable, a process
   restart between drains and a connection dropped mid-upload; and the capture screen was
