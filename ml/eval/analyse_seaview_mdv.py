@@ -103,12 +103,27 @@ def main() -> int:
     print("An image is positive when the model calls it bleached.")
     print()
 
+    # The last two cuts exist to be comparable with the Coralscapes run, which
+    # called an image bleached when bleached classes covered >=5% of the centre
+    # square's *area*. Points sample area uniformly, so bleached points as a
+    # share of all points estimates that same quantity; bleached as a share of
+    # coral points is a different and much more sensitive question, and the two
+    # are reported apart because conflating them would make the Maldivian recall
+    # look worse than the Red Sea recall for reasons of definition alone.
     cuts = {
         ">=1 bleached point": lambda t: t["bleached_points"] >= 1,
         ">=2 bleached points": lambda t: t["bleached_points"] >= 2,
         ">=5% of coral points": lambda t: (
             t["bleached_share_of_coral"] is not None
             and t["bleached_share_of_coral"] >= 0.05
+        ),
+        ">=1% of area (all points)": lambda t: (
+            t["random_points"]
+            and t["random_bleached_points"] / t["random_points"] >= 0.01
+        ),
+        ">=5% of area (all points)": lambda t: (
+            t["random_points"]
+            and t["random_bleached_points"] / t["random_points"] >= 0.05
         ),
     }
 
