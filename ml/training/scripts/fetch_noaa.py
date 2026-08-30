@@ -6,11 +6,11 @@
 
 Roughly 768 MB into `ml/datasets/noaa`, which `.gitignore` excludes - imagery is never
 stageable. The manifest it writes to `ml/training/manifests/noaa.sha256` **is** committed:
-it is small, and it is the project's evidence that the corpus behind the numbers is the
-corpus a reader would download.
+it is small, and it is the evidence that the corpus behind the numbers is the corpus a
+reader would download.
 
 The dataset carries a requested citation and a NOAA as-is disclaimer; both are printed
-on success so they reach the project's data section.
+on success so they are not lost.
 """
 
 from __future__ import annotations
@@ -80,7 +80,7 @@ def main() -> int:
         print(f"manifest sha256: {digest}")
 
     print(f"\nCite as: {corpus_module.CITATION}")
-    print(f"Disclaimer owed in the project's data section: {corpus_module.DISCLAIMER}")
+    print(f"Disclaimer owed wherever these numbers are published: {corpus_module.DISCLAIMER}")
     return 0
 
 

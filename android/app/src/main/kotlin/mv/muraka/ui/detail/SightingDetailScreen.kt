@@ -301,8 +301,8 @@ private fun AssessmentCard(prediction: Prediction, verified: Boolean) {
         }
 
         Readout(
-            // Provenance: `fake-0.0.0` means no trained model is loaded yet, and a reader of
-            // the project needs to be able to tell which screenshots predate the real one.
+            // Provenance: `fake-0.0.0` means no trained model is loaded yet, so a reader
+            // can tell which screenshots predate the real one.
             label = "Model",
             value = prediction.modelVersion,
             style = MaterialTheme.typography.bodySmall,

@@ -40,7 +40,7 @@ object MurakaTheme {
 fun MurakaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     /**
-     * Off in screenshot tests and in the project's figures, so the same screen is the same
+     * Off in screenshot tests and when capturing figures, so the same screen is the same
      * colour every time it is captured. On everywhere else, because a phone that themes
      * itself to its owner is what Material 3 asks for.
      */
@@ -75,8 +75,8 @@ fun MurakaTheme(
  * The fallback scheme below Android 12, seeded from the one accent the three clients
  * share - reef teal.
  *
- * Hand-written rather than generated so the below-12 appearance is reviewable in the
- * report next to the dynamic one.
+ * Hand-written rather than generated so the below-12 appearance can be reviewed
+ * side by side with the dynamic one.
  */
 private val Seed = Color(0xFF0F8168)
 private val SeedDark = Color(0xFF2EC8A2)

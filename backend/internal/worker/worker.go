@@ -1,6 +1,6 @@
 // Package worker drains the classification queue.
 //
-// Design note (for the project): the queue lives in PostgreSQL and is claimed
+// Design note: the queue lives in PostgreSQL and is claimed
 // with FOR UPDATE SKIP LOCKED rather than introducing Redis or a message broker.
 // At this project's scale that removes a whole deployable component while still
 // giving at-least-once delivery, crash recovery and horizontal scalability.

@@ -12,7 +12,7 @@ the input size and the runtime - not of what the weights learned - so an untrain
 times identically to a trained one. That is also why this script does not download
 ImageNet weights: they would cost bandwidth and change nothing. The caveat travels in the
 output file rather than living only in this docstring, because the file is what a reader
-of the project sees.
+actually sees.
 
 Two things are held fixed on purpose:
 

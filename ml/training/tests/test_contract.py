@@ -144,6 +144,6 @@ def test_the_benchmark_measures_the_threads_the_stack_deploys():
 
     assert export_module.SERVICE_INTRA_OP_THREADS == deployed, (
         f"the benchmark measures {export_module.SERVICE_INTRA_OP_THREADS} intra-op threads but the "
-        f"stack deploys {deployed}. Every NFR2 figure in the project would describe a configuration "
+        f"stack deploys {deployed}. Every NFR2 figure would describe a configuration "
         "nobody runs. Change both together, and re-run scripts/bench_backbones.py."
     )

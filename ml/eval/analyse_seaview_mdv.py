@@ -1,11 +1,11 @@
-"""Turn the Seaview Maldives run into the numbers the project quotes.
+"""Turn the Seaview Maldives run into the headline numbers.
 
 Kept separate from the run itself so the expensive part - 1,612 calls to a
 CPU-only classifier - is done once and every question is asked of the same
 stored predictions. Nothing here touches the model or the thresholds.
 
 Everything reported is either a count or derived from counts that are printed
-alongside it, so any figure quoted in the project can be traced back to how many
+alongside it, so any figure quoted from this run can be traced back to how many
 images or cells produced it. Where a denominator is small the script says so
 rather than printing a ratio that looks as solid as one drawn from thousands.
 """

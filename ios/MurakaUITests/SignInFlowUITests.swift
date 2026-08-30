@@ -3,8 +3,8 @@ import XCTest
 /// End-to-end through the real app against the local stack.
 ///
 /// This is the only test in the project that exercises the actual networking, the Keychain
-/// and the outbox together, so it is also where the screenshots for the project come from
-/// captured from a real run rather than staged by hand.
+/// and the outbox together, so it is also where the iOS screenshots in docs/evidence come
+/// from - captured from a real run rather than staged by hand.
 ///
 /// Requires the stack to be up (`make up && make seed`). It skips rather than fails when it
 /// is not, because a red suite on a machine with no Docker running tells nobody anything.

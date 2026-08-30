@@ -31,8 +31,8 @@ verification-first design exists to catch. Best configuration found was Percenti
 with per-channel weights and the classifier and stem left in float, and even that was
 -12 points of recall. See D67 and `docs/evidence/performance/nfr2-quantisation.md`.
 
-Keep this script: the experiment is report evidence, and it is the right tool if the
-backbone, the task or the deployment target ever changes. Do not serve its output without
+Keep this script: the experiment is the evidence for that decision, and it is the right
+tool if the backbone, the task or the deployment target ever changes. Do not serve its output without
 re-measuring **recall on the bleached class**, not accuracy.
 
 **Calibration uses the TRAIN split only.** Not val, which selects the checkpoint, and

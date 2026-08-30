@@ -11,7 +11,7 @@ import UIKit
 /// 3. **A word** - literally "model" or "expert".
 ///
 /// That redundancy is the requirement. It survives greyscale, it survives colour blindness,
-/// and it survives a screenshot pasted into the project at 60% scale.
+/// and it survives a screenshot pasted into a document at 60% scale.
 final class ProvenanceChipView: UIView {
     private let border = CAShapeLayer()
     private let markerView = UIView()

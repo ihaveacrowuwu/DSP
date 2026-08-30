@@ -6,8 +6,8 @@ Reproducibility is the kind of claim that is easy to assert and easy to be wrong
 because there are more sources of randomness than anyone remembers: Python's `random`,
 NumPy, Torch's global generator, the DataLoader's shuffle, and the weighted sampler used
 for the minority class. Missing any one of them produces runs that are *nearly* the same,
-which is worse than obviously different - the project would claim reproducibility and a
-marker re-running it would get other numbers.
+which is worse than obviously different - this project would claim reproducibility and
+anyone re-running it would get other numbers.
 
 These runs are deliberately tiny (two epochs, a few hundred synthetic images, a small
 backbone with no pretrained download) so the suite stays runnable. What they test is the

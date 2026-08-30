@@ -5,7 +5,7 @@ download that can go wrong in ways nothing downstream would notice:
 
 * **A different corpus.** HuggingFace repositories are mutable. A re-download months
   later can bring more images, fewer images, or a re-cut split, and the run that
-  produced the project's headline number would no longer be repeatable. So the split
+  produced this project's headline number would no longer be repeatable. So the split
   totals and per-class counts from the dataset card are asserted here, and a mismatch
   stops the fetch rather than being written into a log.
 * **A different layout.** `data.folder_map` translates `CORAL`/`CORAL_BL` onto this
@@ -14,9 +14,9 @@ download that can go wrong in ways nothing downstream would notice:
 * **Silent corruption.** A truncated image decodes to something; it does not raise.
 
 What answers all three is a manifest: every file's SHA-256, sorted, written to a small
-committed text file. It is the project's provenance evidence - the one line a reader
-needs to know the corpus that produced the numbers is the corpus they downloaded - and
-it costs one pass over 768 MB.
+committed text file. It is the provenance evidence - the one line a reader needs to
+know the corpus that produced the numbers is the corpus they downloaded - and it costs
+one pass over 768 MB.
 
 Anonymity is deliberate and not incidental. `snapshot_download` is called with
 `token=False`, which stops it consulting a cached login: the project forbids anything
@@ -250,8 +250,8 @@ def build_manifest(root: Path) -> str:
 def write_manifest(root: Path, destination: Path) -> tuple[Path, str, int]:
     """Write the manifest and return `(path, its own sha256, file count)`.
 
-    The manifest's own digest is what makes provenance quotable in one line: a report can
-    cite a single hash instead of a ten-thousand-line file.
+    The manifest's own digest is what makes provenance quotable in one line: cite a
+    single hash instead of a ten-thousand-line file.
     """
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)

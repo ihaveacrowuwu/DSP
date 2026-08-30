@@ -33,7 +33,7 @@ issues a certificate locally instead:
 ```
 
 A browser will show a warning the first time. **That warning is the honest consequence
-of the key-free constraint, not a defect**, and the project says so rather than hiding it
+of the key-free constraint, not a defect**, and it is documented rather than hidden
 behind a screenshot taken after clicking through. The certificate carries
 `subjectAltName` for `localhost`, `muraka.local`, `127.0.0.1` and `::1` - a certificate
 with only a `commonName` is rejected outright by browsers and by Go's TLS stack, not

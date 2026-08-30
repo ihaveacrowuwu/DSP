@@ -35,7 +35,7 @@ import mv.muraka.core.designsystem.theme.MurakaTheme
  * 3. **A word** - literally "model" or "expert".
  *
  * That redundancy is the requirement. It survives greyscale, it survives colour
- * blindness, and it survives a screenshot pasted into the project at 60% scale.
+ * blindness, and it survives a screenshot pasted into a document at 60% scale.
  *
  * *Standard component rejected:* M3's chips (`AssistChip`, `FilterChip`, `SuggestionChip`)
  * are all interactive by definition - they take an `onClick` and carry the affordances of

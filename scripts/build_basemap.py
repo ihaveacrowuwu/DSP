@@ -6,7 +6,7 @@ Why this exists
 The reef map used to render sighting markers over an empty background: without a
 tile server there was no geography, so the map was a scatter of dots with nothing
 to locate them against. The project forbids depending on any third-party service
-(no keys, and nothing that has to be reachable during a demo demo), so a hosted
+(no keys, and nothing that has to be reachable during a live demo), so a hosted
 basemap - even a keyless one - is not something we want to rely on.
 
 Instead the geography ships with the bundle. The Maldives is small enough that

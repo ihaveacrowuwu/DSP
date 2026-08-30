@@ -75,7 +75,7 @@ GPS is acquired automatically, and depth, note and self-assessment are all optio
 5 thereafter - both inside the limit.
 
 **< 60 seconds: still not measured.** NFR6's verification method is "usability testing
-measurement", and a tap count is not a stopwatch. This stays open, and the project should
+measurement", and a tap count is not a stopwatch. This stays open, and any claim should
 say so rather than infer the timing from the tap count.
 
 ## Capture with the radio off: walked, on a cold-booted emulator

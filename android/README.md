@@ -77,7 +77,7 @@ Material 3, with **dynamic colour** from the wallpaper where it is available. Th
 chrome only. The condition scale, the severity ramp and the signal colours are data - they
 carry scientific meaning - so they live in `MurakaTheme.reef`, and nothing connects a
 wallpaper to them. A user's home screen deciding what "bleached" looks like would corrupt the
-reading and make two screenshots in the project disagree.
+reading and make the same screen disagree with itself across two phones.
 
 ## Commands
 

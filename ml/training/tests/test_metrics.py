@@ -2,7 +2,7 @@
 
 The headline metric is F2 on the bleached class - recall weighted four times as heavily
 as precision, because a missed bleaching event costs more than a false alarm. That is a
-scientific decision the project defends, so the arithmetic behind it is checked rather
+scientific decision rather than a default, so the arithmetic behind it is checked rather
 than assumed, and checked against values a reader can verify with a calculator.
 """
 

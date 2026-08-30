@@ -53,7 +53,7 @@
   },
 
   "provenance": {
-    "$comment": "NFR13. A model label must never be mistaken for an expert verdict, and the distinction must survive greyscale, colour blindness and a screenshot in the project. Encode it in SHAPE and WORDS, never in colour alone. Express it with each platform's own chip/badge component - an M3 FilterChip or an iOS bordered label - not by reproducing the web's markup.",
+    "$comment": "NFR13. A model label must never be mistaken for an expert verdict, and the distinction must survive greyscale, colour blindness and a downscaled screenshot. Encode it in SHAPE and WORDS, never in colour alone. Express it with each platform's own chip/badge component - an M3 FilterChip or an iOS bordered label - not by reproducing the web's markup.",
     "verified": { "border": "solid", "markerFill": "filled", "word": "expert" },
     "predicted": { "border": "dashed", "markerFill": "hollow", "word": "model" }
   },

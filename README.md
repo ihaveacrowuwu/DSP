@@ -9,7 +9,101 @@ contributors capture geotagged reef photographs in offline-first mobile apps, a
 model grades each photograph patch by patch, and marine researchers confirm or
 correct every result before it counts as data.
 
-📚 Design rationale, requirements and the ML specification are in [`docs/`](docs/00-INDEX.md).
+Five components, all self-hosted. **Nothing in the system depends on an external
+API key.**
+
+📚 The API contract and supporting reference material are in [`docs/`](docs/README.md).
+🧪 Test results and requirement traceability are in [`TESTING.md`](TESTING.md).
+
+---
+
+## Quick start
+
+**Docker is the only prerequisite.** Nothing else is needed to run the whole system -
+no toolchain, no API key, no model download, no configuration file to edit.
+
+```bash
+git clone https://github.com/ihaveacrowuwu/DSP.git
+cd DSP
+make up                 # build and start everything (the first run builds images)
+make seed N=2000        # load demo data
+```
+
+Then open **<http://localhost:5180>** and sign in as
+`researcher@muraka.test` / `muraka-research-2026`.
+
+That is the whole setup. Only the mobile apps need anything more.
+
+To check the pipeline end to end:
+
+```bash
+make smoke              # 33 checks: register, submit, classify, verify
+```
+
+### What is running
+
+| Service | URL | Notes |
+|---|---|---|
+| Dashboard | <http://localhost:5180> | The researcher and admin interface |
+| API | <http://localhost:8090/healthz> | Go API, with the worker in-process |
+| ML service | <http://localhost:8010/healthz> | Reports the model version it loaded |
+| PostgreSQL | `localhost:5433` | user `muraka`, password `muraka`, database `muraka` |
+
+Ports are overridable if they clash: `make up API_PORT=9090 WEB_PORT=5190`.
+
+### Demo accounts
+
+All created by `make seed`. All passwords are demo values.
+
+| Email | Role | Password | Can see |
+|---|---|---|---|
+| `researcher@muraka.test` | researcher | `muraka-research-2026` | Map, review queue, records |
+| `admin@muraka.test` | admin | `muraka-admin-2026` | The above, plus Operations |
+| `diver@muraka.test` | contributor | `muraka-diver-2026` | The mobile apps |
+| `diver2@muraka.test` | contributor | `muraka-diver-2026` | The mobile apps |
+
+Contributors have no dashboard access; they use the mobile apps.
+
+### Stopping and resetting
+
+```bash
+make down               # stop, keep the data
+make reset-data N=2000  # wipe every sighting and reseed
+make logs               # follow all logs
+make ps                 # service status
+```
+
+`make down` keeps the PostgreSQL volume, so a later `make up` finds the same data.
+
+---
+
+## Screenshots
+
+### Dashboard
+
+| Reef map | Review queue |
+|---|---|
+| ![Reef map](docs/evidence/dashboard/reef-map.jpg) | ![Review queue](docs/evidence/dashboard/review-queue.jpg) |
+| Every sighting in the archipelago, grouped by area until you zoom in. | The patch lattice over the photograph, and the researcher's verdict. |
+
+| Records | Operations |
+|---|---|
+| ![Records](docs/evidence/dashboard/records.jpg) | ![Operations](docs/evidence/dashboard/operations.jpg) |
+| Every sighting, filterable, exportable as CSV. Each badge says **MODEL** or **EXPERT**. | Queue depth, model versions and accounts. Admin only. |
+
+### Mobile
+
+The two contributor apps share the same six screens. The full set, including dark
+mode, is in [`docs/evidence/mobile/`](docs/evidence/mobile/).
+
+| Screen | Android | iOS |
+|---|---|---|
+| Sign in | ![Android sign in](docs/evidence/mobile/android-signin.png) | ![iOS sign in](docs/evidence/mobile/ios-sign-in.png) |
+| My sightings | ![Android sightings](docs/evidence/mobile/android-sightings.png) | ![iOS sightings](docs/evidence/mobile/ios-my-sightings.png) |
+| Sighting detail | ![Android detail](docs/evidence/mobile/android-detail.png) | ![iOS detail](docs/evidence/mobile/ios-detail.png) |
+| Sync | ![Android sync](docs/evidence/mobile/android-sync.png) | ![iOS sync](docs/evidence/mobile/ios-sync.png) |
+
+---
 
 ## Architecture
 
@@ -26,77 +120,16 @@ correct every result before it counts as data.
                      and the job queue
 ```
 
-Five components, all self-hosted. **Nothing in the system depends on an external
-API key** - that is a hard project constraint, and it shapes the map tiles,
-notification strategy and ML stack.
-
-| Component | Stack | Status |
-|---|---|---|
-| API + worker | Go 1.26, chi, pgx | Working |
-| ML service | Python 3.12, FastAPI, ONNX Runtime | Working - serving a trained model |
-| Dashboard | Vue 3, TypeScript, MapLibre | Working |
-| Database | PostgreSQL 16 + PostGIS | Working |
-| Android app | Kotlin, Jetpack Compose, Material 3 | Working - all six screens, offline outbox |
-| iOS app | Swift, UIKit, Liquid Glass | Working - all six screens, offline outbox |
-
-## Getting started
-
-Requires Docker. Nothing else, for the stack itself.
-
-```bash
-make up                 # build and start everything
-make seed N=2000        # load demo data
-make smoke              # end-to-end pipeline test
-```
-
-Then open the dashboard at **http://localhost:5180** and sign in as
-`researcher@muraka.test` / `muraka-research-2026`.
-
-Ports are overridable if they clash: `make up API_PORT=9090 WEB_PORT=5190`.
-
-### Working on the dashboard
-
-`make up` serves the dashboard as a **static production build** behind nginx, which
-is what the demo demo should run. It does not pick up source edits - a change needs
-`make restart S=web` to be rebuilt.
-
-For frontend work, run the dev server instead and get hot module reload: edits to a
-component or to the design tokens apply in place, without a page reload and without
-losing where you were in the app.
-
-```bash
-make dev-web            # hot reload on the same URL, :5180
-make dev                # the same, plus starting postgres/api/ml first
-```
-
-`make dev-web` stops the static `web` container so the dev server can own port
-5180 - the URL never changes, only what is answering on it. Vite is set to
-`strictPort`, so if something else holds 5180 it says so instead of quietly moving
-to another port and leaving you looking at a stale build. `make up` puts the static
-container back.
-
-The API, ML service and database keep running in Docker throughout; only the
-dashboard moves to the host. Same pattern as the existing `dev-api` and `dev-ml`
-targets.
-
-| Service | URL |
+| Component | Stack |
 |---|---|
-| Dashboard | http://localhost:5180 |
-| API | http://localhost:8090/healthz |
-| ML service | http://localhost:8010/healthz |
-| PostgreSQL | localhost:5433 |
+| API + worker | Go 1.26, chi, pgx |
+| ML service | Python 3.12, FastAPI, ONNX Runtime |
+| Dashboard | Vue 3, TypeScript, MapLibre |
+| Database | PostgreSQL 16 + PostGIS |
+| Android app | Kotlin, Jetpack Compose, Material 3 |
+| iOS app | Swift, UIKit, Liquid Glass |
 
-### Demo accounts
-
-Created by `make seed`.
-
-| Email | Role | Password |
-|---|---|---|
-| `admin@muraka.test` | admin | `muraka-admin-2026` |
-| `researcher@muraka.test` | researcher | `muraka-research-2026` |
-| `diver@muraka.test` | contributor | `muraka-diver-2026` |
-
-## How a sighting flows through the system
+### How a sighting flows through the system
 
 1. A contributor captures photographs, a position and a depth. It works with no
    network at all and queues on the device.
@@ -111,65 +144,182 @@ Created by `make seed`.
 6. A researcher confirms, corrects or rejects it. Expert labels win; the model's
    prediction is preserved for provenance rather than overwritten.
 
-## Repository layout
+---
 
+## Running the mobile apps
+
+Both apps need the stack running first (`make up && make seed N=200`), and both
+sign in as `diver@muraka.test` / `muraka-diver-2026`.
+
+Neither app needs an API key or a configuration file. The debug builds already
+point at the local stack.
+
+### Android
+
+**Prerequisites**
+
+- **JDK 21.** The build's toolchain is pinned to 21.
+- **Android SDK with Platform 36.** Android Studio is optional - the SDK alone
+  builds from the command line. If Android Studio has not written
+  `android/local.properties`, copy `android/local.properties.example` to it and
+  set `sdk.dir`.
+- An emulator or a device on **API 26 (Android 8.0)** or newer.
+
+Gradle 8.14.5 and AGP 8.13.2 come from the committed wrapper, so there is nothing
+to install for those.
+
+```bash
+make android-install    # build and install on the running emulator or device
 ```
-backend/         Go API, worker, seed loader
-ml/              service/ (inference) and training/ (M1 Pro recipes)
-web/             Vue dashboard
-mobile-shared/   API contract notes, sync protocol, design tokens for the apps
-android/  ios/   the two native contributor apps
-deploy/          docker compose stack
-docs/            proposal, requirements, design, ML spec, OpenAPI
-scripts/         smoke_test.py
+
+Or open the `android/` folder in Android Studio and press Run.
+
+The debug build talks to `http://10.0.2.2:8090`, which is how an emulator reaches
+the host. For a physical phone on the same Wi-Fi, pass your machine's address
+instead:
+
+```bash
+cd android && ./gradlew installDebug -PmurakaApiBase=http://192.168.1.20:8090/
 ```
+
+Cleartext HTTP is scoped to the debug build and to those hosts only. The release
+build carries no such exception and points at HTTPS.
+
+### iOS
+
+**Prerequisites**
+
+- **macOS with Xcode 26 or newer.** The app targets iOS 26 and uses Liquid Glass,
+  so it needs the iOS 26 SDK.
+- An **iOS 26 simulator runtime** (Xcode ▸ Settings ▸ Components).
+- **XcodeGen** (`brew install xcodegen`). `Muraka.xcodeproj` is generated from
+  `ios/project.yml` and is not committed, so generate it before first use.
+
+```bash
+cd ios && xcodegen generate && open Muraka.xcodeproj
+```
+
+Pick any iPhone simulator and press Run. The simulator shares the Mac's loopback,
+so the debug build talks to `http://localhost:8090` with no extra configuration.
+
+From the repository root, `make ios-build` and `make test-ios` do the same
+generate-then-build without opening Xcode.
+
+For a physical iPhone, copy `ios/Config/Local.xcconfig.example` to
+`ios/Config/Local.xcconfig` and set your Mac's LAN address there. Cleartext HTTP is
+confined to the debug configuration; the release build uses HTTPS only.
+
+---
 
 ## Tests
 
 ```bash
-make test        # Go unit tests + ML service tests
-make test-web    # dashboard typecheck
-make smoke       # 33 end-to-end checks against the running stack
+make test        # Go, ML service and dashboard unit tests
+make mobile      # Android and iOS unit tests
+make smoke       # end-to-end pipeline check against the running stack
+make lint        # linters and cross-platform contract checks
 ```
 
-The smoke test walks the whole pipeline the way a mobile client will: register,
-submit, replay to prove idempotency, upload, wait for classification, verify as a
-researcher, then confirm the expert label overrides the model while the prediction
-survives.
+Suites that need infrastructure - a database, an emulator, a simulator - skip rather
+than fail when it is absent.
 
-## Measured behaviour
+The smoke test walks the whole pipeline: register, submit, upload, classify,
+then verify as a researcher.
 
-Measured on the development machine (Apple M1 Pro) against 10,312 seeded sightings.
-Every figure here comes from a harness or a timed request, not from memory - three
-earlier numbers in this table were recalled rather than measured and turned out to
-be wrong.
+[`TESTING.md`](TESTING.md) records what each suite covers.
 
-| Measure | Result |
-|---|---|
-| Sync to visible model label | **0.89 s** (target: ≤ 30 s) |
-| National map viewport, 10,312 sightings | **56 ms** worst of 5 (target: < 2 s) |
-| 50 concurrent submissions | **0 errors, 0 lost**, 919/s |
-| Map points endpoint | 42 ms |
-| Trends endpoint | 30 ms |
-| Verification queue page | 32 ms |
-| Classifier, held-out test split | 0.8575 accuracy, 0.8548 macro-F1, **0.9543 recall on bleached** |
-| CPU inference, one 5×5 patch lattice | **405 ms** native (target: ≤ 500 ms) |
+---
 
-⚠️ That last figure is met on the processor and **missed inside Docker on macOS**,
-where the same model takes ~822 ms - Docker Desktop runs containers in a virtual
-machine, which roughly doubles it. A Linux host has no such penalty.
+## Working on individual components
 
-## Constraints worth knowing before changing anything
+`make up` serves the dashboard as a static production build behind nginx. It does
+not pick up source edits; rebuild with `make restart S=web`.
+
+For frontend work, run the dev server instead and get hot module reload:
+
+```bash
+make dev-web            # hot reload on the same URL, :5180
+make dev                # the same, plus starting postgres/api/ml first
+```
+
+`make dev-web` stops the static `web` container and serves the dev server on the
+same port; `make up` puts the static container back.
+
+The API and ML service can also run on the host against the containerised database:
+
+```bash
+make dev-api            # Go API on the host
+make dev-ml             # ML service on the host, with reload
+make psql               # a database shell
+```
+
+### TLS demo
+
+An overlay serves the dashboard and the API from one origin over TLS.
+
+```bash
+make up-tls             # https://localhost:8443
+make smoke-tls          # the same end-to-end check, through TLS
+```
+
+The certificate is self-signed and generated locally; a browser warns once. See
+[`deploy/README.md`](deploy/README.md).
+
+---
+
+## Repository layout
+
+```
+backend/         Go API, worker, seed loader
+ml/              service/ (inference), training/ (model training), models/ (the served ONNX)
+web/             Vue dashboard
+mobile-shared/   API contract notes, sync protocol, design tokens for the apps
+android/  ios/   the two native contributor apps
+deploy/          docker compose stack, TLS overlay
+docs/            OpenAPI contract, screenshots and supporting material
+scripts/         smoke test, performance harness, cross-platform contract checks
+```
+
+Each of `backend/`, `ml/`, `web/`, `android/`, `ios/` and `deploy/` has its own
+README covering that component in depth.
+
+### The bundled model
+
+`ml/models/active.onnx` (15 MB) is the trained classifier; the ML service loads it
+at startup. Set `FAKE_MODE=1` in `deploy/docker-compose.yml` to serve deterministic
+stubs instead, which needs no model file.
+
+---
+
+## Design constraints
 
 1. **The stack is fixed**: Go, Vue 3, Python for ML only, PostgreSQL + PostGIS.
-   Android is Kotlin/Compose; iOS is Swift/UIKit. No substitutions.
+   Android is Kotlin/Compose; iOS is Swift/UIKit.
 2. **No external API keys.** No Mapbox, no Firebase, no cloud ML, no analytics.
-   Local notifications instead of push, keyless map tiles, local models.
-3. **ML training targets an M1 Pro**; deployed inference is CPU-only.
+   Local notifications instead of push, keyless map tiles, local models. The map's
+   geography is committed under `web/public/basemap` (Natural Earth, public domain).
+3. **Inference runs on CPU**, with no GPU at serving time.
 4. **A model label is never presented as fact.** Model output and expert verdicts
-   are visually distinct everywhere they appear.
+   are visually distinct everywhere they appear, as the `MODEL` and `EXPERT` badges.
 
-Reference material not owned by this project is ignored
-rather than tracked.
+---
 
-be committed.
+## Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| A port is already in use | Override it: `make up API_PORT=9090 WEB_PORT=5190 ML_PORT=8020 POSTGRES_PORT=5434` |
+| Dashboard loads but shows no data | `make seed N=2000` has not been run yet |
+| Dashboard edits do nothing | `make up` serves a static build. Use `make dev-web`, or `make restart S=web` |
+| ML container restarting | `ml/models/active.onnx` is missing. Restore it, or set `FAKE_MODE=1` in `deploy/docker-compose.yml` |
+| Map shows a blank square under the patch grid | Expected. A fresh clone has no reef imagery, so the seeder uses a plain swatch - see [`ml/README.md`](ml/README.md) to add real photographs |
+| Go integration tests all skip | They need PostgreSQL. `make up` first |
+| `make smoke` cannot connect | The stack is not running, or the API port was overridden - pass `MURAKA_API=http://localhost:9090` |
+| iOS build fails: no such project | `Muraka.xcodeproj` is generated. Run `cd ios && xcodegen generate` |
+| Android build fails on the JDK | The toolchain requires JDK 21 |
+
+---
+
+## Licence
+
+Apache License 2.0 - see [`LICENSE`](LICENSE).

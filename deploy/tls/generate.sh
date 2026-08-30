@@ -5,7 +5,7 @@
 # external service that needs an account, which rules out Let's Encrypt and every
 # managed certificate authority - so the demo terminates TLS with a certificate it
 # generates itself. A browser will warn about it, and that warning is the honest
-# consequence of the key-free constraint rather than a defect: the project says so.
+# consequence of the key-free constraint rather than a defect, and is documented as such.
 #
 # Idempotent. Existing certificates are left alone, so `make up-tls` can call this
 # every time without invalidating a certificate a browser has already been told to

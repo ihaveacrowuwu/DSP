@@ -193,7 +193,7 @@ hpo:
 
 logging:
   # No comet-ml, W&B or Roboflow: all need accounts or API keys, which the project
-  # forbids. Local files are also what makes runs reproducible for the project.
+  # forbids. Local files are also what makes runs reproducible.
   to_csv: runs/baseline-effnetb0/metrics.csv
   to_json: runs/baseline-effnetb0/summary.json
   save_curves: true

@@ -278,8 +278,8 @@ final class SightingDetailViewController: UIViewController {
         }
         card.addRow(SectionCardView.readoutRow(readouts))
 
-        // Provenance: `fake-0.0.0` means no trained model is loaded yet, and a reader of the
-        // report needs to be able to tell which screenshots predate the real one.
+        // Provenance: `fake-0.0.0` means no trained model is loaded yet, so a reader can
+        // tell which screenshots predate the real one.
         card.addRow(ReadoutView(caption: "Model", value: prediction.modelVersion, style: .footnote))
 
         return card

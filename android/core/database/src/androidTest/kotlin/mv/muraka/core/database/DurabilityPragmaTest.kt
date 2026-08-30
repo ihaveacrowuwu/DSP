@@ -58,7 +58,7 @@ class DurabilityPragmaTest {
         // 2 is FULL. Android's default under WAL is 1 (NORMAL), which lets the OS buffer a
         // commit - and a phone that dies in that window loses a sighting the contributor
         // watched the app accept. If this reads "1", the pragma is not being applied and
-        // the durability guarantee in the project is not real.
+        // the durability guarantee this app makes is not real.
         assertEquals("2", pragma("synchronous"))
     }
 

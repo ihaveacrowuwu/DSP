@@ -46,7 +46,7 @@ changes made:
 | 4×4 | 16 | 8 | 406 ms | ✅ |
 | **5×5 (shipped)** | 25 | 8 | 657 ms | ❌ |
 
-**The honest statement for the project:** NFR2 is met on the target CPU and missed when
+**The honest statement:** NFR2 is met on the target CPU and missed when
 the service is run through Docker Desktop's macOS VM. The overhead is a property of the
 development environment, not of the system - a Linux host running the same container has
 no such VM in the path - but the project's demo runs on this laptop, so the caveat is
@@ -115,7 +115,7 @@ recovered some of it and not enough:
 
 Still −12 points of recall. Rejected.
 
-### The part worth putting in the project
+### The part worth remembering
 
 The project already argues that a missed bleaching event costs more than a false alarm -
 that is why the selection metric is F2 on the bleached class rather than accuracy, and

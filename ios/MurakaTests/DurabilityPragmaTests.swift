@@ -38,8 +38,8 @@ struct DurabilityPragmaTests {
         try withTemporaryDatabase { queue in
             // 2 is FULL. SQLite's default under WAL is 1 (NORMAL), which lets the OS buffer a
             // commit - and a phone that dies in that window loses a sighting the contributor
-            // watched the app accept. If this reads 1, the durability claim in the project is
-            // not real.
+            // watched the app accept. If this reads 1, the durability claim this app makes
+            // is not real.
             let synchronous = try queue.read { try Int.fetchOne($0, sql: "PRAGMA synchronous") }
             #expect(synchronous == 2)
         }

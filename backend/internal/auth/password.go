@@ -12,8 +12,7 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
-// Argon2id parameters. Chosen for ~50-100ms on modest hardware; documented in
-// the project's security discussion (NFR4).
+// Argon2id parameters. Chosen for ~50-100ms on modest hardware (NFR4).
 const (
 	argonTime    = 3
 	argonMemory  = 64 * 1024 // 64 MiB

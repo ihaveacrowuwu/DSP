@@ -9,8 +9,8 @@ asserts it rather than trusting it.
 
 The test split is **not touched** by anything in this module when
 `data.test_split_locked` is set. Val drives every decision; test is opened once, by
-`scripts/evaluate.py`, at the end. That discipline is worth more to the project than a
-tenth of a point of accuracy.
+`scripts/evaluate.py`, at the end. That discipline is worth more than a tenth of a
+point of accuracy.
 """
 
 from __future__ import annotations
@@ -193,8 +193,8 @@ class Trainer:
             out / "best.pt",
         )
 
-        # Per-epoch CSV, because a learning curve in the project needs the whole series
-        # and not just the final number.
+        # Per-epoch CSV, because a learning curve needs the whole series and not just
+        # the final number.
         header = ["epoch", "train_loss", "val_loss", "seconds", "backbone_trainable"]
         metric_keys = sorted(
             k for k, v in (self.history[0].val_metrics.as_dict().items() if self.history else [])

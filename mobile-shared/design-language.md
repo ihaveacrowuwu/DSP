@@ -54,8 +54,7 @@ bars, navigation, buttons, surfaces, cards.
 
 > Dynamic colour must never touch `condition`, `severityRamp` or `signal`. Those are
 > data. A user's wallpaper deciding what "bleached" looks like would corrupt the
-> reading, and the same screenshot in the project would be a different colour on a
-> different phone. Keep them as fixed data colours with light/dark variants and
+> reading, and the same screen would be a different colour on a different phone. Keep them as fixed data colours with light/dark variants and
 > pull them from a separate palette object, not from `MaterialTheme.colorScheme`.
 
 **Surfaces.** Use the M3 surface roles (`surface`, `surfaceContainerLow` through

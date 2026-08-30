@@ -192,8 +192,8 @@ mobile: test-android test-ios ## Unit tests for both apps
 
 lint: mobile-lint ## Every lint and contract check, including the traceability matrix
 	@echo
-	@# The testing chapter of the project is assembled from TESTING.md, so a test it cites
-	@# having been renamed or deleted is a documentation bug that must fail the build.
+	@# TESTING.md is this project's coverage claim, so a test it cites having been
+	@# renamed or deleted is a documentation bug that must fail the build.
 	$(PY) scripts/testing_matrix.py --check
 	@echo
 	@# NFR4's "config inspection" half. The live handshake is `make smoke-tls`.

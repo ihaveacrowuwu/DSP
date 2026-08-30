@@ -63,8 +63,7 @@ fun Readout(
  * few pale colonies, and it is the number researchers actually work with.
  *
  * The model version is shown because it is provenance: `fake-0.0.0` means no trained
- * model is loaded yet, and a reader of the project needs to be able to tell which
- * screenshots predate the real one.
+ * model is loaded yet, so a reader can tell which screenshots predate the real one.
  */
 @Composable
 fun PredictionReadout(prediction: Prediction, verified: Boolean, modifier: Modifier = Modifier) {

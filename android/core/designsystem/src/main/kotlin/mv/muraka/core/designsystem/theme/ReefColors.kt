@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.lerp
  * not in `MaterialTheme.colorScheme`. Material 3 dynamic colour re-tints the whole scheme
  * from the user's wallpaper - correct and desirable for chrome, and catastrophic here. A
  * wallpaper deciding what "bleached" looks like would corrupt the reading, and the same
- * screenshot in the project would be a different colour on a different phone.
+ * screen would be a different colour on a different phone.
  *
  * Keeping them apart is not a style preference. It is the mechanism that makes the
  * separation enforceable: there is no path from `dynamicDarkColorScheme()` into this

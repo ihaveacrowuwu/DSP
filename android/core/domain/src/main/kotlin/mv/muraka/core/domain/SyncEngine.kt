@@ -20,7 +20,7 @@ interface SyncEngine {
     suspend fun drain(): SyncOutcome
 }
 
-/** What one drain pass achieved. Reported to the sync screen, and logged for the project. */
+/** What one drain pass achieved. Shown on the sync screen, and logged. */
 data class SyncOutcome(
     val sightingsConfirmed: Int = 0,
     val photosUploaded: Int = 0,

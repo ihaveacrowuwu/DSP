@@ -6,8 +6,8 @@ import UIKit
 /// catalogue entry rather than from the system palette or the app's tint. iOS semantic
 /// colours shift with appearance, Increase Contrast and Increased Legibility - correct and
 /// desirable for chrome, and catastrophic here. A system setting deciding what "bleached"
-/// looks like would corrupt the reading, and the same screenshot in the project would be a
-/// different colour on a different device.
+/// looks like would corrupt the reading, and the same screen would be a different colour
+/// on a different device.
 ///
 /// Keeping them apart is not a style preference. It is the mechanism that makes the
 /// separation enforceable: there is no path from `UIColor.label` into this type.

@@ -3,7 +3,7 @@
 Four of the project's non-functional requirements are numbers. Until 2026-08-21 all four
 were carried in prose - "measured ~1.5s", "22ms", "320ms" - which is a memory, not
 evidence. `scripts/perf_test.py` prints them, and the JSON files here are the runs that
-produced the figures the project quotes.
+produced the figures quoted elsewhere in this repository.
 
 ```bash
 make up && make seed N=10000     # NFR3 is a claim about 10,000 sightings

@@ -7,7 +7,7 @@ too large or too raw to live there.
 | | |
 |---|---|
 | [`openapi.yaml`](openapi.yaml) | **The API contract.** Authoritative for the dashboard and both mobile apps - `web/src/lib/api.ts` and the Go handler tests are written against it. |
-| [`evidence/`](evidence/) | **Measured output**, not claims. Every performance figure quoted elsewhere was produced by a harness in this repository and its raw output is here. |
+| [`evidence/`](evidence/) | Screenshots of the running system, and the raw output of the performance harness. |
 
 ## Evidence
 
@@ -17,8 +17,8 @@ too large or too raw to live there.
 | [`evidence/mobile/`](evidence/mobile/) | Android and iOS screenshots, including dark mode and airplane-mode capture, plus the acceptance checklist results | `make test-ios` regenerates the iOS set; `adb shell screencap` for Android |
 | [`evidence/dashboard/`](evidence/dashboard/) | Dashboard screenshots used by the root README | Captured against the running stack |
 
-`make perf` writes a new timestamped file into `evidence/performance/`, so the figures
-in the root README can always be re-derived rather than trusted.
+`make perf` writes a new timestamped file into `evidence/performance/` each time it
+runs.
 
 ## Where the rest lives
 

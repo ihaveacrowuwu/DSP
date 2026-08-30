@@ -3,8 +3,8 @@
 Hand-written rather than imported, for one reason that matters to this project: the
 headline metric is **F2 on the bleached class**, because a missed bleaching event costs
 more than a false alarm. That weighting is a scientific decision, not a default, and it
-belongs somewhere a reader of the project can check - with a test that pins the arithmetic
-against numbers worked out by hand.
+belongs somewhere a reader can check it - with a test that pins the arithmetic against
+numbers worked out by hand.
 
 Everything is derived from the confusion matrix, so accuracy and per-class recall cannot
 disagree with each other the way two library calls on two different arrays can.
