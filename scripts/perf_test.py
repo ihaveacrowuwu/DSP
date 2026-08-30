@@ -55,6 +55,32 @@ import uuid
 # skipped **only** when explicitly asked for - a script that silently accepted any
 # certificate would be a worse example than one that cannot reach the demo at all.
 API = os.environ.get("MURAKA_API", "http://localhost:8090").rstrip("/")
+ML = os.environ.get("MURAKA_ML", "http://localhost:8010").rstrip("/")
+
+
+def _nfr2_caveat() -> str | None:
+    faking = ml_is_faking()
+    if faking is None:
+        return "could not reach the ML service to confirm whether a real model is loaded"
+    if faking:
+        return "measured against the service's fake mode - says nothing about a real model"
+    return None
+
+
+def ml_is_faking() -> bool | None:
+    """Ask the ML service whether it is serving a real model.
+
+    This was a hardcoded caveat saying the figure came from fake mode "until the
+    training track produces a model". The training track produced one, the string
+    did not change, and the JSON evidence went on disclaiming a measurement that
+    had become real - a caveat that outlives its condition is a false statement
+    about the run, not a cautious one.
+    """
+    try:
+        with urllib.request.urlopen(ML + "/healthz", timeout=5) as response:
+            return bool(json.loads(response.read()).get("fake_mode"))
+    except Exception:
+        return None
 
 _TLS_CONTEXT = None
 if os.environ.get("MURAKA_TLS_INSECURE") == "1":
@@ -291,9 +317,7 @@ def check_nfr1_and_nfr2() -> list[dict]:
             "passed": inference_ms <= NFR2_MS,
             "inference_ms": inference_ms,
             "threshold_ms": NFR2_MS,
-            # The service ships in fake mode until the training track produces a model,
-            # so this figure says nothing about the real one. Stated, not buried.
-            "caveat": "measured against the service's fake mode - no trained model yet",
+            "caveat": _nfr2_caveat(),
         })
     return results
 
