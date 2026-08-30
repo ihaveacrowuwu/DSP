@@ -309,15 +309,31 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* Two explicit tracks, pipeline narrow and models wide, because auto-fit
+   cannot work here: the accounts section spans 1 / -1, which marks every
+   track it crosses as occupied, so auto-fit never collapses the spare third
+   track and the first row ends in a card-sized hole. The cards stretch to one
+   shared row height (each pins its content to the top below), so the row
+   reads as a band rather than two ragged boxes. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(23rem, 100%), 1fr));
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
   gap: 0.875rem;
-  align-items: start;
+  max-width: 84rem;
+}
+
+.grid > .section {
+  align-content: start;
 }
 
 .wide {
   grid-column: 1 / -1;
+}
+
+@media (max-width: 60rem) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .counters {

@@ -266,193 +266,207 @@ function formatCoord(value: number, positive: string, negative: string): string 
         </figcaption>
       </figure>
 
+      <!-- Two independent stacks, not one: side by side when the inspector has
+           the width, so the decision block sits at the top right of the screen
+           instead of below the fold at the end of one long column. -->
       <aside class="inspector">
-        <section class="section">
-          <span class="eyebrow">Model assessment</span>
+        <div class="inspector-col">
+          <section class="section">
+            <span class="eyebrow">Model assessment</span>
 
-          <template v-if="prediction">
-            <p class="verdict">
-              <span class="readout severity">{{ Math.round(prediction.severity * 100) }}%</span>
-              <span class="verdict-text">
-                bleached extent - reads
-                <strong>{{ prediction.label }}</strong>
-              </span>
-            </p>
+            <template v-if="prediction">
+              <p class="verdict">
+                <span class="readout severity">{{ Math.round(prediction.severity * 100) }}%</span>
+                <span class="verdict-text">
+                  bleached extent - reads
+                  <strong>{{ prediction.label }}</strong>
+                </span>
+              </p>
 
-            <!-- Extent, confidence and the lattice's own tally, in that order:
-                 what it found, how sure it is, and how much of the grid agrees. -->
-            <div class="metrics">
-              <MetricBar label="Extent" :value="prediction.severity" tone="bone" />
-              <MetricBar label="Confidence" :value="prediction.confidence" tone="reef" />
-              <MetricBar
-                label="Patches"
-                :value="bleachedShare"
-                tone="bone"
-                :display="`${prediction.patches.filter((p) => p.label === 'bleached').length}/${prediction.patches.length}`"
-              />
-            </div>
+              <!-- Extent, confidence and the lattice's own tally, in that order:
+                   what it found, how sure it is, and how much of the grid agrees. -->
+              <div class="metrics">
+                <MetricBar label="Extent" :value="prediction.severity" tone="bone" />
+                <MetricBar label="Confidence" :value="prediction.confidence" tone="reef" />
+                <MetricBar
+                  label="Patches"
+                  :value="bleachedShare"
+                  tone="bone"
+                  :display="`${prediction.patches.filter((p) => p.label === 'bleached').length}/${prediction.patches.length}`"
+                />
+              </div>
 
+              <dl class="meta">
+                <div>
+                  <dt>Grid</dt>
+                  <dd class="readout">{{ prediction.patchGrid }}×{{ prediction.patchGrid }}</dd>
+                </div>
+                <div>
+                  <dt>Model</dt>
+                  <dd class="readout">{{ prediction.modelVersion }}</dd>
+                </div>
+                <div v-if="prediction.inferenceMs">
+                  <dt>Inference</dt>
+                  <dd class="readout">{{ prediction.inferenceMs }} ms</dd>
+                </div>
+              </dl>
+            </template>
+
+            <p v-else class="muted small">No model result yet for this sighting.</p>
+          </section>
+
+          <section class="section">
+            <span class="eyebrow">Sighting</span>
             <dl class="meta">
               <div>
-                <dt>Grid</dt>
-                <dd class="readout">{{ prediction.patchGrid }}×{{ prediction.patchGrid }}</dd>
+                <dt>Captured</dt>
+                <dd class="readout">{{ new Date(current.capturedAt).toLocaleString() }}</dd>
               </div>
               <div>
-                <dt>Model</dt>
-                <dd class="readout">{{ prediction.modelVersion }}</dd>
+                <dt>Position</dt>
+                <dd class="readout">
+                  {{ formatCoord(current.location.lat, 'N', 'S') }},
+                  {{ formatCoord(current.location.lon, 'E', 'W') }}
+                </dd>
               </div>
-              <div v-if="prediction.inferenceMs">
-                <dt>Inference</dt>
-                <dd class="readout">{{ prediction.inferenceMs }} ms</dd>
+              <div v-if="current.depthM !== undefined">
+                <dt>Depth</dt>
+                <dd class="readout">{{ current.depthM.toFixed(1) }} m</dd>
+              </div>
+              <div v-if="current.siteName">
+                <dt>Site</dt>
+                <dd>{{ current.siteName }}</dd>
+              </div>
+              <div>
+                <dt>Contributor</dt>
+                <dd>{{ current.contributorName }}</dd>
+              </div>
+              <div>
+                <dt>Fix</dt>
+                <dd>{{ current.locationSource === 'gps' ? 'GPS' : 'Dropped pin' }}</dd>
               </div>
             </dl>
-          </template>
-
-          <p v-else class="muted small">No model result yet for this sighting.</p>
-        </section>
-
-        <section class="section">
-          <span class="eyebrow">Sighting</span>
-          <dl class="meta">
-            <div>
-              <dt>Captured</dt>
-              <dd class="readout">{{ new Date(current.capturedAt).toLocaleString() }}</dd>
-            </div>
-            <div>
-              <dt>Position</dt>
-              <dd class="readout">
-                {{ formatCoord(current.location.lat, 'N', 'S') }},
-                {{ formatCoord(current.location.lon, 'E', 'W') }}
-              </dd>
-            </div>
-            <div v-if="current.depthM !== undefined">
-              <dt>Depth</dt>
-              <dd class="readout">{{ current.depthM.toFixed(1) }} m</dd>
-            </div>
-            <div v-if="current.siteName">
-              <dt>Site</dt>
-              <dd>{{ current.siteName }}</dd>
-            </div>
-            <div>
-              <dt>Contributor</dt>
-              <dd>{{ current.contributorName }}</dd>
-            </div>
-            <div>
-              <dt>Fix</dt>
-              <dd>{{ current.locationSource === 'gps' ? 'GPS' : 'Dropped pin' }}</dd>
-            </div>
-          </dl>
-          <p v-if="current.note" class="quote">“{{ current.note }}”</p>
-          <RouterLink
-            class="small"
-            :to="{ name: 'sighting', params: { id: current.id } }"
-          >
-            Open the full record
-          </RouterLink>
-        </section>
-
-        <!-- The decision block is the only accented surface on the screen, so
-             where to act is never in question. -->
-        <section class="decide">
-          <span class="eyebrow">Your decision</span>
-
-          <div v-if="!rejecting" class="actions">
-            <button
-              type="button"
-              class="btn btn-primary btn-block"
-              :disabled="submitting || !prediction"
-              @click="confirmModel"
+            <p v-if="current.note" class="quote">“{{ current.note }}”</p>
+            <RouterLink
+              class="small"
+              :to="{ name: 'sighting', params: { id: current.id } }"
             >
-              Confirm {{ prediction?.label ?? 'assessment' }}
-              <span class="kbd">C</span>
-            </button>
+              Open the full record
+            </RouterLink>
+          </section>
+        </div>
 
-            <div class="correct">
-              <span class="correct-label">Correct to</span>
+        <div class="inspector-col">
+          <!-- The decision block is the only accented surface on the screen, so
+               where to act is never in question. -->
+          <section class="decide">
+            <span class="eyebrow">Your decision</span>
+
+            <div v-if="!rejecting" class="actions">
               <button
                 type="button"
-                class="btn btn-secondary"
-                :disabled="submitting"
-                @click="correctTo('healthy')"
+                class="btn btn-primary btn-block"
+                :disabled="submitting || !prediction"
+                @click="confirmModel"
               >
-                Healthy <span class="kbd">H</span>
+                Confirm {{ prediction?.label ?? 'assessment' }}
+                <span class="kbd">C</span>
               </button>
+
+              <div class="correct">
+                <span class="correct-label">Correct to</span>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  :disabled="submitting"
+                  @click="correctTo('healthy')"
+                >
+                  Healthy <span class="kbd">H</span>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  :disabled="submitting"
+                  @click="correctTo('bleached')"
+                >
+                  Bleached <span class="kbd">B</span>
+                </button>
+              </div>
+
               <button
                 type="button"
-                class="btn btn-secondary"
+                class="btn btn-danger btn-block"
                 :disabled="submitting"
-                @click="correctTo('bleached')"
+                @click="rejecting = true"
               >
-                Bleached <span class="kbd">B</span>
+                Reject photograph <span class="kbd">R</span>
               </button>
             </div>
 
-            <button
-              type="button"
-              class="btn btn-danger btn-block"
-              :disabled="submitting"
-              @click="rejecting = true"
-            >
-              Reject photograph <span class="kbd">R</span>
-            </button>
-          </div>
-
-          <div v-else class="reject">
-            <div class="field">
-              <span class="field-label">Why is it unusable?</span>
-              <SelectMenu
-                v-model="rejectReason"
-                :options="REJECT_REASONS"
-                ariaLabel="Rejection reason"
-                block
-              />
+            <div v-else class="reject">
+              <div class="field">
+                <span class="field-label">Why is it unusable?</span>
+                <SelectMenu
+                  v-model="rejectReason"
+                  :options="REJECT_REASONS"
+                  ariaLabel="Rejection reason"
+                  block
+                />
+              </div>
+              <div class="reject-actions">
+                <button
+                  type="button"
+                  class="btn btn-danger"
+                  :disabled="submitting"
+                  @click="decide('rejected', undefined, rejectReason as RejectReason)"
+                >
+                  Reject
+                </button>
+                <button type="button" class="btn btn-ghost" @click="rejecting = false">
+                  Cancel <span class="kbd">Esc</span>
+                </button>
+              </div>
             </div>
-            <div class="reject-actions">
-              <button
-                type="button"
-                class="btn btn-danger"
-                :disabled="submitting"
-                @click="decide('rejected', undefined, rejectReason as RejectReason)"
-              >
-                Reject
-              </button>
-              <button type="button" class="btn btn-ghost" @click="rejecting = false">
-                Cancel <span class="kbd">Esc</span>
-              </button>
-            </div>
-          </div>
-        </section>
+          </section>
 
-        <section v-if="queue.length > 1" class="section">
-          <span class="eyebrow">Next in queue</span>
-          <ul class="upnext">
-            <li v-for="sighting in queue.slice(1, 5)" :key="sighting.id" class="row-hover-wide">
-              <span class="readout upnext-date">
-                {{ new Date(sighting.capturedAt).toLocaleDateString() }}
-              </span>
-              <span v-if="sighting.confidence !== undefined" class="readout upnext-conf">
-                {{ Math.round(sighting.confidence * 100) }}% sure
-              </span>
-              <ConditionChip
-                :condition="sighting.condition"
-                :status="sighting.status"
-                :verified="sighting.verified"
-                :severity="sighting.severity"
-              />
-            </li>
-          </ul>
-        </section>
+          <section v-if="queue.length > 1" class="section">
+            <span class="eyebrow">Next in queue</span>
+            <ul class="upnext">
+              <li v-for="sighting in queue.slice(1, 5)" :key="sighting.id" class="row-hover-wide">
+                <span class="readout upnext-date">
+                  {{ new Date(sighting.capturedAt).toLocaleDateString() }}
+                </span>
+                <span v-if="sighting.confidence !== undefined" class="readout upnext-conf">
+                  {{ Math.round(sighting.confidence * 100) }}% sure
+                </span>
+                <ConditionChip
+                  :condition="sighting.condition"
+                  :status="sighting.status"
+                  :verified="sighting.verified"
+                  :severity="sighting.severity"
+                />
+              </li>
+            </ul>
+          </section>
+        </div>
       </aside>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* The photograph's cap lives on ITS track, not on the plate. When the first
+   track was 1fr and the plate capped its own width, the leftover width of the
+   track became a dead gutter between the photograph and the inspector; sizing
+   the track to the cap hands that width to the inspector instead. The ceiling
+   on the whole row keeps the inspector's columns from being stretched into
+   ribbons on very wide screens. */
 .review {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(20rem, 25rem);
+  grid-template-columns: minmax(0, min(66vh, 44rem)) minmax(20rem, 1fr);
   gap: clamp(1rem, 2vw, 1.75rem);
   align-items: start;
+  max-width: 90rem;
 }
 
 /* One width for every photograph, whatever resolution it arrived at. See the
@@ -460,14 +474,12 @@ function formatCoord(value: number, positive: string, negative: string): string 
  * shrank to the source's pixel width made low-resolution crops too small to
  * judge, and judging them is this screen's entire purpose.
  *
- * 100% keeps it in the column, 66vh keeps the caption and the accept/correct row
- * on screen with it, and 44rem is the upscale ceiling. The frame is square, so
- * its width is also its height - the max-height this used to carry was saying
- * the same thing twice. */
+ * The track above carries the size: 66vh keeps the caption and the
+ * accept/correct row on screen with the square frame, and 44rem is the
+ * upscale ceiling. */
 .plate {
   display: grid;
   gap: 0.75rem;
-  width: min(100%, 66vh, 44rem);
 }
 
 .frame {
@@ -545,11 +557,23 @@ figcaption {
   cursor: help;
 }
 
+/* auto-fit, so the two stacks sit side by side once both can hold a MetricBar
+   row (19rem) and fall into one column below that. The stacks are separate
+   elements rather than grid rows because each column's cards must pack their
+   own heights: placed in one shared grid, a tall assessment row would push the
+   "next in queue" list down and leave a hole under the decision block. */
 .inspector {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
   gap: 0.875rem;
+  align-items: start;
   position: sticky;
   top: clamp(1.25rem, 2.4vw, 2rem);
+}
+
+.inspector-col {
+  display: grid;
+  gap: 0.875rem;
 }
 
 .verdict {
@@ -656,6 +680,13 @@ figcaption {
 @media (max-width: 66rem) {
   .review {
     grid-template-columns: 1fr;
+  }
+
+  /* The cap moves back onto the plate here: the single column is wider than
+     the photograph should be, and the inspector below still wants all of it
+     for its two stacks. */
+  .plate {
+    width: min(100%, 66vh, 44rem);
   }
 
   .inspector {

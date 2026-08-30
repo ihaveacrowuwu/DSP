@@ -311,6 +311,9 @@ onUnmounted(() => {
   grid-template-columns: minmax(0, 1fr) minmax(18rem, 23rem);
   gap: clamp(1rem, 2vw, 1.75rem);
   align-items: start;
+  /* Roughly frame + panel + side rail at their caps. Past this the spare width
+     would go into the assessment panel, stretching its rows into ribbons. */
+  max-width: 84rem;
 }
 
 .photos {
@@ -327,16 +330,18 @@ onUnmounted(() => {
  * which is the layout this change exists to remove.
  *
  * So the tracks are explicit. Track one is capped, never flexible, so the frame
- * cannot grow past its upscale ceiling; track two has a floor of 17rem, which is
- * what a MetricBar needs before its label starts eliding. When the column cannot
- * satisfy both, grid honours the floor and the frame shrinks - still one size for
- * every photograph, which was always the point.
+ * cannot grow past its ceiling; track two has a floor of 17rem, which is what a
+ * MetricBar needs before its label starts eliding, and a cap of its own so the
+ * panel's rows are never stretched into ribbons. When the column cannot satisfy
+ * both, grid honours the floor and the frame shrinks - still one size for every
+ * photograph, which was always the point.
  *
  * `align-items: start` keeps the panel the height of its own content. A card
- * stretched to 44rem tall with five rows in it reads as something unfinished. */
+ * stretched to the frame's full height with five rows in it reads as something
+ * unfinished. */
 .plate {
   display: grid;
-  grid-template-columns: minmax(0, min(80vh, 44rem)) minmax(17rem, 1fr);
+  grid-template-columns: minmax(0, min(70vh, 34rem)) minmax(17rem, 26rem);
   align-items: start;
   gap: 0.875rem;
   margin-bottom: 1.25rem;
@@ -351,10 +356,12 @@ onUnmounted(() => {
  * which is the whole job on this page. The frame is furniture: fixed, with the
  * panel beside it saying when a photograph has less detail than it fills.
  *
- * The size itself comes from the grid track above: 80vh so a square frame is
- * never taller than the screen, and 44rem as the upscale ceiling - past roughly
- * 3x a 224 px crop, softness is all that is being added, and stopping there is
- * also what leaves room for the panel beside it. */
+ * The size itself comes from the grid track above: 70vh so a square frame is
+ * never taller than the screen, and 34rem as the ceiling. This is a record
+ * page, not the judging screen - the queue keeps its 44rem frame because
+ * grading is done there - and a frame this size is what lets the assessment
+ * panel and the capture rail stand beside the photograph at the same height
+ * instead of leaving a column of dead space under each. */
 .frame {
   position: relative;
   width: 100%;
