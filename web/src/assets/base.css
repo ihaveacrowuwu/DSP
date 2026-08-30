@@ -183,10 +183,13 @@ button {
   cursor: pointer;
 }
 
+/* No border-radius here: the ring follows the focused element's own radius.
+   Setting one would restyle the element's corners for the duration of the
+   focus, which on anything rounder than --r-xs reads as the control snapping
+   to a different shape the moment the ring appears. */
 :focus-visible {
   outline: 2px solid var(--reef);
   outline-offset: 2px;
-  border-radius: var(--r-xs);
 }
 
 ::selection {

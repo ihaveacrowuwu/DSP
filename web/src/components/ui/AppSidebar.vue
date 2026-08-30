@@ -181,10 +181,15 @@ const isLight = computed(() => theme.resolved() === 'light')
 
       <ul class="nav">
         <li v-for="item in items" :key="item.key" :data-pill-id="item.key">
+          <!-- mousedown.prevent keeps a mouse click from leaving the link
+               focused: stale click focus meant the next arrow key (scrolling
+               the page) upgraded it to :focus-visible and drew a ring around
+               the active pill. Tab focus is untouched. -->
           <RouterLink
             class="nav-link"
             :to="{ name: item.routeName }"
             :data-tip="open ? undefined : item.label"
+            @mousedown.prevent
           >
             <Icon :path="item.icon" :size="1.2" />
             <span class="nav-label">{{ item.label }}</span>
@@ -282,7 +287,8 @@ const isLight = computed(() => theme.resolved() === 'light')
   display: flex;
   align-items: center;
   gap: 0.5625rem;
-  padding: 0.375rem 0.4375rem 0.125rem;
+  /* (2.5rem - 1.375rem mark) / 2: see the centring rule on .nav-link. */
+  padding: 0.375rem 0.5625rem 0.125rem;
   min-height: 2.25rem;
 }
 
@@ -349,11 +355,16 @@ const isLight = computed(() => theme.resolved() === 'light')
   gap: 2px;
 }
 
+/* Inline padding centres the glyph on the collapsed rail's midline. The rail's
+   padding box is 2.5rem wide (3.5rem minus its own 0.5rem sides) and the icon
+   is 1.05rem (1.2em at 14px), so (2.5 - 1.05) / 2 each side. The brand mark,
+   avatar and account actions below solve the same equation for their own
+   widths, which is what keeps the whole icon column on one vertical axis. */
 .nav-link {
   display: flex;
   align-items: center;
   gap: 0.6875rem;
-  padding: 0.5rem 0.5625rem;
+  padding: 0.5rem 0.725rem;
   border-radius: var(--r-md);
   color: var(--ink-3);
   text-decoration: none;
@@ -468,7 +479,8 @@ const isLight = computed(() => theme.resolved() === 'light')
   display: flex;
   align-items: center;
   gap: 0.5625rem;
-  padding-inline: 0.1875rem;
+  /* (2.5rem - 1.75rem badge) / 2: see the centring rule on .nav-link. */
+  padding-inline: 0.375rem;
 }
 
 .badge {
@@ -539,7 +551,7 @@ const isLight = computed(() => theme.resolved() === 'light')
   display: flex;
   align-items: center;
   gap: 0.6875rem;
-  padding: 0.5rem 0.5625rem;
+  padding: 0.5rem 0.725rem;
   border: none;
   border-radius: var(--r-md);
   background: transparent;
