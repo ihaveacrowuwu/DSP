@@ -190,10 +190,22 @@ def percentiles(samples: list[float]) -> dict[str, float]:
 # ---------------------------------------------------------------- NFR11
 
 
-def check_nfr11() -> dict:
-    """50 concurrent submissions, no error and no data loss."""
-    token = login(*CONTRIBUTOR)
+# One burst is not a measurement of throughput. Consecutive bursts against the
+# same warm stack were observed spanning 90 to 1,551 submissions/second - the
+# first after a restart pays for an empty connection pool and a cold page cache,
+# and a single sample lands anywhere in that range depending on when it is taken.
+# An earlier figure of 919/s was quoted in the project as though it were a
+# property of the system; it was one sample of that spread.
+#
+# So: one discarded warm-up round, then several measured ones, reported as a
+# range. What NFR11 actually requires - no error, no data loss - is asserted on
+# every round rather than on one.
+NFR11_WARMUP_ROUNDS = 1
+NFR11_MEASURED_ROUNDS = 3
 
+
+def _nfr11_round(token: str) -> tuple[list[int], list[float], float, list[str]]:
+    """One burst of concurrent submissions; returns statuses, latencies, wall, missing."""
     # Client-generated ids, exactly as a mobile client does - which is also what makes
     # the data-loss half checkable: every id is known before anything is sent.
     ids = [str(uuid.uuid4()) for _ in range(NFR11_CONCURRENCY)]
@@ -216,10 +228,6 @@ def check_nfr11() -> dict:
         results = list(pool.map(lambda pair: submit(*pair), enumerate(ids)))
     wall = time.perf_counter() - started
 
-    statuses = [status for status, _ in results]
-    latencies = [ms for _, ms in results]
-    errors = [status for status in statuses if status not in (200, 201)]
-
     # Data loss is the half a status-code check cannot see: read every id back.
     missing = []
     for sighting_id in ids:
@@ -227,17 +235,50 @@ def check_nfr11() -> dict:
         if status != 200:
             missing.append(sighting_id)
 
+    return [s for s, _ in results], [ms for _, ms in results], wall, missing
+
+
+def check_nfr11() -> dict:
+    """50 concurrent submissions, no error and no data loss, over several rounds."""
+    token = login(*CONTRIBUTOR)
+
+    for _ in range(NFR11_WARMUP_ROUNDS):
+        _nfr11_round(token)
+
+    errors: list[int] = []
+    missing: list[str] = []
+    latencies: list[float] = []
+    throughputs: list[float] = []
+
+    for _ in range(NFR11_MEASURED_ROUNDS):
+        statuses, round_latencies, wall, round_missing = _nfr11_round(token)
+        errors += [s for s in statuses if s not in (200, 201)]
+        missing += round_missing
+        latencies += round_latencies
+        if wall:
+            throughputs.append(NFR11_CONCURRENCY / wall)
+
     ok = not errors and not missing
     return {
         "requirement": "NFR11",
         "claim": f"{NFR11_CONCURRENCY} concurrent submissions without error or data loss",
         "passed": ok,
         "concurrency": NFR11_CONCURRENCY,
+        "rounds": NFR11_MEASURED_ROUNDS,
+        "warmup_rounds_discarded": NFR11_WARMUP_ROUNDS,
+        "submissions_total": NFR11_CONCURRENCY * NFR11_MEASURED_ROUNDS,
         "errors": len(errors),
         "error_statuses": sorted(set(errors)),
         "missing_after_write": len(missing),
-        "wall_seconds": round(wall, 2),
-        "throughput_per_second": round(NFR11_CONCURRENCY / wall, 1) if wall else 0.0,
+        "throughput_per_second": {
+            "min": round(min(throughputs), 1) if throughputs else 0.0,
+            "median": round(statistics.median(throughputs), 1) if throughputs else 0.0,
+            "max": round(max(throughputs), 1) if throughputs else 0.0,
+        },
+        "throughput_note": (
+            "warm rounds only; the first burst after a restart is several times slower, "
+            "and the requirement is the error and data-loss count, not the rate"
+        ),
         "latency_ms": percentiles(latencies),
     }
 

@@ -161,16 +161,16 @@ is the argument for having written them:
 
 | ID | Requirement | MoSCoW | Evidence | |
 |---|---|---|---|---|
-| NFR1 | ML label visible in the dashboard ≤ 30 s after sync | Must | `make perf` - **0.89 s** on 2026-08-21 (`docs/evidence/performance/`) | ✅ |
-| NFR2 | CPU inference ≤ 500 ms per image | Must | **405 ms p50 / 414 ms p95** per photograph (a 25-patch lattice) for the trained effnetb0-0.1.0 model on ONNX/CPU at the deployed `ONNX_THREADS=4` - `docs/evidence/performance/nfr2-backbone-comparison.json`. **Met on the CPU, missed in the container: 822 ms through Docker Desktop's macOS VM** (D67), which no thread count recovers and INT8 quantisation could not fix without costing 14 points of bleached recall (D68). Two earlier figures were wrong for instructive reasons - 381 ms measured the wrong thread count (D64) | ◐ |
-| NFR3 | Map interactive at 10,000 sightings; viewport ≤ 2 s | Must | `make perf` - **56 ms** worst of 5 at 10,304 sightings; the check fails if the corpus is smaller | ✅ |
+| NFR1 | ML label visible in the dashboard ≤ 30 s after sync | Must | `make perf` - **2.2 s** on 2026-08-30 (`docs/evidence/performance/`) | ✅ |
+| NFR2 | CPU inference ≤ 500 ms per image | Must | **405 ms p50 / 414 ms p95** per photograph (a 25-patch lattice) for the trained effnetb0-0.1.0 model on ONNX/CPU at the deployed `ONNX_THREADS=4` - `docs/evidence/performance/nfr2-backbone-comparison.json`. **Met on the CPU, missed in the container: 931 ms p50 / 992 ms p95 through Docker Desktop's macOS VM** (D67, re-measured 2026-08-30; the two field evaluations independently recorded 897 and 901 ms p50 over 2,004 photographs), which no thread count recovers and INT8 quantisation could not fix without costing 14 points of bleached recall (D68). Two earlier figures were wrong for instructive reasons - 381 ms measured the wrong thread count (D64) | ◐ |
+| NFR3 | Map interactive at 10,000 sightings; viewport ≤ 2 s | Must | `make perf` - **80 ms** worst of 5 at 12,763 sightings; the check fails if the corpus is smaller | ✅ |
 | NFR4 | argon2id, TLS in the demo config, JWT ≤ 15 min | Must | argon2id: `TestHashPasswordIsSaltedPerCall`, `TestHashPasswordProducesVerifiableArgon2idHash`; expiry: `TestParseAccessTokenRejectsExpiredToken`; refresh: `TestRefreshTokenStoresOnlyItsHash`, `TestRefreshTokensAreUnique`; TLS: `make lint` static checks + `make smoke-tls` (33 checks over TLS 1.3) | ✅ |
 | NFR5 | Validate, re-encode and strip EXIF from uploads | Must | 10 upload tests incl. `TestUploadRefusesADecompressionBomb` (asserted on allocation, not only status), `TestUploadRejectsAFileOverTheSizeCap`, `TestUploadKeepsExifFactsAndStripsTheRest`; 11 `internal/imagemeta` tests incl. `TestMalformedExifIsSurvivedRatherThanTrusted`, `TestAPositionWithNoHemisphereIsDiscarded`; smoke 8 | ✅ |
 | NFR6 | Capture completable in < 60 s and ≤ 8 taps | Must | **5 taps**, counted from the capture code (6 on the first ever capture, including the permission grant). The **timing** has never been measured | ◐ |
 | NFR7 | Contributor app fully functional offline except register/login | Must | the 8 `SyncEngineOfflineTest` cases, `journalsWriteAheadSoAReaderNeverBlocksTheCaptureFlow`, `commitsReachTheStorageMediumBeforeEnqueueReturns`, `DurabilityPragmaTests`; plus a device walkthrough with the radio off - GPS resolved, camera captured (`docs/evidence/mobile/acceptance.md`) | ✅ |
 | NFR9 | No component depends on a key-requiring external service | Must | `make mobile-lint` fails on an App Transport Security exception in a release plist; the basemap is committed vector GeoJSON with no tile or glyph server (D22/D23) | ◐ |
 | NFR10 | Startable by one documented command; seed by one more | Must | `make up`, `make seed`; `make test`, `make test-ml`, `make test-web` and `make smoke` were all broken before 2026-08-21 and now run (D42) | ◐ |
-| NFR11 | 50 concurrent sighting submissions with no error or loss | Should | `make perf` - **0 errors, 0 lost**, 919/s; every client-generated id is read back afterwards | ✅ |
+| NFR11 | 50 concurrent sighting submissions with no error or loss | Should | `make perf` - **0 errors, 0 lost across 150 submissions** (3 rounds of 50, one warm-up discarded); every client-generated id is read back afterwards. Throughput is reported as a warm range, 1,081-1,429/s, because it is not what the requirement asks and a single burst is not a measurement of it - see below | ✅ |
 | NFR12 | Request IDs propagated through Go and Python logs | Should | `TestTheClassificationCallCarriesACorrelationID`, `TestARetriedJobIsDistinguishableFromItsFirstAttempt`, `TestAnInboundRequestIDIsReusedRatherThanReplaced`, `TestEveryResponseCarriesARequestIDEvenWithoutOne` | ✅ |
 | NFR13 | ML-only labels visually distinct from expert-verified | Must | `says "expert" when a human decided`, `says "model" when only the classifier has`, `is distinguishable with every colour class stripped`, `marks the two with different classes, so shape and border can differ`; both apps encode it in shape and word too (`docs/evidence/mobile/`) | ✅ |
 | NFR14 | Material 3 / Liquid Glass; light and dark on both | Must | `testTheAppearanceToggleDarkensEveryScreen`, `testTheAppearanceChoiceIsRemembered`, `testTheLastRowIsReachableUnderTheFloatingTabBar`, `testThePatchGridCanBeTurnedOffAndStaysOff`; Android night resources verified with `aapt2 dump` (D33) | ✅ |
@@ -228,6 +228,13 @@ is the argument for having written them:
   clears comfortably. The honest alternative was a rushed five-person study behind an
   unresolved ethics process (Q5). Usability is now evidenced by **NFR6** instead - 5 taps,
   counted from the capture code, with the timing still to be measured.
+- **NFR11** - the requirement (no error, no data loss) was always met, but the *throughput*
+  figure beside it was one sample of a very wide spread. Consecutive bursts against the same
+  warm stack ranged from 90 to 1,551 submissions/second: the first burst after a restart pays
+  for an empty connection pool and a cold page cache, and the 919/s once quoted in the project
+  landed in the middle of that by chance. The harness now discards a warm-up round and reports
+  min/median/max over three measured rounds, and the project quotes the error and loss counts
+  rather than the rate.
 - **NFR12** - closed on 2026-08-30, and writing the assertion showed the requirement was
   implemented for a path nothing uses. The middleware puts a correlation id on inbound
   HTTP and `mlclient` forwards it, which covers a request that calls the classifier
