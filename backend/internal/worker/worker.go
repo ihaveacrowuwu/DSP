@@ -100,7 +100,7 @@ func (w *Worker) processJob(ctx context.Context, job store.Job) {
 	// given attempt, distinct across retries of the same job, and already the
 	// key the Go-side log lines below are grouped by. It joins to the upload
 	// that produced the work through photo_id, which both sides log.
-	rid := fmt.Sprintf("%s#%d", job.ID, job.Attempts)
+	rid := fmt.Sprintf("%d#%d", job.ID, job.Attempts)
 	ctx = context.WithValue(ctx, mlclient.RequestIDKey, rid)
 
 	log := w.log.With("job_id", job.ID, "photo_id", job.PhotoID, "attempt", job.Attempts,
