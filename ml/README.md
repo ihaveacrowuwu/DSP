@@ -12,23 +12,27 @@ share the same normalisation constants, and a golden-file test asserts that
 PyTorch and ONNX agree - a silent mismatch there is the classic way to lose
 accuracy points with nothing in the logs.
 
-See [`docs/06-ml-specification.md`](../docs/06-ml-specification.md) for the task
-definition, dataset provenance, evaluation protocol and fallback ladder.
+The task is binary patch classification - healthy or bleached - over an N×N lattice
+tiled from the centre square of each photograph, with the bleached fraction becoming an
+image-level severity. `training/configs/baseline.yaml` is the authoritative recipe.
 
 ## Service
 
-Runs in **fake mode by default**, which is what lets the API, dashboard and both
-mobile apps be built and tested before any model exists. Fake predictions are
-derived from the image's own hash, so they are deterministic per image: demos and
-client tests can assert on fixed values.
+The code's own default is **fake mode**, which is what lets the API, dashboard and
+both mobile apps be built and tested before any model exists. The shipped stack
+overrides it: `deploy/docker-compose.yml` sets `FAKE_MODE=0` and serves the
+committed `ml/models/active.onnx`, so a clone classifies with the real model.
+
+Fake predictions are derived from the image's own hash, so they are deterministic
+per image: demos and client tests can assert on fixed values.
 
 ```bash
 cd ml/service
-python -m venv .venv && ./.venv/Scripts/pip install -r requirements-dev.txt   # Windows
-# python3 -m venv .venv && ./.venv/bin/pip install -r requirements-dev.txt    # macOS/Linux
+python3 -m venv .venv && ./.venv/bin/pip install -r requirements-dev.txt
+# .venv\Scripts\pip install -r requirements-dev.txt                          # Windows
 
-./.venv/Scripts/python -m pytest tests/ -q
-./.venv/Scripts/python -m uvicorn app.main:app --reload --port 8000
+./.venv/bin/python -m pytest tests/ -q
+./.venv/bin/python -m uvicorn app.main:app --reload --port 8000
 ```
 
 In the stack it is already wired up; check it with:
@@ -37,12 +41,14 @@ In the stack it is already wired up; check it with:
 curl http://localhost:8010/healthz
 ```
 
-### Serving a real model
+### Serving a different model
+
+The stack already serves one; these are the steps to replace it.
 
 1. Put the artefact at `ml/models/active.onnx` (mounted read-only into the
    container, so no image rebuild).
-2. Set `FAKE_MODE=0` in `deploy/docker-compose.yml`.
-3. Restart: `docker compose -f deploy/docker-compose.yml up -d ml`
+2. Confirm `FAKE_MODE=0` in `deploy/docker-compose.yml` - it already is.
+3. Restart: `make restart S=ml`
 4. Register the version in the dashboard's Operations screen so predictions cite
    it.
 
@@ -60,7 +66,7 @@ curl http://localhost:8010/healthz
 | `ONNX_THREADS` | `2` (compose sets **4**) | CPU threads for inference. The code's fallback is 2; `deploy/docker-compose.yml` sets 4, because at 2 a 25-patch lattice breaches NFR2 at the tail - D64 |
 
 `PATCH_GRID`, `PATCH_OVERLAP` and `BLEACHED_LABEL_THRESHOLD` are deliberately
-configurable: grid granularity and the label threshold are experiments the project
+configurable: grid granularity and the label threshold are experiments this project
 reports on, not constants.
 
 ## Demo photographs for the dashboard
@@ -93,124 +99,101 @@ uploads. Once the NOAA dataset is downloaded for training, it is the obvious sou
 
 **Done - there is a trained model.** `effnetb0-0.1.0`, 59 minutes on the M1 Pro via MPS,
 0.8575 accuracy and 0.9027 F2-bleached on the held-out test split, exported to ONNX and
-served. Full numbers, the training curve and the honest caveats are in
-[`docs/evidence/ml/baseline-effnetb0.md`](../docs/evidence/ml/baseline-effnetb0.md).
-The recipe that produced it is `training/configs/baseline.yaml`, unmodified.
+served. The recipe that produced it is `training/configs/baseline.yaml`, unmodified,
+and `manifests/noaa.sha256` pins the corpus it was trained on.
 
-### What exists now
-
-The pipeline is **built and verified end to end**, on synthetic data, so everything
-except the corpus is de-risked:
+### The pipeline
 
 ```
 training/
   configs/          run configuration; baseline.yaml is the recipe
   muraka_train/     config, data, model, metrics, train loop, ONNX export
-  scripts/          train.py, evaluate.py
-  tests/            29 tests: contract, metrics, reproducibility, ONNX parity
+  scripts/          train.py, evaluate.py, fetch_noaa.py, bench_backbones.py, quantize.py
+  manifests/        SHA-256 corpus manifests (committed - they are the provenance record)
+  tests/            42 tests: contract, corpus, metrics, reproducibility, ONNX parity
   runs/             per-run checkpoint, metrics.csv, summary.json (gitignored)
 ```
 
 ```bash
-make test-train                      # 29 tests, no dataset needed
-cd ml/training && python3 scripts/train.py --config configs/baseline.yaml     --synthetic --epochs 4 --export-onnx     # verify the whole pipeline
+make test-train     # 42 tests, no dataset needed
 ```
 
-Three things that verification already settled:
+Three properties the test suite holds the pipeline to:
 
-- **CPU latency fits, at the thread count the stack actually deploys.** EfficientNet-B0 at
-  224 px, exported to ONNX, classifies a whole 5×5 lattice - one photograph - in **406 ms
-  p50 / 417 ms p95** on the M1 Pro at `ONNX_THREADS=4`, against NFR2's 500 ms. So the
-  fallback in step 6 below is not needed and the accuracy-first backbone stays. An earlier
-  381 ms figure measured onnxruntime's *default* thread count rather than the service's,
-  and at the previously shipped `ONNX_THREADS=2` the same graph breached the budget at the
-  tail - see D64, and `scripts/bench_backbones.py --sweep-threads` for the sweep that
-  chose 4. Figures in [`docs/evidence/performance/`](../docs/evidence/performance/).
-- **The graph the service will serve matches the model that gets evaluated**, to 6.9e-07.
-- **Runs are reproducible** - same seed, same metrics; different seed, different metrics.
-  Both directions are asserted, because a pipeline that ignores the seed passes the first
-  test and fails the requirement.
+- **The graph the service serves matches the model that was evaluated**, to 6.9e-07.
+  A silent PyTorch/ONNX mismatch is the classic way to lose accuracy with nothing in
+  the logs.
+- **Runs are reproducible** - same seed, same metrics; different seed, different
+  metrics. Both directions are asserted, because a pipeline that ignores the seed
+  passes the first test and fails the requirement.
+- **Class order and normalisation cannot drift** from `ml/service/app`.
+  `muraka_train/config.py` refuses to start a run that disagrees with the service.
+  That is not tidiness: a swapped class order inverts every prediction *confidently*,
+  and mismatched normalisation degrades accuracy invisibly. Neither crashes, so
+  neither would be noticed.
 
-`muraka_train/config.py` refuses to start a run whose class order or normalisation
-disagrees with `ml/service/app`. That is not tidiness: a swapped class order inverts every
-prediction *confidently*, and mismatched normalisation degrades accuracy invisibly.
-Neither crashes, so neither would be noticed.
+### Reproducing the trained model
 
-**What is missing is the data**, and nothing else.
-
-### Picking this up next session - the exact next steps
-
-Everything below the dataset is done. **The gate is open: Q6 was resolved on 2026-08-24 - the NOAA dataset is cleared for use**, with a citation and the as-is
-disclaimer owed in the project's data section. The terms as read are recorded in
-the decision log under Q6: no explicit licence tag, the standard NOAA as-is disclaimer, a requested
-citation, and the dataset's own facts (224 px, `CORAL`/`CORAL_BL`, 7,292 training images)
-matching `configs/baseline.yaml` exactly. **Nothing has been downloaded.**
-
-The steps, in order (the prep for steps 1-2 is planned in
-the ML prep notes):
+The corpus is not committed (768 MB, and `ml/datasets/` is gitignored), so step 1
+fetches it. `manifests/noaa.sha256` is committed, so an existing copy can be verified
+without the network.
 
 ```bash
-# 1. Get the corpus (768 MB) into ml/datasets/noaa. The script downloads it anonymously,
-#    checks the split totals and per-class counts against the dataset card, writes a
-#    SHA-256 manifest to manifests/noaa.sha256 (committed - it is the project's
-#    provenance evidence), and prints the citation D63 owes.
 cd ml/training
+
+# 1. Fetch the corpus into ml/datasets/noaa. Downloads anonymously, checks split
+#    totals and per-class counts against the dataset card, and writes the manifest.
 python3 scripts/fetch_noaa.py
 python3 scripts/fetch_noaa.py --verify-only    # re-check an existing copy, no network
 
-# 2. Sanity-check the recipe against the real data before spending an hour on a run:
-python3 scripts/train.py --config configs/baseline.yaml     --data-root ../datasets/noaa --epochs 1 --output-dir runs/smoke
+# 2. Sanity-check the recipe against real data before spending an hour on a run.
+python3 scripts/train.py --config configs/baseline.yaml \
+  --data-root ../datasets/noaa --epochs 1 --output-dir runs/smoke
 
-# 3. The real baseline. Roughly an hour on the M1 Pro.
-python3 scripts/train.py --config configs/baseline.yaml     --data-root ../datasets/noaa --export-onnx --model-version effnetb0-0.1.0
+# 3. The baseline. Roughly an hour on the M1 Pro.
+python3 scripts/train.py --config configs/baseline.yaml \
+  --data-root ../datasets/noaa --export-onnx --model-version effnetb0-0.1.0
 
-# 4. Open the test split ONCE, at the end:
-python3 scripts/evaluate.py --config configs/baseline.yaml     --data-root ../datasets/noaa --checkpoint runs/baseline-effnetb0/best.pt --split test
+# 4. Open the test split ONCE, at the end.
+python3 scripts/evaluate.py --config configs/baseline.yaml \
+  --data-root ../datasets/noaa --checkpoint runs/baseline-effnetb0/best.pt --split test
 
-# 5. Serve it: copy the .onnx to ml/models/active.onnx, set FAKE_MODE=0 in
-#    deploy/docker-compose.yml, then `make up && make smoke`.
+# 5. Serve it: copy the .onnx over ml/models/active.onnx, then `make restart S=ml`.
 ```
 
 On macOS, if the ImageNet weights fail with `CERTIFICATE_VERIFY_FAILED`:
 `export SSL_CERT_FILE=$(python3 -c "import certifi;print(certifi.where())")`.
 
-Two things to compare against when the numbers arrive: prior published work on this
-dataset reports roughly **0.90 accuracy and 0.90 macro-F1** at patch level with a
-comparable backbone, and CPU latency is already known to be **406 ms** per photograph at the
-deployed `ONNX_THREADS=4`, so a slowdown after training would mean something changed in the
-graph rather than in the weights.
+The test split was frozen before training and opened once, at the end. Published work
+on this dataset reports roughly **0.90 accuracy and 0.90 macro-F1** at patch level with
+a comparable backbone, against this model's 0.8575 / 0.8548.
 
-### The plan, in order
+### Backbone and latency
 
-1. **Verify the dataset.** ← *the only remaining blocker, and it is a decision rather than
-   a task.* Download
-   `NMFS-OSI/NOAA-PIFSC-ESD-CORAL-Bleaching-Dataset` from HuggingFace (no API key
-   needed) and confirm its licence terms permit this use. This is the project's
-   last real unknown, so it comes first.
-2. **Freeze the test split immediately** and do not look at it again until final
-   evaluation. Say so in the project; it is a discipline markers notice.
-3. **Train the baseline**: EfficientNet-B0, head first, then staged unfreeze.
-   Target under an hour per run on the M1 Pro.
-4. **Evaluate**: accuracy, macro-F1, and **F2 on the bleached class** - a missed
-   bleaching event costs more than a false alarm, so recall is weighted. Plus a
-   confusion matrix and an error gallery.
-5. **Export ONNX**, then run the parity test against the PyTorch model.
-6. ~~**Check CPU latency** for a 25-patch batch. If it is slow, drop to
-   MobileNetV3-Large before touching accuracy.~~ **Done** - 406 ms per photograph at
-   `ONNX_THREADS=4`, so EfficientNet-B0 stays. `scripts/bench_backbones.py` also closed the
-   "compare a modern backbone" question: ConvNeXt-Tiny is 1,486 ms and
-   EfficientNetV2-S 862 ms, both far outside the budget rather than marginally over.
-7. **Then the domain-gap work**: pull the **Central Indian
-   Ocean** region of the Seaview Survey dataset - that region only, the whole thing
-   is 1.5 TB across 22 regional partitions - and record the survey IDs and a
-   manifest hash in `configs/baseline.yaml`, which already has the fields waiting
-   under `evaluation.cross_domain_sets`. The eSpace page describes the region as "Indian Ocean (Maldives, Chagos Archipelago)": confirm
-   the partition's real name at download, select Maldivian transects via the shipped
-   CSV metadata rather than by folder name, and take only the photo-quadrats,
-   annotations and tabular files - never the raw 360° triplets, which are the bulk
-   of the 1.5 TB. Evaluate the NOAA-trained model on
-   Maldivian quadrats, then hand-label ~100 of them for the image-level set.
-   Label them *before* looking at any model output on them.
+EfficientNet-B0 at 224 px, exported to ONNX, classifies a whole 5×5 lattice - one
+photograph - in **406 ms p50 / 417 ms p95** on the M1 Pro at the deployed
+`ONNX_THREADS=4`, against NFR2's 500 ms. At `ONNX_THREADS=2` the same graph breaches
+the budget at the tail, which is why the compose file sets 4.
+
+`scripts/bench_backbones.py` closed the "compare a modern backbone" question:
+ConvNeXt-Tiny is 1,486 ms and EfficientNetV2-S 862 ms, both far outside the budget
+rather than marginally over. INT8 quantisation was tried and rejected: it could not
+close the container-side gap without costing 14 points of bleached recall
+(`scripts/quantize.py`, and the write-up in
+[`docs/evidence/performance/nfr2-quantisation.md`](../docs/evidence/performance/nfr2-quantisation.md)).
+
+### Domain-gap evaluation
+
+The NOAA figures describe NOAA imagery, and nothing more. Two evaluations in
+`ml/eval/` measure what happens off that distribution:
+
+- `eval_coralscapes.py` - Red Sea wide scenes. Recall largely intact, precision
+  collapsed.
+- `eval_seaview_mdv.py` and `analyse_seaview_mdv.py` - Maldivian photo-quadrats, run
+  against the deployed service at its production configuration. This is the evaluation
+  that matters for this project, and the model does not survive it.
+
+Both need their corpus fetched first; neither corpus is committed.
 
 Two things it is easy to get wrong here:
 
@@ -219,30 +202,18 @@ Two things it is easy to get wrong here:
   corpus only - never add it to a training split.
 - **The NOAA crops being low-quality is the point, not a problem.** Contributors
   photograph reefs on phones through moving water. A classifier trained on clean
-  survey imagery would look better in a table and worse in the product. Do not
-  swap NOAA out for something prettier; it is also the dataset the published
-  0.902 acc / 0.896 macro-F1 comparison is measured on.
+  survey imagery would look better in a table and worse in the product.
+
 
 ### Constraints
 
 - **Training hardware is the M1 Pro** (PyTorch MPS). The 7900 XT is an untested
   backup. The work DGX is a bonus and must never be a dependency.
 - **Inference is CPU-only.**
-- **No API-key services**: no comet-ml, no W&B, no Roboflow. Log runs to local
-  CSV/JSON - that is also what makes them reproducible for the project.
+- **No API-key services**: no comet-ml, no W&B, no Roboflow. Runs log to local
+  CSV/JSON, which is also what makes them reproducible.
 - Everything config-driven and seeded, so a run can be repeated exactly.
 
-### Layout
-
-```
-training/
-  configs/          run configuration; one file per experiment
-  muraka_train/     the library: config, data, model, metrics, train, export
-  scripts/          train.py, evaluate.py - thin CLIs over the library
-  tests/            contract, metrics, reproducibility, ONNX parity
-  runs/             metrics and checkpoints per run (gitignored)
-```
-
-The library sits beside `scripts/` rather than inside it because the tests import it, and
-a test suite that imports from a scripts directory ends up manipulating `sys.path` in
-every file.
+`muraka_train/` sits beside `scripts/` rather than inside it because the tests import
+it, and a test suite that imports from a scripts directory ends up manipulating
+`sys.path` in every file.

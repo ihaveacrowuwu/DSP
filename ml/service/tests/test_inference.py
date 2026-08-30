@@ -147,7 +147,7 @@ def test_to_dict_shape_matches_go_client_contract(fake_classifier: Classifier) -
 # ---------------------------------------------------------------- preprocessing
 
 def test_preprocess_produces_normalised_nchw_batch(fake_classifier: Classifier) -> None:
-    # Guards the training/serving parity contract from docs/06: shape, channel
+    # Guards the training/serving parity contract: shape, channel
     # order and ImageNet normalisation must match the training transform.
     patches = [Image.new("RGB", (224, 224), (255, 255, 255))]
     batch = fake_classifier._preprocess(patches)  # noqa: SLF001 - contract under test

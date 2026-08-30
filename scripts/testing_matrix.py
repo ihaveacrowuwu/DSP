@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Keep `TESTING.md` honest about the tests it claims exist.
 
-`docs/07-requirements.md` asks for a document linking FR/NFR IDs to test names to
-results, so the project's testing chapter can be assembled from evidence rather than
-memory. A hand-written table like that has one predictable failure mode: a test gets
-renamed or deleted and the table keeps citing it, so the project claims coverage that
-no longer exists. This repository has already had documents drift from the code  -
+`TESTING.md` links FR/NFR IDs to test names to results, so this project's coverage
+claim can be assembled from evidence rather than memory. A hand-written table like
+that has one predictable failure mode: a test gets renamed or deleted and the table
+keeps citing it, so the document claims coverage that no longer exists. This repository has already had documents drift from the code  -
 Documents drift from code - and a traceability matrix is the worst possible place
 for it to happen, because its entire value is being trustworthy.
 

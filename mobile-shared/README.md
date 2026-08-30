@@ -61,8 +61,8 @@ These come from the project's requirements and apply to both platforms.
    teal to white because that is what bleaching looks like. Do not substitute a
    red/green scale.
 5. **No API-key services.** No Firebase, no Crashlytics, no Google Maps, no
-   analytics SDK. Local notifications only - there is no push infrastructure by
-   design, and the project explains why.
+   analytics SDK. Local notifications only - push would require a third-party
+   service and an account, which the project's key-free constraint rules out.
 6. **Ask for location and camera permission in context**, at the moment of
    capture, with a sentence explaining why. Never on launch.
 7. **Position is required; GPS is not.** If there is no fix, the contributor
@@ -147,7 +147,7 @@ want a reference for the geometry.
 ## Acceptance checklist
 
 Work through this before calling either app done; several items map directly to
-requirements the project has to evidence.
+requirements tracked in [`TESTING.md`](../TESTING.md).
 
 Results are recorded in
 [`docs/evidence/mobile/acceptance.md`](../docs/evidence/mobile/acceptance.md), including

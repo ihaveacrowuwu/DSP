@@ -85,7 +85,7 @@ style:
     comments:
       - reason: 'Add an owner and a reason: // TODO(nauhaan): why'
         value: 'TODO:'
-      - reason: 'Fix it or record it in docs/08.'
+      - reason: 'Fix it, or record why it stays in the comment above it.'
         value: 'FIXME:'
   WildcardImport:
     active: true

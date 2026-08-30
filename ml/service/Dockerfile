@@ -1,4 +1,4 @@
-# CPU-only inference image (docs/06: no GPU at serving time).
+# CPU-only inference image: no GPU at serving time.
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

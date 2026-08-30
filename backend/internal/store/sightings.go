@@ -15,7 +15,7 @@ import (
 
 // effectiveLabelCTE derives each sighting's authoritative condition.
 //
-// Rules (see docs/05): the latest verification wins over any prediction; a
+// Rules: the latest verification wins over any prediction; a
 // sighting's severity is the worst (max) across its photos, and its label comes
 // from that worst photo. Nothing here mutates predictions - provenance is kept.
 const effectiveLabelCTE = `

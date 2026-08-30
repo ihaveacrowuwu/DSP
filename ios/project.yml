@@ -29,7 +29,7 @@ options:
     # two visual designs behind `if #available`. The documented degradation path is
     # still built and still exercised: Reduce Transparency and Increase Contrast turn
     # the effect off at runtime, so GlassSurface has a real fallback that a reviewer
-    # can switch on in Settings. See docs/08 D26.
+    # can switch on in Settings.
     iOS: "26.0"
   createIntermediateGroups: true
   generateEmptyDirectories: true

@@ -2,12 +2,12 @@
 
 Four of the project's non-functional requirements are numbers, and until now all four
 were carried in prose: "measured ~1.5s", "22ms", "320ms". A remembered figure is not
-evidence, and the project's evaluation chapter needs a command that prints the number
-and a recorded run that produced it. This is that command.
+evidence. What is needed instead is a command that prints the number, and a recorded
+run that produced it. This is that command.
 
     python3 scripts/perf_test.py                 # every check
     python3 scripts/perf_test.py --only nfr11    # one of them
-    python3 scripts/perf_test.py --json out.json # machine-readable, for the project
+    python3 scripts/perf_test.py --json out.json # machine-readable, for the record
 
 Deliberately standard library only - `concurrent.futures` and `urllib` - because NFR9
 forbids depending on a service that needs an account, and reaching for k6 or Locust
@@ -91,7 +91,7 @@ if os.environ.get("MURAKA_TLS_INSECURE") == "1":
 CONTRIBUTOR = ("diver@muraka.test", "muraka-diver-2026")
 RESEARCHER = ("researcher@muraka.test", "muraka-research-2026")
 
-# NFR thresholds, from docs/07-requirements.md.
+# NFR thresholds. The requirements they belong to are tabulated in TESTING.md.
 NFR1_SECONDS = 30.0
 NFR2_MS = 500.0
 NFR3_SECONDS = 2.0
@@ -99,7 +99,7 @@ NFR11_CONCURRENCY = 50
 
 
 class Failure(Exception):
-    """A check failed. Carries the message the project should quote."""
+    """A check failed. Carries the message describing how it failed."""
 
 
 def call(
@@ -194,7 +194,7 @@ def percentiles(samples: list[float]) -> dict[str, float]:
 # same warm stack were observed spanning 90 to 1,551 submissions/second - the
 # first after a restart pays for an empty connection pool and a cold page cache,
 # and a single sample lands anywhere in that range depending on when it is taken.
-# An earlier figure of 919/s was quoted in the project as though it were a
+# An earlier figure of 919/s was quoted as though it were a
 # property of the system; it was one sample of that spread.
 #
 # So: one discarded warm-up round, then several measured ones, reported as a

@@ -1,6 +1,6 @@
 """Patch-grid coral condition inference.
 
-Pipeline (docs/06):
+Pipeline:
   1. tile the photo into a grid of square patches over its centre crop
   2. classify every patch (batched) as healthy or bleached
   3. aggregate: severity = bleached fraction; image label from a severity threshold
@@ -142,7 +142,7 @@ class Classifier:
         opts.inter_op_num_threads = 1
         opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
-        # CPU only: the deployment target has no GPU (docs/06 constraint 2).
+        # CPU only: the deployment target has no GPU.
         self._session = ort.InferenceSession(
             self.settings.model_path, sess_options=opts, providers=["CPUExecutionProvider"]
         )

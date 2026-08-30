@@ -1,13 +1,15 @@
 # Testing and requirement traceability
 
-`docs/07-requirements.md` closes by asking for a document that links FR/NFR IDs to
-test names to results, "so the project's testing chapter can be generated from evidence
-rather than memory". This is that document.
+This document links every FR and NFR identifier used across the repository to the
+tests that cover it and the results of running them, so that what this project claims
+can be generated from evidence rather than from memory. The tables below are also the
+only definition of those identifiers - source comments, the Makefile and both compose
+files cite them by number.
 
 It is deliberately unflattering. A traceability matrix whose every row says "covered"
 is not evidence, it is decoration - the value is in the rows that say **none**, because
-those are the project's honest limitations section and the build's to-do list at the
-same time.
+those are the project's honest limitations and the build's to-do list at the same
+time.
 
 Of thirty-two live requirements, **twenty-five** have full automated evidence, six are
 partly covered and **one has none at all**. Those figures are tallied from the table
@@ -105,7 +107,7 @@ virtualenv alone once counted as 11,917 Python tests.
 | FR2 | Create a sighting: 1-5 photos, position, time, depth, note | Must | smoke 5; mobile capture screens built and screenshotted (`docs/evidence/mobile/`) | ◐ |
 | FR3 | Queue offline, sync automatically | Must | `capturingWithNoNetworkQueuesTheSightingAndKeepsThePhotograph`, `drainingWithNoNetworkLeavesTheRowQueuedAndDoesNotBurnItsAttempts`, `theQueueSurvivesTheProcessDying`, `theQueueDrainsOnceTheNetworkReturns`, `aConnectionLostMidUploadResumesWithoutResendingWhatArrived`; plus the outbox and retry-curve tests | ✅ |
 | FR4 | Submission is idempotent; retries never duplicate | Must | `TestReplayingASubmissionCreatesExactlyOneRow` (eight attempts, the outbox give-up threshold), `TestDepthAndNoteSurviveAReplay`; smoke 6 | ✅ |
-| FR5 | Classify each photo; record label, confidence, model version | Must | smoke 9, 10, 13; `test_classify_returns_one_patch_per_cell`, `test_label_follows_severity_threshold`, `test_severity_matches_bleached_patch_fraction`, `test_to_dict_shape_matches_go_client_contract`; plus `test_the_exported_onnx_agrees_with_the_pytorch_model`. **Trained model effnetb0-0.1.0 served since 2026-08-26** - 0.8575 accuracy / 0.9027 F2-bleached on the held-out test split, all 33 smoke checks pass with `FAKE_MODE=0` (`docs/evidence/ml/baseline-effnetb0.md`). Field accuracy is still unevidenced: the model has never seen a Maldivian reef (D60) | ✅ |
+| FR5 | Classify each photo; record label, confidence, model version | Must | smoke 9, 10, 13; `test_classify_returns_one_patch_per_cell`, `test_label_follows_severity_threshold`, `test_severity_matches_bleached_patch_fraction`, `test_to_dict_shape_matches_go_client_contract`; plus `test_the_exported_onnx_agrees_with_the_pytorch_model`. **Trained model effnetb0-0.1.0 served since 2026-08-26** - 0.8575 accuracy / 0.9027 F2-bleached on the held-out test split, all 33 smoke checks pass with `FAKE_MODE=0`. Field accuracy is still unevidenced: the model has never seen a Maldivian reef | ✅ |
 | FR6 | Verification queue: confirm, correct, reject, audit-logged | Must | `TestRejectingASightingIsRecordedWithItsReasonAndAuthor`, `TestARejectionWithoutAReasonIsRefused`, `TestAnInvalidRejectReasonSaysSoRatherThanClaimingItIsMissing`; smoke 11-14 | ✅ |
 | FR7 | Map with clustering, heatmap, filters | Must | 14 `mapStyle` tests incl. `is valid against the MapLibre style specification`, `never lets a national-zoom cluster cover a whole atoll`; 16 `ReefMapView` tests incl. `asks for the bounding box the map is actually showing`, `applies the verified-only filter to both queries`, `re-queries after a pan, and coalesces a burst into one request`; smoke 15 | ✅ |
 | FR8 | Full provenance per sighting | Must | 21 `SightingDetailView` tests incl. `shows the model label, its confidence and the version that produced it`, `keeps the model's original claim visible after it was overruled`, `names who decided, what they decided, and when`; smoke 13, 15 (CSV carries provenance columns) | ✅ |
@@ -190,7 +192,7 @@ is the argument for having written them:
   `ml/README.md`, and D65 closes the backbone comparison: ConvNeXt-Tiny (1,486 ms) and
   EfficientNetV2-S (862 ms) are both far outside the budget. The service's own 22 ms
   figure is still the stub.
-- **NFR4** - now complete, but with a caveat the project must state rather than bury:
+- **NFR4** - now complete, but with a caveat worth stating rather than burying:
   the demo certificate is **self-signed**, because NFR9 rules out a certificate
   authority. A browser warns on first visit. That is the honest cost of the key-free
   constraint, not a defect.
@@ -236,10 +238,10 @@ is the argument for having written them:
 - **NFR11** - the requirement (no error, no data loss) was always met, but the *throughput*
   figure beside it was one sample of a very wide spread. Consecutive bursts against the same
   warm stack ranged from 90 to 1,551 submissions/second: the first burst after a restart pays
-  for an empty connection pool and a cold page cache, and the 919/s once quoted in the project
-  landed in the middle of that by chance. The harness now discards a warm-up round and reports
-  min/median/max over three measured rounds, and the project quotes the error and loss counts
-  rather than the rate.
+  for an empty connection pool and a cold page cache, and the 919/s once quoted landed in
+  the middle of that by chance. The harness now discards a warm-up round and reports
+  min/median/max over three measured rounds, and the requirement is judged on the error
+  and loss counts rather than the rate.
 - **NFR12** - closed on 2026-08-30, and writing the assertion showed the requirement was
   implemented for a path nothing uses. The middleware puts a correlation id on inbound
   HTTP and `mlclient` forwards it, which covers a request that calls the classifier

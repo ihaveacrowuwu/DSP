@@ -41,8 +41,10 @@ any model output was read:
   present at that pixel, so they count towards presence and are excluded from
   fractions - and the two uses are reported separately for that reason.
 
-Reproduce: start the stack (`make up`), fetch the partition per
-`docs/evidence/datasets/seaview-partition-scope.md`, and run this file.
+Reproduce: start the stack (`make up`), fetch the Central Indian Ocean partition of
+the Seaview Survey dataset into `ml/datasets/seaview`, and run this file. Take only the
+photo-quadrats, annotations and tabular metadata - never the raw 360 degree triplets,
+which are the bulk of the 1.5 TB.
 """
 
 import argparse

@@ -5,5 +5,5 @@ python-multipart==0.0.20
 pillow==11.1.0
 numpy==2.2.1
 
-# CPU-only inference (docs/06 constraint: no GPU at serving time).
+# CPU-only inference: no GPU at serving time.
 onnxruntime==1.20.1

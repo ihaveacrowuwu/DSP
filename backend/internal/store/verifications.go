@@ -58,7 +58,8 @@ type CreateVerificationInput struct {
 }
 
 // CreateVerification appends an audit row and moves the sighting to its resolved
-// status. Predictions are never mutated (docs/05 provenance rule).
+// status. Predictions are never mutated - an expert verdict wins, but the model's
+// prediction is preserved beside it for provenance.
 func (s *Store) CreateVerification(ctx context.Context, in CreateVerificationInput) (domain.Verification, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {

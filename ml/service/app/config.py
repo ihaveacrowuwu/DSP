@@ -42,7 +42,7 @@ class Settings:
     model_path: str = field(default_factory=lambda: os.getenv("MODEL_PATH", "models/active.onnx"))
     model_version: str = field(default_factory=lambda: os.getenv("MODEL_VERSION", ""))
 
-    # --- patch-grid inference (docs/06)
+    # --- patch-grid inference
     # Grid size and overlap are configurable because grid granularity is an
     # experiment we report on, not a fixed constant.
     patch_grid: int = field(default_factory=lambda: _env_int("PATCH_GRID", 5))
