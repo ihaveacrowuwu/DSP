@@ -167,15 +167,36 @@ func (a *API) handleUploadPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Decode to validate it really is an image and to learn its dimensions
-	// (NFR5: never trust the declared content type).
-	img, format, err := image.Decode(bytes.NewReader(raw))
+	// Read the header alone first. Decoding straight to pixels would let a
+	// well-formed file whose IHDR claims 30000x30000 cost 3.6 GB of allocation
+	// while weighing 77 bytes on the wire - every byte-count check above passes
+	// it, because by every measure they take it is a small file. The header is
+	// the only part cheap enough to trust before committing memory.
+	cfg, format, err := image.DecodeConfig(bytes.NewReader(raw))
 	if err != nil {
 		writeFieldErrors(w, map[string]string{"file": "must be a decodable JPEG or PNG image"})
 		return
 	}
 	if format != "jpeg" && format != "png" {
 		writeFieldErrors(w, map[string]string{"file": "must be a JPEG or PNG image"})
+		return
+	}
+	if cfg.Width <= 0 || cfg.Height <= 0 ||
+		cfg.Width > a.cfg.MaxImageDimension || cfg.Height > a.cfg.MaxImageDimension {
+		writeError(w, http.StatusUnprocessableEntity, "image_too_large",
+			fmt.Sprintf("image must be at most %d pixels on a side", a.cfg.MaxImageDimension))
+		return
+	}
+	if cfg.Width*cfg.Height > a.cfg.MaxImagePixels {
+		writeError(w, http.StatusUnprocessableEntity, "image_too_large",
+			fmt.Sprintf("image must be at most %d pixels in total", a.cfg.MaxImagePixels))
+		return
+	}
+
+	// Only now, with the cost known and bounded, decode the pixels.
+	img, _, err := image.Decode(bytes.NewReader(raw))
+	if err != nil {
+		writeFieldErrors(w, map[string]string{"file": "must be a decodable JPEG or PNG image"})
 		return
 	}
 

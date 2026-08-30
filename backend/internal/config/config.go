@@ -26,6 +26,11 @@ type Config struct {
 
 	StorageDir     string
 	MaxUploadBytes int64
+	// A byte cap alone does not bound the cost of an upload: an image's header
+	// declares its dimensions, and the decoder sizes its pixel buffer from that
+	// before reading a single scanline. A 77-byte PNG can ask for 3.6 GB.
+	MaxImagePixels    int
+	MaxImageDimension int
 
 	MLServiceURL string
 	MLTimeout    time.Duration
@@ -42,6 +47,15 @@ type Config struct {
 
 const devJWTSecret = "dev-only-insecure-secret-change-me"
 
+// Decode ceilings for uploaded images. 80 MP clears every camera a contributor
+// is plausibly carrying - a 48 MP phone, a 27 MP action cam - while costing at
+// most 320 MB to decode; 20,000 on a side refuses shapes that are not
+// photographs at all, which the patch grid could not tile meaningfully.
+const (
+	DefaultMaxImagePixels    = 80_000_000
+	DefaultMaxImageDimension = 20_000
+)
+
 func Load() (Config, error) {
 	c := Config{
 		Env:      env("MURAKA_ENV", "development"),
@@ -55,8 +69,10 @@ func Load() (Config, error) {
 		AccessTokenTTL:  duration("ACCESS_TOKEN_TTL", 15*time.Minute),
 		RefreshTokenTTL: duration("REFRESH_TOKEN_TTL", 30*24*time.Hour),
 
-		StorageDir:     env("STORAGE_DIR", "./data/images"),
-		MaxUploadBytes: int64(intVal("MAX_UPLOAD_BYTES", 12<<20)), // 12 MiB
+		StorageDir:        env("STORAGE_DIR", "./data/images"),
+		MaxUploadBytes:    int64(intVal("MAX_UPLOAD_BYTES", 12<<20)), // 12 MiB
+		MaxImagePixels:    intVal("MAX_IMAGE_PIXELS", DefaultMaxImagePixels),
+		MaxImageDimension: intVal("MAX_IMAGE_DIMENSION", DefaultMaxImageDimension),
 
 		MLServiceURL: env("ML_SERVICE_URL", "http://localhost:8000"),
 		MLTimeout:    duration("ML_TIMEOUT", 60*time.Second),
@@ -76,6 +92,15 @@ func Load() (Config, error) {
 	}
 	if len(c.JWTSecret) < 16 {
 		return Config{}, fmt.Errorf("JWT_SECRET must be at least 16 bytes")
+	}
+	// Zero is not "unlimited" for a ceiling, it is "refuse everything", and an
+	// operator setting MAX_IMAGE_PIXELS=0 to mean the former would take every
+	// upload offline. Fall back rather than obey it.
+	if c.MaxImagePixels <= 0 {
+		c.MaxImagePixels = DefaultMaxImagePixels
+	}
+	if c.MaxImageDimension <= 0 {
+		c.MaxImageDimension = DefaultMaxImageDimension
 	}
 	return c, nil
 }

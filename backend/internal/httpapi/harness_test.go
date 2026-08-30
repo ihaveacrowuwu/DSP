@@ -124,7 +124,12 @@ func newHarness(t *testing.T) *harness {
 		AccessTokenTTL:  15 * time.Minute,
 		RefreshTokenTTL: 24 * time.Hour,
 		MaxUploadBytes:  8 << 20,
-		CORSOrigins:     []string{"*"},
+		// The real defaults, not ad-hoc test values: the decode ceilings are a
+		// security boundary, and a harness that relaxed them would be proving
+		// the boundary holds somewhere the deployment does not.
+		MaxImagePixels:    config.DefaultMaxImagePixels,
+		MaxImageDimension: config.DefaultMaxImageDimension,
+		CORSOrigins:       []string{"*"},
 	}
 	tokens := auth.NewTokenIssuer(cfg.JWTSecret, cfg.JWTIssuer, cfg.AccessTokenTTL, cfg.RefreshTokenTTL)
 
